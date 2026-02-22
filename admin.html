@@ -254,11 +254,17 @@
     <div class="modal-title">Edit Balance</div>
     <div class="modal-sub" id="editBal-name">User</div>
     <input type="hidden" id="editBal-uid"/>
-    <div class="field"><label>BTC Balance ($)</label><input type="number" id="eb-btc" step="0.01" min="0"/></div>
-    <div class="field"><label>Stocks Balance ($)</label><input type="number" id="eb-stocks" step="0.01" min="0"/></div>
-    <div class="field"><label>Forex Balance ($)</label><input type="number" id="eb-forex" step="0.01" min="0"/></div>
-    <div class="field"><label>Total Profit ($)</label><input type="number" id="eb-profit" step="0.01" min="0"/></div>
-    <button class="modal-btn gold" onclick="saveBalance()">Save Changes</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="field"><label>BTC Balance ($)</label><input type="number" id="eb-btc" step="0.01" min="0" placeholder="0.00"/></div>
+      <div class="field"><label>Stocks Balance ($)</label><input type="number" id="eb-stocks" step="0.01" min="0" placeholder="0.00"/></div>
+      <div class="field"><label>Forex Balance ($)</label><input type="number" id="eb-forex" step="0.01" min="0" placeholder="0.00"/></div>
+    </div>
+    <div class="field" style="background:rgba(0,200,150,0.05);border:1px solid rgba(0,200,150,0.15);border-radius:8px;padding:14px;margin-top:4px;">
+      <label style="color:var(--green)">💰 Total Profit / Loss ($)</label>
+      <input type="number" id="eb-profit" step="0.01" placeholder="e.g. 500 or -200" style="margin-top:6px;"/>
+      <div style="font-size:11px;color:var(--gray);margin-top:6px;">Enter positive for profit, negative for loss. This shows on user dashboard.</div>
+    </div>
+    <button class="modal-btn gold" onclick="saveBalance()" style="margin-top:8px;">💾 Save Changes</button>
     <div class="msg" id="eb-msg"></div>
   </div>
 </div>
@@ -545,7 +551,7 @@ async function saveBalance(){
   const {error}=await sb.from('wallets').update({btc_balance:parseFloat(document.getElementById('eb-btc').value)||0,
     stocks_balance:parseFloat(document.getElementById('eb-stocks').value)||0,
     forex_balance:parseFloat(document.getElementById('eb-forex').value)||0,
-    total_profit:parseFloat(document.getElementById('eb-profit').value)||0
+    total_profit:parseFloat(document.getElementById('eb-profit').value)||0  // can be negative
   }).eq('user_id',uid);
   if(error)return showMsg(msg,'Error saving','error');
   showMsg(msg,'Balance updated!','success');

@@ -429,14 +429,52 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 .simple-page{padding:28px;max-width:700px;}
 .simple-page h2{font-size:18px;font-weight:700;margin-bottom:6px;}
 .simple-page .sub{color:var(--gray);font-size:12px;margin-bottom:22px;}
-.plan-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;}
-.plan-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:20px;text-align:center;}
-.plan-card.featured{border-color:var(--blue);}
-.plan-roi{font-size:26px;font-weight:800;color:var(--blue);margin-bottom:2px;}
-.plan-name{font-size:11px;color:var(--gray);margin-bottom:14px;}
-.plan-btn{width:100%;padding:9px;border-radius:7px;border:none;background:var(--blue);color:#fff;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;}
-.plan-btn.gold{background:#d4a017;}
-.plan-btn.dim{background:var(--border2);opacity:0.5;cursor:not-allowed;}
+/* ━━━━━━━━━━━━━━━━━━━━ SUBSCRIBE PAGE ━━━━━━━━━━━━━━━━━━━━ */
+.sub-page-wrap{padding:32px 28px;max-width:1100px;}
+.sub-page-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:4px;}
+.sub-page-sub{font-size:13px;color:var(--gray);margin-bottom:32px;}
+.plan-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.plan-card{
+  background:#0d1117;border:1px solid #1e2a38;
+  border-radius:16px;padding:28px 24px;
+  display:flex;flex-direction:column;gap:0;
+  position:relative;overflow:hidden;transition:border 0.2s;
+}
+.plan-card:hover{border-color:#2a3f5f;}
+.plan-card.featured{border-color:#3b82f6;box-shadow:0 0 0 1px #3b82f6;}
+.plan-badge{
+  position:absolute;top:16px;right:-22px;
+  background:#3b82f6;color:#fff;
+  font-size:9px;font-weight:800;letter-spacing:1px;
+  padding:5px 32px;transform:rotate(35deg);text-transform:uppercase;
+}
+.plan-label{font-size:10px;font-weight:800;letter-spacing:1.5px;color:#3b82f6;text-transform:uppercase;margin-bottom:12px;}
+.plan-pct{font-size:56px;font-weight:900;color:#fff;line-height:1;margin-bottom:2px;font-family:'Inter',sans-serif;}
+.plan-pct sup{font-size:22px;vertical-align:super;font-weight:700;}
+.plan-freq{font-size:13px;color:var(--gray);margin-bottom:20px;}
+.plan-minmax{
+  background:#111827;border:1px solid #1e2a38;border-radius:8px;
+  padding:12px 14px;font-size:12px;margin-bottom:20px;
+}
+.plan-minmax span{color:#3b82f6;font-weight:700;}
+.plan-features{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px;flex:1;}
+.plan-features li{display:flex;align-items:center;gap:8px;font-size:12px;color:#b0bec5;}
+.plan-features li::before{content:'✓';color:#3b82f6;font-weight:800;flex-shrink:0;}
+.plan-get-btn{
+  width:100%;padding:13px;border-radius:8px;border:none;
+  background:#111827;color:#fff;font-size:13px;font-weight:700;
+  font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.15s;
+  border:1px solid #1e2a38;
+}
+.plan-get-btn:hover{border-color:#3b82f6;color:#3b82f6;}
+.plan-card.featured .plan-get-btn{
+  background:#3b82f6;border-color:#3b82f6;color:#fff;
+}
+.plan-card.featured .plan-get-btn:hover{background:#2563eb;}
+@media(max-width:800px){
+  .plan-cards{grid-template-columns:1fr;}
+  .sub-page-wrap{padding:16px;}
+}
 
 .signal-cards{display:flex;flex-direction:column;gap:10px;}
 .signal-card{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
@@ -824,7 +862,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
               <p>Unlock advanced trading tools today with a limited 20% discount across our platform upgrades now available.</p>
               <div class="promo-btns">
                 <button class="promo-btn-white" onclick="switchPage('subscribe',null)">Upgrade to Pro</button>
-                <button class="promo-btn-ghost">Get 20% off for today</button>
+                <button class="promo-btn-ghost" onclick="switchPage('subscribe',null)">Get 20% off for today</button>
               </div>
             </div>
 
@@ -1119,25 +1157,60 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 
       <!-- ════════════════════ SUBSCRIBE PAGE ════════════════════ -->
       <div class="page" id="page-subscribe">
-        <div class="simple-page">
-          <h2>📺 Subscribe</h2>
-          <div class="sub">Upgrade for advanced features, priority support and exclusive signals.</div>
+        <div class="sub-page-wrap">
+          <div class="sub-page-title">Investment Plans</div>
+          <div class="sub-page-sub">Transparent returns. No hidden fees. Start with any amount.</div>
           <div class="plan-cards">
+
+            <!-- STARTER -->
             <div class="plan-card">
-              <div class="plan-roi">FREE</div>
-              <div class="plan-name">Basic Plan</div>
-              <button class="plan-btn dim" disabled>Current Plan</button>
+              <div class="plan-label">Starter Plan</div>
+              <div class="plan-pct"><sup></sup>5<sup style="font-size:22px">%</sup></div>
+              <div class="plan-freq">Weekly Return</div>
+              <div class="plan-minmax">Min: <span>$100</span> · Max: <span>$4,999</span></div>
+              <ul class="plan-features">
+                <li>Weekly profit credited</li>
+                <li>Crypto and Forex markets</li>
+                <li>Basic analytics dashboard</li>
+                <li>Email support</li>
+                <li>Withdraw anytime</li>
+              </ul>
+              <button class="plan-get-btn" onclick="openDepositModal()">Get Started</button>
             </div>
+
+            <!-- GROWTH (featured) -->
             <div class="plan-card featured">
-              <div class="plan-roi">$49</div>
-              <div class="plan-name">Pro Plan / month</div>
-              <button class="plan-btn">Upgrade to Pro</button>
+              <div class="plan-badge">Most Popular</div>
+              <div class="plan-label">Growth Plan</div>
+              <div class="plan-pct"><sup></sup>12<sup style="font-size:22px">%</sup></div>
+              <div class="plan-freq">Weekly Return</div>
+              <div class="plan-minmax">Min: <span>$5,000</span> · Max: <span>$49,999</span></div>
+              <ul class="plan-features">
+                <li>Daily profit credited</li>
+                <li>Crypto, Forex and Stocks</li>
+                <li>Advanced analytics</li>
+                <li>Priority 24/7 support</li>
+                <li>Dedicated account manager</li>
+              </ul>
+              <button class="plan-get-btn" onclick="openDepositModal()">Get Started</button>
             </div>
+
+            <!-- ELITE -->
             <div class="plan-card">
-              <div class="plan-roi" style="color:#d4a017">$149</div>
-              <div class="plan-name">Elite Plan / month</div>
-              <button class="plan-btn gold">Go Elite</button>
+              <div class="plan-label">Elite Plan</div>
+              <div class="plan-pct"><sup></sup>20<sup style="font-size:22px">%</sup></div>
+              <div class="plan-freq">Weekly Return</div>
+              <div class="plan-minmax">Min: <span>$50,000</span> · No maximum</div>
+              <ul class="plan-features">
+                <li>Daily profit credited</li>
+                <li>All markets and commodities</li>
+                <li>VIP analytics suite</li>
+                <li>Personal trader assigned</li>
+                <li>Tax reporting support</li>
+              </ul>
+              <button class="plan-get-btn" onclick="openDepositModal()">Get Started</button>
             </div>
+
           </div>
         </div>
       </div>
