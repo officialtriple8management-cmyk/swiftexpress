@@ -157,6 +157,29 @@
     <tbody id="balance-table"><tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table></div>
   </div>
 
+
+  <!-- WALLET ADDRESSES PAGE -->
+  <div class="page" id="page-wallets">
+    <div class="topbar"><div class="page-title">💳 Wallet Addresses</div></div>
+    <div class="card" style="max-width:700px">
+      <div class="card-title">Manage Deposit Addresses</div>
+      <p style="color:#888;font-size:12px;margin-bottom:20px;line-height:1.6">
+        Add your real wallet addresses below. You can add multiple addresses per method — the system will automatically rotate them so each user gets a different address. Click <strong>+ Add Address</strong> to add more.
+      </p>
+      <div id="wallet-addr-list">
+        <div style="text-align:center;color:#888;padding:24px">Loading addresses...</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap;">
+        <button onclick="saveWalletAddresses()" style="background:#1db954;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Save All</button>
+        <button onclick="loadWalletAddresses()" style="background:#242424;color:#aaa;border:1px solid #383838;padding:12px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">🔄 Refresh</button>
+      </div>
+      <div style="margin-top:10px;font-size:12px;color:#666;line-height:1.6">
+        💡 Addresses rotate automatically — the least-used address is always shown first to users.
+      </div>
+      <div id="wallet-save-msg" style="margin-top:14px;font-size:13px;padding:10px 14px;border-radius:7px;display:none"></div>
+    </div>
+  </div>
+
   <!-- SEND NOTIFICATION -->
   <div class="page" id="page-notify">
     <div class="topbar"><div class="page-title">📢 Send Notification</div></div>
