@@ -1272,12 +1272,31 @@ function tradeTab(mode,el){
 /* ──────── DEPOSIT MODAL ──────── */
 let walletAddresses={};
 
+/* ──────── DEPOSIT MODAL + AUTO-ROTATION ──────── */
+let allWalletAddresses={};
+let assignedAddress=null;
+
 async function loadWalletAddresses(){
-  const {data}=await sb.from('wallet_addresses').select('*').eq('is_active',true);
-  if(data) data.forEach(a=>{walletAddresses[a.method]=a.address;});
+  const {data}=await sb.from('wallet_addresses')
+    .select('*').eq('is_active',true)
+    .order('usage_count',{ascending:true});
+  allWalletAddresses={};
+  if(data){
+    data.forEach(a=>{
+      if(!allWalletAddresses[a.method]) allWalletAddresses[a.method]=[];
+      allWalletAddresses[a.method].push(a);
+    });
+  }
+}
+
+function getNextAddress(method){
+  const list=allWalletAddresses[method];
+  if(!list||!list.length) return null;
+  return list[0]; // already sorted by usage_count ASC — least used first
 }
 
 function openDepositModal(){
+  loadWalletAddresses(); // refresh every time modal opens
   document.getElementById('deposit-modal').classList.add('open');
   document.getElementById('mod-method').value='';
   document.getElementById('mod-amount').value='';
@@ -1286,13 +1305,14 @@ function openDepositModal(){
   document.getElementById('address-section').style.display='none';
   document.getElementById('file-name').textContent='No file chosen';
   document.getElementById('proof-file').value='';
+  assignedAddress=null;
 }
 
 function closeDepositModal(){
   document.getElementById('deposit-modal').classList.remove('open');
+  assignedAddress=null;
 }
 
-// Close modal when clicking outside — attached after DOM ready
 window.addEventListener('DOMContentLoaded',()=>{
   const mo=document.getElementById('deposit-modal');
   if(mo) mo.addEventListener('click',function(e){if(e.target===this)closeDepositModal();});
@@ -1302,32 +1322,40 @@ function onMethodChange(){
   const method=document.getElementById('mod-method').value;
   const addrSection=document.getElementById('address-section');
   const addrEl=document.getElementById('mod-address');
-  if(!method||method==='Bank Transfer'){
-    addrSection.style.display='none';
-    return;
-  }
-  const addr=walletAddresses[method];
-  if(addr&&addr!=='YOUR_BTC_ADDRESS_HERE'&&addr!=='YOUR_ETH_ADDRESS_HERE'&&addr!=='YOUR_USDT_ADDRESS_HERE'&&addr!=='YOUR_USDT_ERC20_ADDRESS_HERE'){
-    addrEl.textContent=addr;
+  const labelEl=document.getElementById('addr-label');
+  assignedAddress=null;
+
+  if(!method){addrSection.style.display='none';return;}
+
+  const addr=getNextAddress(method);
+  if(addr && !addr.address.startsWith('YOUR_')){
+    addrEl.textContent=addr.address;
+    if(labelEl) labelEl.textContent=addr.label?'('+addr.label+')':'';
+    assignedAddress=addr;
     addrSection.style.display='block';
   } else {
-    addrEl.innerHTML='<span class="no-addr">No address set. Admin has not configured this method yet.</span>';
+    addrEl.innerHTML='<span class="no-addr">Address not configured yet. Contact support.</span>';
+    if(labelEl) labelEl.textContent='';
     addrSection.style.display='block';
   }
-  // Reset copy button
   const btn=document.getElementById('copy-btn');
-  btn.textContent='Copy';
-  btn.className='copy-btn';
+  btn.textContent='Copy';btn.className='copy-btn';
 }
 
 function copyAddress(){
   const addr=document.getElementById('mod-address').textContent;
-  navigator.clipboard.writeText(addr).then(()=>{
-    const btn=document.getElementById('copy-btn');
-    btn.textContent='Copied!';
-    btn.className='copy-btn copied';
-    setTimeout(()=>{btn.textContent='Copy';btn.className='copy-btn';},2000);
-  });
+  const copy=(t)=>{
+    const el=document.createElement('textarea');
+    el.value=t;document.body.appendChild(el);
+    el.select();document.execCommand('copy');
+    document.body.removeChild(el);
+  };
+  try{
+    navigator.clipboard.writeText(addr).catch(()=>copy(addr));
+  }catch(e){copy(addr);}
+  const btn=document.getElementById('copy-btn');
+  btn.textContent='Copied!';btn.className='copy-btn copied';
+  setTimeout(()=>{btn.textContent='Copy';btn.className='copy-btn';},2000);
 }
 
 function onFileSelected(){
@@ -1350,31 +1378,43 @@ async function submitDeposit(){
   btn.disabled=true;btn.textContent='Submitting...';
 
   try{
-    // Upload proof image to Supabase Storage
+    // Upload proof file to storage
     let proofUrl=file.name;
-    const fileExt=file.name.split('.').pop();
-    const fileName=user.id+'_'+Date.now()+'.'+fileExt;
-    const {data:uploadData,error:uploadErr}=await sb.storage.from('payment-proofs').upload(fileName,file,{upsert:true});
-    if(!uploadErr&&uploadData) proofUrl=uploadData.path;
+    try{
+      const ext=file.name.split('.').pop();
+      const fname=user.id+'_'+Date.now()+'.'+ext;
+      const {data:ud,error:ue}=await sb.storage.from('payment-proofs').upload(fname,file,{upsert:true});
+      if(!ue&&ud) proofUrl=ud.path;
+    }catch(e){}
 
-    // Save transaction
+    // Save transaction — store assigned address in admin_note for admin visibility
+    const addrNote=assignedAddress?'Address: '+assignedAddress.address:'';
     const {error}=await sb.from('transactions').insert({
       user_id:user.id,
       type:'deposit',
       amount:amt,
       payment_method:method,
       proof_url:proofUrl,
+      admin_note:addrNote,
       status:'pending'
     });
+    if(error) throw error;
 
-    if(error)throw error;
+    // Increment usage_count on assigned address for rotation tracking
+    if(assignedAddress){
+      await sb.from('wallet_addresses').update({
+        usage_count:(assignedAddress.usage_count||0)+1,
+        last_used:new Date().toISOString()
+      }).eq('id',assignedAddress.id);
+    }
+
     msg.className='modal-msg ok';
-    msg.textContent='✅ Deposit submitted successfully! Admin will approve within 24 hours.';
+    msg.textContent='✅ Deposit submitted! Admin will approve within 24 hours.';
     btn.textContent='Submitted!';
-    setTimeout(()=>{closeDepositModal();btn.disabled=false;btn.textContent='Deposit';},2500);
+    setTimeout(()=>{closeDepositModal();btn.disabled=false;btn.textContent='Deposit';loadTrades();},2500);
   }catch(e){
     msg.className='modal-msg err';
-    msg.textContent='Error: '+(e.message||'Something went wrong. Try again.');
+    msg.textContent='Error: '+(e.message||'Something went wrong. Please try again.');
     btn.disabled=false;btn.textContent='Deposit';
   }
 }

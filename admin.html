@@ -491,61 +491,122 @@ init();
 
 /* ──────── WALLET ADDRESSES ──────── */
 let walletAddrData=[];
+const METHODS=['Bitcoin','Ethereum','USDT (TRC20)','USDT (ERC20)','Bank Transfer'];
+const METHOD_ICONS={'Bitcoin':'₿','Ethereum':'Ξ','USDT (TRC20)':'₮','USDT (ERC20)':'₮','Bank Transfer':'🏦'};
 
 async function loadWalletAddresses(){
-  const {data}=await sb.from('wallet_addresses').select('*').order('method');
+  const {data,error}=await sb.from('wallet_addresses').select('*').order('method').order('usage_count',{ascending:true});
+  if(error){
+    document.getElementById('wallet-addr-list').innerHTML='<div style="color:#fca5a5;padding:16px">Error loading addresses: '+error.message+'</div>';
+    return;
+  }
   walletAddrData=data||[];
   renderWalletAddresses();
 }
 
 function renderWalletAddresses(){
-  const icons={'Bitcoin':'₿','Ethereum':'Ξ','USDT (TRC20)':'₮','USDT (ERC20)':'₮','Bank Transfer':'🏦'};
   const el=document.getElementById('wallet-addr-list');
   if(!walletAddrData.length){
-    el.innerHTML='<div style="text-align:center;color:#888;padding:24px">No addresses found. Run the SQL setup first.</div>';
+    el.innerHTML=`<div style="text-align:center;color:#888;padding:24px;background:#1e1e1e;border-radius:10px;border:1px solid #2d2d2d">
+      No wallet addresses found.<br><span style="font-size:12px;margin-top:8px;display:block">Run the SQL setup in Supabase first, then refresh this page.</span>
+    </div>`;
     return;
   }
-  el.innerHTML=walletAddrData.map((a,i)=>`
-    <div class="wallet-addr-card">
-      <h4>${icons[a.method]||'💳'} ${a.method}</h4>
-      <input class="wallet-addr-input" id="addr-${i}" type="text" value="${a.address||''}" placeholder="Enter ${a.method} address..."/>
-      <div class="wallet-toggle">
-        <button class="toggle-switch ${a.is_active?'on':''}" id="toggle-${i}" onclick="toggleAddr(${i})"></button>
-        <span id="toggle-lbl-${i}">${a.is_active?'Active — users can see this':'Inactive — hidden from users'}</span>
+  // Group by method
+  const grouped={};
+  walletAddrData.forEach(a=>{
+    if(!grouped[a.method]) grouped[a.method]=[];
+    grouped[a.method].push(a);
+  });
+
+  el.innerHTML=METHODS.map(method=>{
+    const addrs=grouped[method]||[];
+    const icon=METHOD_ICONS[method]||'💳';
+    return `<div class="wallet-addr-card">
+      <h4 style="display:flex;align-items:center;justify-content:space-between;">
+        <span>${icon} ${method}</span>
+        <button onclick="addAddress('${method}')" style="background:#1db954;color:#fff;border:none;padding:5px 12px;border-radius:5px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">+ Add Address</button>
+      </h4>
+      <div id="addrs-${method.replace(/[^a-z]/gi,'_')}">
+        ${addrs.length?addrs.map((a,i)=>renderAddrRow(a)).join(''):'<div style="color:#888;font-size:12px;padding:8px 0">No addresses yet. Click + Add Address.</div>'}
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
-function toggleAddr(i){
-  walletAddrData[i].is_active=!walletAddrData[i].is_active;
-  const btn=document.getElementById('toggle-'+i);
-  const lbl=document.getElementById('toggle-lbl-'+i);
-  btn.className='toggle-switch '+(walletAddrData[i].is_active?'on':'');
-  lbl.textContent=walletAddrData[i].is_active?'Active — users can see this':'Inactive — hidden from users';
+function renderAddrRow(a){
+  return `<div class="addr-row" id="row-${a.id}" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+    <div style="flex:1">
+      <input class="wallet-addr-input" id="inp-${a.id}" type="text" value="${a.address||''}" placeholder="Enter address..." style="margin-bottom:4px"/>
+      <input class="wallet-addr-input" id="lbl-${a.id}" type="text" value="${a.label||''}" placeholder="Label (e.g. Wallet 1)" style="font-size:11px;padding:6px 10px;color:#888"/>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;align-items:center">
+      <button class="toggle-switch ${a.is_active?'on':''}" id="toggle-${a.id}" onclick="toggleOne('${a.id}')"></button>
+      <span style="font-size:10px;color:#888">${a.usage_count||0} uses</span>
+      <button onclick="deleteAddress('${a.id}')" style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.2);padding:3px 8px;border-radius:4px;font-size:11px;cursor:pointer">Del</button>
+    </div>
+  </div>`;
+}
+
+function toggleOne(id){
+  const a=walletAddrData.find(x=>x.id===id);
+  if(!a) return;
+  a.is_active=!a.is_active;
+  const btn=document.getElementById('toggle-'+id);
+  btn.className='toggle-switch '+(a.is_active?'on':'');
+}
+
+async function addAddress(method){
+  const {data,error}=await sb.from('wallet_addresses').insert({
+    method:method,address:'',label:'',is_active:true,usage_count:0
+  }).select().single();
+  if(error){alert('Error: '+error.message);return;}
+  walletAddrData.push(data);
+  renderWalletAddresses();
+  // Focus the new input
+  setTimeout(()=>{
+    const inp=document.getElementById('inp-'+data.id);
+    if(inp) inp.focus();
+  },100);
+}
+
+async function deleteAddress(id){
+  if(!confirm('Delete this address? This cannot be undone.')) return;
+  const {error}=await sb.from('wallet_addresses').delete().eq('id',id);
+  if(error){alert('Error: '+error.message);return;}
+  walletAddrData=walletAddrData.filter(a=>a.id!==id);
+  renderWalletAddresses();
 }
 
 async function saveWalletAddresses(){
   const msg=document.getElementById('wallet-save-msg');
   msg.style.display='none';
   let errors=[];
-  for(let i=0;i<walletAddrData.length;i++){
-    const newAddr=document.getElementById('addr-'+i).value.trim();
+  let saved=0;
+
+  for(const a of walletAddrData){
+    const inpEl=document.getElementById('inp-'+a.id);
+    const lblEl=document.getElementById('lbl-'+a.id);
+    if(!inpEl) continue;
+    const newAddr=inpEl.value.trim();
+    const newLbl=lblEl?lblEl.value.trim():'';
     const {error}=await sb.from('wallet_addresses').update({
       address:newAddr,
-      is_active:walletAddrData[i].is_active
-    }).eq('id',walletAddrData[i].id);
-    if(error) errors.push(walletAddrData[i].method+': '+error.message);
-    else walletAddrData[i].address=newAddr;
+      label:newLbl,
+      is_active:a.is_active
+    }).eq('id',a.id);
+    if(error) errors.push(a.method+': '+error.message);
+    else{a.address=newAddr;a.label=newLbl;saved++;}
   }
+
   msg.style.display='block';
   if(errors.length){
     msg.style.color='#fca5a5';
-    msg.textContent='Errors: '+errors.join(', ');
+    msg.textContent='Saved '+saved+', errors: '+errors.join('; ');
   } else {
     msg.style.color='#6ee7b7';
-    msg.textContent='✅ All wallet addresses saved successfully!';
-    setTimeout(()=>{msg.style.display='none';},3000);
+    msg.textContent='✅ '+saved+' address(es) saved! Users will see updated addresses on next deposit.';
+    setTimeout(()=>{msg.style.display='none';},4000);
   }
 }
 
