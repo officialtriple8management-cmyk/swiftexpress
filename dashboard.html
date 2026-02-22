@@ -502,6 +502,86 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 
 @media(max-width:1100px){.dash-right{display:none;}}
 @media(max-width:800px){.sidebar{display:none;}.dash-body{grid-template-columns:1fr;}}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━ DEPOSIT MODAL ━━━━━━━━━━━━━━━━━━━━━━━━ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.75);
+  z-index:2000;display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.open{display:flex;}
+.modal-box{
+  background:#1e1e1e;border:1px solid #383838;border-radius:14px;
+  padding:28px;width:100%;max-width:480px;margin:16px;
+  position:relative;animation:modalIn 0.2s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}
+.modal-close{
+  position:absolute;top:16px;right:16px;
+  background:none;border:none;color:#888;cursor:pointer;font-size:20px;
+  width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  border-radius:4px;transition:all 0.15s;
+}
+.modal-close:hover{background:#333;color:#fff;}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:6px;color:#fff;}
+.modal-sub{font-size:12px;color:#888;margin-bottom:20px;line-height:1.5;}
+.modal-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:#888;margin-bottom:6px;display:block;}
+.modal-select{
+  width:100%;background:#242424;border:1px solid #383838;
+  color:#e8e8e8;padding:11px 36px 11px 12px;border-radius:8px;
+  font-size:13px;font-family:'Inter',sans-serif;outline:none;
+  appearance:none;margin-bottom:16px;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:calc(100% - 12px) center;
+  transition:border 0.15s;
+}
+.modal-select:focus{border-color:#1db954;}
+.modal-select option{background:#1e1e1e;}
+.address-box{
+  display:flex;align-items:center;gap:8px;
+  background:#242424;border:1px solid #383838;border-radius:8px;
+  padding:10px 12px;margin-bottom:16px;
+}
+.address-text{
+  flex:1;font-size:12px;color:#c0c0c0;word-break:break-all;
+  font-family:monospace;line-height:1.4;
+}
+.copy-btn{
+  flex-shrink:0;background:#1db954;color:#fff;border:none;
+  padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;
+  cursor:pointer;transition:all 0.15s;white-space:nowrap;
+}
+.copy-btn:hover{background:#17a045;}
+.copy-btn.copied{background:#3b82f6;}
+.modal-input{
+  width:100%;background:#242424;border:1px solid #383838;
+  color:#e8e8e8;padding:11px 12px;border-radius:8px;
+  font-size:13px;font-family:'Inter',sans-serif;outline:none;
+  transition:border 0.15s;margin-bottom:16px;
+}
+.modal-input:focus{border-color:#1db954;}
+.modal-input::placeholder{color:#555;}
+.upload-area{
+  border:1px dashed #383838;border-radius:8px;padding:16px;
+  text-align:center;cursor:pointer;margin-bottom:16px;
+  transition:all 0.15s;background:#1a1a1a;
+}
+.upload-area:hover{border-color:#1db954;background:#1a2a1a;}
+.upload-area input{display:none;}
+.upload-label{color:#1db954;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.upload-label svg{width:14px;height:14px;}
+.upload-name{font-size:11px;color:#888;margin-top:4px;}
+.modal-dep-btn{
+  width:100%;padding:13px;border-radius:8px;border:none;
+  background:#1db954;color:#fff;font-size:14px;font-weight:700;
+  font-family:'Inter',sans-serif;cursor:pointer;transition:all 0.15s;
+}
+.modal-dep-btn:hover{background:#17a045;}
+.modal-dep-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.modal-msg{margin-top:12px;padding:10px 12px;border-radius:7px;font-size:12px;display:none;}
+.modal-msg.err{background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);color:#fca5a5;display:block;}
+.modal-msg.ok{background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);color:#6ee7b7;display:block;}
+.no-addr{color:#e74c3c;font-size:12px;font-style:italic;}
 </style>
 </head>
 <body>
@@ -527,7 +607,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         Dashboard
       </button>
-      <button class="sb-item" onclick="switchPage('deposit',this)">
+      <button class="sb-item" onclick="switchPage('dashboard',this);setTimeout(openDepositModal,100)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         Deposit
       </button>
@@ -849,35 +929,11 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 
       <!-- ════════════════════ DEPOSIT PAGE ════════════════════ -->
       <div class="page" id="page-deposit">
-        <div class="inner-wrap">
-          <div class="inner-title">💰 Deposit Funds</div>
-          <div class="inner-sub">Submit a deposit request. Our admin team will approve it within 24 hours.</div>
-          <div class="wallet-box">
-            Send your payment to any of these addresses, then submit the form below:<br>
-            <strong>BTC:</strong> 1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P<br>
-            <strong>Bank:</strong> GTBank · Acc: 0123456789 · SwiftExpress Ltd<br>
-            <strong>USDT TRC20:</strong> TXyz123abc456def789ghiJKL
-          </div>
-          <div class="f-group">
-            <label>Amount (USD)</label>
-            <input type="number" id="dep-amt" placeholder="e.g. 500"/>
-          </div>
-          <div class="f-group">
-            <label>Payment Method</label>
-            <select id="dep-method">
-              <option value="">Select method...</option>
-              <option>Bitcoin (BTC)</option>
-              <option>Bank Transfer</option>
-              <option>USDT (TRC20)</option>
-              <option>Ethereum (ETH)</option>
-            </select>
-          </div>
-          <div class="f-group">
-            <label>Transaction ID / Reference</label>
-            <input type="text" id="dep-ref" placeholder="Paste your transaction ID or proof"/>
-          </div>
-          <button class="sub-btn" onclick="doDeposit()">Submit Deposit Request</button>
-          <div class="msg-box" id="dep-msg"></div>
+        <div style="display:flex;align-items:center;justify-content:center;height:60vh;flex-direction:column;gap:16px;">
+          <div style="font-size:48px;">💰</div>
+          <div style="font-size:18px;font-weight:700;">Ready to Deposit?</div>
+          <div style="color:#888;font-size:13px;">Click the button below to start your deposit</div>
+          <button class="sub-btn" style="width:auto;padding:12px 32px;" onclick="openDepositModal()">Make a Deposit</button>
         </div>
       </div>
 
@@ -1084,6 +1140,7 @@ async function init(){
     document.getElementById('pd-email').textContent=user.email;
   }
 
+  loadWalletAddresses();
   refreshBalances();
   loadTrades();
   loadNotifs();
@@ -1212,21 +1269,117 @@ function tradeTab(mode,el){
 }
 
 /* ──────── DEPOSIT ──────── */
-async function doDeposit(){
-  const amt=parseFloat(document.getElementById('dep-amt').value);
-  const method=document.getElementById('dep-method').value;
-  const ref=document.getElementById('dep-ref').value.trim();
-  const msg=document.getElementById('dep-msg');
-  if(!amt||amt<=0)return showMsg(msg,'Please enter a valid amount.','err');
-  if(!method)return showMsg(msg,'Please select a payment method.','err');
-  if(!ref)return showMsg(msg,'Please enter your transaction ID.','err');
-  const {error}=await sb.from('transactions').insert({user_id:user.id,type:'deposit',amount:amt,payment_method:method,proof_url:ref,status:'pending'});
-  if(error)return showMsg(msg,'Error: '+error.message,'err');
-  showMsg(msg,'✅ Deposit submitted! Admin will approve within 24 hours.','ok');
-  document.getElementById('dep-amt').value='';
-  document.getElementById('dep-ref').value='';
-  document.getElementById('dep-method').value='';
+/* ──────── DEPOSIT MODAL ──────── */
+let walletAddresses={};
+
+async function loadWalletAddresses(){
+  const {data}=await sb.from('wallet_addresses').select('*').eq('is_active',true);
+  if(data) data.forEach(a=>{walletAddresses[a.method]=a.address;});
 }
+
+function openDepositModal(){
+  document.getElementById('deposit-modal').classList.add('open');
+  document.getElementById('mod-method').value='';
+  document.getElementById('mod-amount').value='';
+  document.getElementById('mod-msg').className='modal-msg';
+  document.getElementById('mod-msg').textContent='';
+  document.getElementById('address-section').style.display='none';
+  document.getElementById('file-name').textContent='No file chosen';
+  document.getElementById('proof-file').value='';
+}
+
+function closeDepositModal(){
+  document.getElementById('deposit-modal').classList.remove('open');
+}
+
+// Close modal when clicking outside — attached after DOM ready
+window.addEventListener('DOMContentLoaded',()=>{
+  const mo=document.getElementById('deposit-modal');
+  if(mo) mo.addEventListener('click',function(e){if(e.target===this)closeDepositModal();});
+});
+
+function onMethodChange(){
+  const method=document.getElementById('mod-method').value;
+  const addrSection=document.getElementById('address-section');
+  const addrEl=document.getElementById('mod-address');
+  if(!method||method==='Bank Transfer'){
+    addrSection.style.display='none';
+    return;
+  }
+  const addr=walletAddresses[method];
+  if(addr&&addr!=='YOUR_BTC_ADDRESS_HERE'&&addr!=='YOUR_ETH_ADDRESS_HERE'&&addr!=='YOUR_USDT_ADDRESS_HERE'&&addr!=='YOUR_USDT_ERC20_ADDRESS_HERE'){
+    addrEl.textContent=addr;
+    addrSection.style.display='block';
+  } else {
+    addrEl.innerHTML='<span class="no-addr">No address set. Admin has not configured this method yet.</span>';
+    addrSection.style.display='block';
+  }
+  // Reset copy button
+  const btn=document.getElementById('copy-btn');
+  btn.textContent='Copy';
+  btn.className='copy-btn';
+}
+
+function copyAddress(){
+  const addr=document.getElementById('mod-address').textContent;
+  navigator.clipboard.writeText(addr).then(()=>{
+    const btn=document.getElementById('copy-btn');
+    btn.textContent='Copied!';
+    btn.className='copy-btn copied';
+    setTimeout(()=>{btn.textContent='Copy';btn.className='copy-btn';},2000);
+  });
+}
+
+function onFileSelected(){
+  const file=document.getElementById('proof-file').files[0];
+  document.getElementById('file-name').textContent=file?file.name:'No file chosen';
+}
+
+async function submitDeposit(){
+  const method=document.getElementById('mod-method').value;
+  const amt=parseFloat(document.getElementById('mod-amount').value);
+  const file=document.getElementById('proof-file').files[0];
+  const msg=document.getElementById('mod-msg');
+  const btn=document.getElementById('dep-submit-btn');
+
+  msg.className='modal-msg';
+  if(!method){msg.className='modal-msg err';msg.textContent='Please select a payment method.';return;}
+  if(!amt||amt<=0){msg.className='modal-msg err';msg.textContent='Please enter a valid amount.';return;}
+  if(!file){msg.className='modal-msg err';msg.textContent='Please upload your payment proof.';return;}
+
+  btn.disabled=true;btn.textContent='Submitting...';
+
+  try{
+    // Upload proof image to Supabase Storage
+    let proofUrl=file.name;
+    const fileExt=file.name.split('.').pop();
+    const fileName=user.id+'_'+Date.now()+'.'+fileExt;
+    const {data:uploadData,error:uploadErr}=await sb.storage.from('payment-proofs').upload(fileName,file,{upsert:true});
+    if(!uploadErr&&uploadData) proofUrl=uploadData.path;
+
+    // Save transaction
+    const {error}=await sb.from('transactions').insert({
+      user_id:user.id,
+      type:'deposit',
+      amount:amt,
+      payment_method:method,
+      proof_url:proofUrl,
+      status:'pending'
+    });
+
+    if(error)throw error;
+    msg.className='modal-msg ok';
+    msg.textContent='✅ Deposit submitted successfully! Admin will approve within 24 hours.';
+    btn.textContent='Submitted!';
+    setTimeout(()=>{closeDepositModal();btn.disabled=false;btn.textContent='Deposit';},2500);
+  }catch(e){
+    msg.className='modal-msg err';
+    msg.textContent='Error: '+(e.message||'Something went wrong. Try again.');
+    btn.disabled=false;btn.textContent='Deposit';
+  }
+}
+
+async function doDeposit(){openDepositModal();}
 
 /* ──────── WITHDRAWAL ──────── */
 async function doWithdraw(){
@@ -1298,5 +1451,49 @@ function toggleBalMenu(){}
 
 init();
 </script>
+
+<!-- ══════════════ DEPOSIT MODAL ══════════════ -->
+<div class="modal-overlay" id="deposit-modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeDepositModal()">✕</button>
+    <div class="modal-title">Deposit</div>
+    <div class="modal-sub">To make a deposit, choose your preferred method, enter an amount and upload a corresponding payment proof.</div>
+
+    <label class="modal-label">Method</label>
+    <select class="modal-select" id="mod-method" onchange="onMethodChange()">
+      <option value="">Select method...</option>
+      <option value="Bitcoin">Bitcoin</option>
+      <option value="Ethereum">Ethereum</option>
+      <option value="USDT (TRC20)">USDT (TRC20)</option>
+      <option value="USDT (ERC20)">USDT (ERC20)</option>
+      <option value="Bank Transfer">Bank Transfer</option>
+    </select>
+
+    <div id="address-section" style="display:none;">
+      <label class="modal-label">Address</label>
+      <div class="address-box">
+        <div class="address-text" id="mod-address">--</div>
+        <button class="copy-btn" id="copy-btn" onclick="copyAddress()">Copy</button>
+      </div>
+    </div>
+
+    <label class="modal-label">Amount (USD)</label>
+    <input class="modal-input" type="number" id="mod-amount" placeholder="0.00"/>
+
+    <label class="modal-label" style="margin-bottom:6px;">Payment Proof</label>
+    <div class="upload-area" onclick="document.getElementById('proof-file').click()">
+      <input type="file" id="proof-file" accept="image/*,.pdf" onchange="onFileSelected()"/>
+      <label class="upload-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Click here to upload payment proof
+      </label>
+      <div class="upload-name" id="file-name">No file chosen</div>
+    </div>
+
+    <button class="modal-dep-btn" id="dep-submit-btn" onclick="submitDeposit()">Deposit</button>
+    <div class="modal-msg" id="mod-msg"></div>
+  </div>
+</div>
+
 </body>
 </html>

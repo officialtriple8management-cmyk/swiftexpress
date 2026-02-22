@@ -68,7 +68,23 @@
     .msg.success{background:rgba(0,200,150,0.1);border:1px solid rgba(0,200,150,0.3);color:var(--green);}
     .msg.show{display:block;}
     .search-bar{background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:10px 16px;border-radius:8px;font-size:0.9rem;font-family:'DM Sans',sans-serif;outline:none;width:280px;}
-  </style>
+  
+.wallet-addr-card{background:#1e1e1e;border:1px solid #2d2d2d;border-radius:10px;padding:18px 20px;}
+.wallet-addr-card h4{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.wallet-addr-input{
+  width:100%;background:#141414;border:1px solid #383838;
+  color:#e8e8e8;padding:10px 14px;border-radius:7px;
+  font-size:12px;font-family:monospace;outline:none;
+  transition:border 0.15s;
+}
+.wallet-addr-input:focus{border-color:#1db954;}
+.wallet-toggle{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:#888;}
+.toggle-switch{width:36px;height:20px;background:#333;border-radius:10px;position:relative;cursor:pointer;transition:all 0.2s;border:none;}
+.toggle-switch.on{background:#1db954;}
+.toggle-switch::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:all 0.2s;}
+.toggle-switch.on::after{left:19px;}
+
+</style>
 </head>
 <body>
 <aside class="sidebar">
@@ -82,6 +98,7 @@
   <div class="nav-item" onclick="showPage('deposits',this)">💰 Deposits</div>
   <div class="nav-item" onclick="showPage('withdrawals',this)">💸 Withdrawals</div>
   <div class="nav-item" onclick="showPage('balances',this)">⚖️ Edit Balances</div>
+  <div class="nav-item" onclick="showPage('wallets',this)">💳 Wallet Addresses</div>
   <div class="nav-sep"></div>
   <div class="nav-label">Tools</div>
   <div class="nav-item" onclick="showPage('notify',this)">📢 Send Notification</div>
@@ -231,6 +248,7 @@ async function init(){
 async function loadAll(){
   await loadUsers();
   loadStats();
+  loadWalletAddresses();
   loadPendingDeposits();
   loadPendingWithdrawals();
   loadAllDeposits();
@@ -470,6 +488,67 @@ function doLogout(){sb.auth.signOut().then(()=>window.location.href='login.html'
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function showMsg(el,text,type){el.textContent=text;el.className='msg '+type+' show';}
 init();
+
+/* ──────── WALLET ADDRESSES ──────── */
+let walletAddrData=[];
+
+async function loadWalletAddresses(){
+  const {data}=await sb.from('wallet_addresses').select('*').order('method');
+  walletAddrData=data||[];
+  renderWalletAddresses();
+}
+
+function renderWalletAddresses(){
+  const icons={'Bitcoin':'₿','Ethereum':'Ξ','USDT (TRC20)':'₮','USDT (ERC20)':'₮','Bank Transfer':'🏦'};
+  const el=document.getElementById('wallet-addr-list');
+  if(!walletAddrData.length){
+    el.innerHTML='<div style="text-align:center;color:#888;padding:24px">No addresses found. Run the SQL setup first.</div>';
+    return;
+  }
+  el.innerHTML=walletAddrData.map((a,i)=>`
+    <div class="wallet-addr-card">
+      <h4>${icons[a.method]||'💳'} ${a.method}</h4>
+      <input class="wallet-addr-input" id="addr-${i}" type="text" value="${a.address||''}" placeholder="Enter ${a.method} address..."/>
+      <div class="wallet-toggle">
+        <button class="toggle-switch ${a.is_active?'on':''}" id="toggle-${i}" onclick="toggleAddr(${i})"></button>
+        <span id="toggle-lbl-${i}">${a.is_active?'Active — users can see this':'Inactive — hidden from users'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleAddr(i){
+  walletAddrData[i].is_active=!walletAddrData[i].is_active;
+  const btn=document.getElementById('toggle-'+i);
+  const lbl=document.getElementById('toggle-lbl-'+i);
+  btn.className='toggle-switch '+(walletAddrData[i].is_active?'on':'');
+  lbl.textContent=walletAddrData[i].is_active?'Active — users can see this':'Inactive — hidden from users';
+}
+
+async function saveWalletAddresses(){
+  const msg=document.getElementById('wallet-save-msg');
+  msg.style.display='none';
+  let errors=[];
+  for(let i=0;i<walletAddrData.length;i++){
+    const newAddr=document.getElementById('addr-'+i).value.trim();
+    const {error}=await sb.from('wallet_addresses').update({
+      address:newAddr,
+      is_active:walletAddrData[i].is_active
+    }).eq('id',walletAddrData[i].id);
+    if(error) errors.push(walletAddrData[i].method+': '+error.message);
+    else walletAddrData[i].address=newAddr;
+  }
+  msg.style.display='block';
+  if(errors.length){
+    msg.style.color='#fca5a5';
+    msg.textContent='Errors: '+errors.join(', ');
+  } else {
+    msg.style.color='#6ee7b7';
+    msg.textContent='✅ All wallet addresses saved successfully!';
+    setTimeout(()=>{msg.style.display='none';},3000);
+  }
+}
+
 </script>
 </body>
 </html>
