@@ -151,9 +151,17 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
   border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;
 }
 .balance-badge svg{width:10px;height:10px;}
-.bal-dots{display:flex;gap:6px;justify-content:center;margin-top:18px;}
-.bal-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);cursor:pointer;transition:all 0.2s;}
-.bal-dot.active{width:22px;border-radius:4px;background:var(--blue);}
+.bal-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px;}
+.bal-stat-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;cursor:default;
+  transition:border 0.15s;
+}
+.bal-stat-card:hover{border-color:var(--border2);}
+.bal-stat-lbl{font-size:10px;color:var(--gray);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+.bal-stat-val{font-size:13px;font-weight:700;color:var(--white);font-variant-numeric:tabular-nums;}
+.bal-stat-val.green{color:var(--green);}
+.bal-stat-val.blue{color:var(--blue);}
 
 /* PROMO BANNER */
 .promo{
@@ -565,7 +573,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 }
 @media(max-width:480px){
   .balance-amount{font-size:22px;}
-  .bal-dots{margin-top:12px;}
+
   .bsc-btn{padding:7px 12px;font-size:11px;}
   .t-input,.t-select{font-size:13px;}
   .modal-box{margin:8px;padding:20px;}
@@ -794,11 +802,19 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
                 0%
               </div>
-              <div class="bal-dots">
-                <div class="bal-dot active"></div>
-                <div class="bal-dot"></div>
-                <div class="bal-dot"></div>
-                <div class="bal-dot"></div>
+              <div class="bal-stats">
+                <div class="bal-stat-card">
+                  <div class="bal-stat-lbl">Total Balance</div>
+                  <div class="bal-stat-val blue" id="stat-total">$0.00</div>
+                </div>
+                <div class="bal-stat-card">
+                  <div class="bal-stat-lbl">Total Deposited</div>
+                  <div class="bal-stat-val" id="stat-deposited">$0.00</div>
+                </div>
+                <div class="bal-stat-card">
+                  <div class="bal-stat-lbl">Total Profit</div>
+                  <div class="bal-stat-val green" id="stat-profit">$0.00</div>
+                </div>
               </div>
             </div>
 
@@ -1283,6 +1299,18 @@ function refreshBalances(){
   if(bvEl) bvEl.textContent='$'+liveTotal.toLocaleString('en',{minimumFractionDigits:2});
   const pvEl=document.getElementById('pa-btc-val');
   if(pvEl) pvEl.textContent='$'+liveTotal.toLocaleString('en',{minimumFractionDigits:2});
+  // Update mini stat cards
+  const stTotal=document.getElementById('stat-total');
+  if(stTotal) stTotal.textContent='$'+liveTotal.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const stDep=document.getElementById('stat-deposited');
+  if(stDep) stDep.textContent='$'+(+wallet.total_deposited||0).toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const stProfit=document.getElementById('stat-profit');
+  if(stProfit){
+    const profit=(+wallet.total_profit||0)+(liveTotal-base);
+    stProfit.textContent=(profit>=0?'+':'')+profit.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2,style:'currency',currency:'USD'});
+    stProfit.className='bal-stat-val '+(profit>=0?'green':'');
+    if(profit<0) stProfit.style.color='#e74c3c';
+  }
   // Update badge with live BTC change
   const badge=document.getElementById('balance-badge-el');
   if(badge){
