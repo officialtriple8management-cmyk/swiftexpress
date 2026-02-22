@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SwiftExpress — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#141414;
+  --sidebar:#1a1a1a;
+  --panel:#1e1e1e;
+  --card:#242424;
+  --border:#2d2d2d;
+  --border2:#383838;
+  --green:#2ecc71;
+  --green-btn:#1db954;
+  --green-dark:#17a045;
+  --red:#e74c3c;
+  --blue:#3b82f6;
+  --gray:#888;
+  --gray2:#555;
+  --white:#e8e8e8;
+  --white2:#c0c0c0;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);font-family:'Inter',sans-serif;font-size:14px;}
+.app{opacity:0;transition:opacity 0.4s ease;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ LAYOUT ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.app{display:flex;height:100vh;overflow:hidden;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ SIDEBAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.sidebar{
+  width:210px;flex-shrink:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  height:100vh;overflow-y:auto;
+  padding:16px 0;
+}
+.sb-logo{
+  display:flex;align-items:center;gap:10px;
+  padding:4px 18px 20px;
+}
+.sb-logo-box{
+  width:30px;height:30px;background:#fff;border-radius:6px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sb-logo-box svg{width:16px;height:16px;}
+.sb-logo-text{font-size:13px;font-weight:600;color:var(--white);}
+
+.sb-nav{display:flex;flex-direction:column;gap:1px;padding:0 8px;}
+.sb-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 12px;border-radius:7px;
+  cursor:pointer;color:var(--gray);font-size:13px;font-weight:500;
+  transition:all 0.15s;border:none;background:none;width:100%;text-align:left;
+}
+.sb-item svg{width:15px;height:15px;flex-shrink:0;}
+.sb-item:hover{background:rgba(255,255,255,0.05);color:var(--white2);}
+.sb-item.active{background:rgba(255,255,255,0.07);color:#fff;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ MAIN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden;}
+
+/* TOPBAR */
+.topbar{
+  height:50px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;
+  border-bottom:1px solid var(--border);
+  background:var(--sidebar);
+}
+.topbar-left{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;}
+.topbar-left svg{width:15px;height:15px;color:var(--gray);}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.tb-bell{
+  width:32px;height:32px;border-radius:7px;
+  background:var(--card);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--gray);
+  transition:all 0.15s;position:relative;
+}
+.tb-bell:hover{color:var(--white);}
+.tb-bell svg{width:14px;height:14px;}
+.tb-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#3b82f6,#06b6d4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;cursor:pointer;color:#fff;
+}
+
+/* SCROLLABLE CONTENT */
+.content-area{flex:1;overflow-y:auto;overflow-x:hidden;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━ PAGE SYSTEM ━━━━━━━━━━━━━━━━━━━━━━━━ */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━ DASHBOARD PAGE ━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* TRADINGVIEW TICKER TAPE (real embed) */
+.tv-ticker{height:56px;flex-shrink:0;border-bottom:1px solid var(--border);}
+.tv-ticker iframe{width:100%;height:100%;border:none;display:block;}
+
+/* 2-col layout: left scrollable, right fixed */
+.dash-body{
+  display:grid;
+  grid-template-columns:1fr 390px;
+  min-height:calc(100vh - 50px - 56px);
+}
+
+/* LEFT COLUMN */
+.dash-left{
+  padding:20px;
+  border-right:1px solid var(--border);
+  overflow-y:auto;
+}
+
+/* Balance card */
+.balance-card{
+  background:transparent;
+  padding:4px 0 16px;
+  margin-bottom:16px;
+}
+.balance-top{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:10px;
+}
+.balance-top-left{display:flex;align-items:center;gap:10px;}
+.balance-icon{
+  width:28px;height:28px;border-radius:50%;
+  background:radial-gradient(circle,#555,#333);
+  display:flex;align-items:center;justify-content:center;font-size:11px;
+}
+.balance-lbl{color:var(--gray);font-size:13px;font-weight:500;}
+.dots-btn{
+  display:flex;gap:3px;cursor:pointer;padding:4px;
+  background:none;border:none;
+}
+.dots-btn span{width:4px;height:4px;border-radius:50%;background:var(--gray);display:block;}
+.balance-amount{
+  font-size:32px;font-weight:700;letter-spacing:-0.5px;
+  color:#fff;margin-bottom:8px;
+  font-variant-numeric:tabular-nums;
+}
+.balance-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:#1a3d2b;color:var(--green);
+  border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;
+}
+.balance-badge svg{width:10px;height:10px;}
+.bal-dots{display:flex;gap:6px;justify-content:center;margin-top:18px;}
+.bal-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);cursor:pointer;transition:all 0.2s;}
+.bal-dot.active{width:22px;border-radius:4px;background:var(--blue);}
+
+/* PROMO BANNER */
+.promo{
+  background:linear-gradient(135deg,#c0392b 0%,#9b2c7e 40%,#6c1fa8 100%);
+  border-radius:10px;padding:18px 20px;margin-bottom:22px;
+}
+.promo h3{font-size:15px;font-weight:700;margin-bottom:5px;color:#fff;}
+.promo p{font-size:12px;color:rgba(255,255,255,0.8);line-height:1.5;margin-bottom:14px;}
+.promo-btns{display:flex;gap:10px;}
+.promo-btn-white{
+  background:#fff;color:#111;border:none;
+  padding:8px 18px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;
+  transition:all 0.15s;
+}
+.promo-btn-white:hover{background:#f0f0f0;}
+.promo-btn-ghost{
+  background:rgba(255,255,255,0.15);color:#fff;border:none;
+  padding:8px 18px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;
+  transition:all 0.15s;
+}
+.promo-btn-ghost:hover{background:rgba(255,255,255,0.25);}
+
+/* BUY / SELL / CONVERT tabs */
+.bsc-row{display:flex;align-items:center;gap:0;margin-bottom:18px;}
+.bsc-btn{
+  padding:9px 28px;font-size:13px;font-weight:600;cursor:pointer;
+  border:none;background:transparent;color:var(--gray);border-radius:7px;
+  transition:all 0.15s;
+}
+.bsc-btn.active-buy{background:var(--green-btn);color:#fff;border-radius:7px;}
+.bsc-btn.active-sell{background:var(--red);color:#fff;border-radius:7px;}
+
+/* Trade form */
+.t-label{font-size:12px;color:var(--gray);margin-bottom:6px;display:block;}
+.t-select{
+  width:100%;background:var(--card);border:1px solid var(--border2);
+  color:var(--white);padding:10px 12px;border-radius:7px;
+  font-size:13px;font-family:'Inter',sans-serif;outline:none;
+  transition:border 0.15s;margin-bottom:14px;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:calc(100% - 12px) center;
+  padding-right:36px;
+}
+.t-select:focus{border-color:var(--green-btn);}
+.t-select option{background:#1e1e1e;}
+
+.amount-wrap{position:relative;margin-bottom:6px;}
+.t-input{
+  width:100%;background:var(--card);border:1px solid var(--border2);
+  color:var(--white);padding:10px 100px 10px 12px;border-radius:7px;
+  font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border 0.15s;
+}
+.t-input:focus{border-color:var(--green-btn);}
+.t-input::placeholder{color:var(--gray2);}
+.amount-asset{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  display:flex;align-items:center;gap:5px;cursor:pointer;
+  background:var(--border2);padding:4px 8px;border-radius:5px;
+  font-size:12px;font-weight:600;color:var(--white2);
+}
+.amount-asset svg{width:9px;height:9px;color:var(--gray);}
+.current-bal{font-size:12px;color:var(--gray);margin-bottom:14px;}
+.current-bal span{color:var(--green);font-weight:600;}
+
+.sltp-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.sltp-col label{font-size:12px;color:var(--gray);display:block;margin-bottom:5px;}
+.sltp-input-wrap{position:relative;}
+.sltp-input{
+  width:100%;background:var(--card);border:1px solid var(--border2);
+  color:var(--gray2);padding:9px 42px 9px 10px;border-radius:7px;
+  font-size:13px;font-family:'Inter',sans-serif;outline:none;
+}
+.sltp-badge{
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  font-size:11px;color:var(--gray);font-weight:600;
+}
+
+.lev-label{font-size:12px;color:var(--gray);margin-bottom:6px;}
+.lev-row{display:flex;gap:8px;margin-bottom:14px;}
+.lev-input{
+  flex:1;background:var(--card);border:1px solid var(--border2);
+  color:var(--white);padding:9px 10px;border-radius:7px;
+  font-size:13px;font-family:'Inter',sans-serif;outline:none;
+}
+.lev-input::placeholder{color:var(--gray2);}
+.lev-chip{
+  background:var(--card);border:1px solid var(--border2);
+  padding:9px 12px;border-radius:7px;font-size:12px;font-weight:600;
+  cursor:pointer;color:var(--gray);transition:all 0.15s;
+}
+.lev-chip:hover{border-color:var(--green-btn);color:var(--green);}
+.lev-chip.picked{border-color:var(--green-btn);color:var(--green);background:rgba(46,204,113,0.06);}
+
+.action-btn{
+  width:100%;padding:12px;border-radius:8px;border:none;
+  font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;
+  transition:all 0.15s;letter-spacing:0.2px;margin-top:2px;
+}
+.action-btn.buy{background:var(--green-btn);color:#fff;}
+.action-btn.buy:hover{background:var(--green-dark);}
+.action-btn.sell-mode{background:var(--red);color:#fff;}
+.action-btn.sell-mode:hover{background:#c0392b;}
+
+/* TRADES SECTION */
+.trades-wrap{margin-top:22px;}
+.trades-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.trades-word{font-size:14px;font-weight:600;color:var(--white);}
+.trades-tab{
+  padding:5px 14px;border-radius:5px;font-size:12px;font-weight:600;cursor:pointer;
+  border:none;background:transparent;color:var(--gray);transition:all 0.15s;
+}
+.trades-tab.active{background:var(--blue);color:#fff;}
+.trades-search-row{display:flex;gap:8px;margin-bottom:12px;}
+.trades-search{
+  flex:1;background:var(--card);border:1px solid var(--border2);
+  color:var(--white);padding:8px 12px 8px 32px;border-radius:7px;
+  font-size:12px;font-family:'Inter',sans-serif;outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:10px center;
+}
+.trades-filter{
+  background:var(--card);border:1px solid var(--border2);
+  color:var(--white);padding:8px 28px 8px 10px;border-radius:7px;
+  font-size:12px;font-family:'Inter',sans-serif;outline:none;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:calc(100% - 8px) center;
+}
+table{width:100%;border-collapse:collapse;}
+thead th{
+  font-size:11px;font-weight:600;color:var(--gray);
+  padding:8px 10px;text-align:left;
+  border-bottom:1px solid var(--border);white-space:nowrap;
+}
+tbody td{
+  padding:10px 10px;font-size:12px;
+  border-bottom:1px solid rgba(45,45,45,0.5);color:var(--white2);
+}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,0.015);}
+.empty-td{text-align:center;color:var(--gray);padding:28px!important;font-size:12px;}
+
+/* RIGHT COLUMN */
+.dash-right{
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  background:var(--sidebar);
+}
+
+/* Categories section */
+.right-block{
+  padding:16px 18px;
+  border-bottom:1px solid var(--border);
+}
+.right-block-title{font-size:13px;font-weight:600;color:var(--white);margin-bottom:5px;}
+.right-block-sub{font-size:12px;color:var(--gray);line-height:1.5;}
+.right-block-sub a{color:var(--blue);text-decoration:none;font-weight:500;}
+.right-block-sub a:hover{text-decoration:underline;}
+
+/* Signal strength */
+.sig-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.sig-lbl{font-size:12px;color:var(--gray);}
+.sig-pct{font-size:12px;color:var(--gray);}
+.sig-track{height:3px;background:var(--border2);border-radius:2px;overflow:hidden;}
+.sig-fill{height:100%;background:linear-gradient(90deg,var(--blue) 0%,var(--green) 100%);border-radius:2px;transition:width 0.6s;}
+
+/* TradingView chart */
+.tv-chart{flex-shrink:0;}
+.tv-chart iframe{width:100%;border:none;display:block;}
+
+/* Your Top Assets */
+.assets-block{padding:14px 18px;flex:1;}
+.assets-title{font-size:13px;font-weight:600;color:var(--white);margin-bottom:10px;}
+.assets-search-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.assets-search{
+  flex:1;background:var(--card);border:1px solid var(--border2);
+  color:var(--white);padding:7px 10px 7px 30px;border-radius:7px;
+  font-size:12px;font-family:'Inter',sans-serif;outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23555' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:9px center;
+}
+.assets-filter{
+  background:var(--card);border:1px solid var(--border2);
+  color:var(--white);padding:7px 24px 7px 8px;border-radius:7px;
+  font-size:12px;font-family:'Inter',sans-serif;outline:none;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:calc(100% - 7px) center;
+}
+.assets-thead{
+  display:grid;grid-template-columns:1fr 100px 60px 70px;
+  padding:6px 0 8px;border-bottom:1px solid var(--border);
+}
+.assets-thead span{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:0.3px;}
+.assets-thead span:not(:first-child){text-align:right;}
+
+.asset-row{
+  display:grid;grid-template-columns:1fr 100px 60px 70px;
+  padding:9px 0;border-bottom:1px solid rgba(45,45,45,0.5);
+  align-items:center;
+}
+.asset-row:last-child{border-bottom:none;}
+.asset-info{display:flex;align-items:center;gap:9px;}
+.asset-ico{
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;flex-shrink:0;
+}
+.asset-name{font-size:13px;font-weight:600;color:var(--white);display:flex;align-items:baseline;gap:3px;}
+.asset-name small{font-size:10px;color:var(--gray);font-weight:400;}
+.asset-amt{font-size:12px;color:var(--white2);text-align:right;font-variant-numeric:tabular-nums;}
+.asset-type{font-size:11px;color:var(--gray);text-align:right;}
+.asset-val{font-size:12px;font-weight:600;color:var(--white2);text-align:right;font-variant-numeric:tabular-nums;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━ DEPOSIT / WITHDRAW PAGES ━━━━━━━━━━━━━━━━━━━━━━ */
+.inner-wrap{padding:28px;max-width:560px;}
+.inner-title{font-size:18px;font-weight:700;margin-bottom:4px;}
+.inner-sub{color:var(--gray);font-size:12px;margin-bottom:22px;line-height:1.6;}
+.wallet-box{
+  background:var(--card);border:1px solid var(--border2);border-left:3px solid var(--green-btn);
+  border-radius:8px;padding:14px 16px;margin-bottom:20px;font-size:12px;line-height:1.9;
+}
+.wallet-box strong{color:var(--green);}
+.f-group{margin-bottom:14px;}
+.f-group label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;color:var(--gray);margin-bottom:6px;}
+.f-group input,.f-group select,.f-group textarea{
+  width:100%;background:var(--card);border:1px solid var(--border2);
+  color:var(--white);padding:10px 12px;border-radius:7px;
+  font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border 0.15s;
+}
+.f-group input:focus,.f-group select:focus{border-color:var(--green-btn);}
+.f-group input::placeholder,.f-group textarea::placeholder{color:var(--gray2);}
+.f-group select option{background:#1e1e1e;}
+.f-group select{
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:calc(100% - 12px) center;
+  padding-right:32px;
+}
+.avail-bal{
+  font-size:24px;font-weight:700;color:var(--green);
+  font-variant-numeric:tabular-nums;margin-bottom:18px;
+}
+.sub-btn{
+  width:100%;padding:12px;border-radius:8px;border:none;
+  background:var(--green-btn);color:#fff;
+  font-size:14px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;
+  transition:all 0.15s;
+}
+.sub-btn:hover{background:var(--green-dark);}
+.sub-btn:disabled{opacity:0.5;cursor:not-allowed;}
+.msg-box{
+  margin-top:12px;padding:11px 14px;border-radius:7px;
+  font-size:12px;line-height:1.5;display:none;
+}
+.msg-box.err{background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);color:#fca5a5;}
+.msg-box.ok{background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);color:#6ee7b7;}
+.msg-box.show{display:block;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━ OTHER PAGES (Markets, Subscribe etc) ━━━━━━━━━━━━━━━━━━━━━ */
+.fullframe-page{height:calc(100vh - 50px);}
+.fullframe-page iframe{width:100%;height:100%;border:none;display:block;}
+
+.simple-page{padding:28px;max-width:700px;}
+.simple-page h2{font-size:18px;font-weight:700;margin-bottom:6px;}
+.simple-page .sub{color:var(--gray);font-size:12px;margin-bottom:22px;}
+.plan-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:4px;}
+.plan-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:20px;text-align:center;}
+.plan-card.featured{border-color:var(--blue);}
+.plan-roi{font-size:26px;font-weight:800;color:var(--blue);margin-bottom:2px;}
+.plan-name{font-size:11px;color:var(--gray);margin-bottom:14px;}
+.plan-btn{width:100%;padding:9px;border-radius:7px;border:none;background:var(--blue);color:#fff;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;}
+.plan-btn.gold{background:#d4a017;}
+.plan-btn.dim{background:var(--border2);opacity:0.5;cursor:not-allowed;}
+
+.signal-cards{display:flex;flex-direction:column;gap:10px;}
+.signal-card{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;}
+.signal-card-left h4{font-size:13px;font-weight:600;margin-bottom:3px;}
+.signal-card-left p{font-size:11px;color:var(--gray);}
+.sig-chip{font-size:11px;font-weight:700;padding:4px 10px;border-radius:4px;}
+.sig-buy{background:rgba(46,204,113,0.1);color:var(--green);}
+.sig-hold{background:rgba(212,160,23,0.1);color:#d4a017;}
+
+.stake-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.stake-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:18px;}
+.stake-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.stake-ico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.stake-apy{font-size:22px;font-weight:800;color:var(--green);margin-bottom:2px;}
+.stake-period{font-size:11px;color:var(--gray);margin-bottom:12px;}
+.stake-btn{width:100%;padding:9px;border-radius:7px;border:none;background:var(--green-btn);color:#fff;font-size:12px;font-weight:700;font-family:'Inter',sans-serif;cursor:pointer;}
+
+/* NOTIFICATIONS PANEL */
+.notif-overlay{
+  position:fixed;inset:0;z-index:800;display:none;
+}
+.notif-overlay.open{display:block;}
+.notif-panel{
+  position:fixed;top:50px;right:0;width:300px;
+  background:var(--sidebar);border-left:1px solid var(--border);border-bottom:1px solid var(--border);
+  max-height:420px;overflow-y:auto;z-index:900;
+  box-shadow:-8px 8px 32px rgba(0,0,0,0.5);
+}
+.notif-hdr{padding:14px 16px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;}
+.notif-item{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.12s;}
+.notif-item:hover{background:var(--card);}
+.notif-item.unread{border-left:2px solid var(--blue);}
+.notif-item h5{font-size:12px;font-weight:600;margin-bottom:3px;}
+.notif-item p{font-size:11px;color:var(--gray);line-height:1.4;}
+.notif-empty{padding:28px;text-align:center;color:var(--gray);font-size:12px;}
+
+/* PROFILE DROPDOWN */
+.profile-overlay{position:fixed;inset:0;z-index:800;display:none;}
+.profile-overlay.open{display:block;}
+.profile-panel{
+  position:fixed;top:50px;right:0;width:220px;
+  background:var(--sidebar);border-left:1px solid var(--border);border-bottom:1px solid var(--border);
+  z-index:900;box-shadow:-8px 8px 32px rgba(0,0,0,0.5);
+}
+.profile-head{padding:14px 16px;border-bottom:1px solid var(--border);}
+.profile-head-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+.profile-head-email{font-size:11px;color:var(--gray);}
+.profile-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 16px;cursor:pointer;color:var(--gray);font-size:12px;transition:all 0.12s;
+}
+.profile-item:hover{background:var(--card);color:var(--white);}
+.profile-item.danger{color:#e74c3c;}
+
+/* CHAT BUBBLE */
+.chat-btn{
+  position:fixed;bottom:20px;right:20px;
+  width:48px;height:48px;border-radius:50%;
+  background:var(--blue);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:18px;z-index:700;
+  box-shadow:0 4px 16px rgba(59,130,246,0.4);transition:transform 0.15s;
+}
+.chat-btn:hover{transform:scale(1.08);}
+.chat-notif{
+  position:absolute;top:-2px;right:-2px;
+  width:15px;height:15px;border-radius:50%;
+  background:#e74c3c;border:2px solid var(--bg);
+  font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:700;
+}
+
+@media(max-width:1100px){.dash-right{display:none;}}
+@media(max-width:800px){.sidebar{display:none;}.dash-body{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<!-- LOADING SCREEN -->
+<div id="loading-screen" style="position:fixed;inset:0;background:#141414;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="width:36px;height:36px;background:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+  <div style="color:#888;font-size:13px;font-family:Inter,sans-serif;">Loading your dashboard...</div>
+  <div style="width:200px;height:3px;background:#2d2d2d;border-radius:2px;overflow:hidden;"><div style="height:100%;background:#3b82f6;border-radius:2px;width:60%;margin-left:20%;animation:ldSl 1.2s ease-in-out infinite;"></div></div>
+</div>
+<style>@keyframes ldSl{0%{width:0;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0;margin-left:100%}}</style>
+<div class="app">
+
+  <!-- ══════════════ SIDEBAR ══════════════ -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <span class="sb-logo-text">SwiftExpress</span>
+    </div>
+    <nav class="sb-nav">
+      <button class="sb-item active" onclick="switchPage('dashboard',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        Dashboard
+      </button>
+      <button class="sb-item" onclick="switchPage('deposit',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Deposit
+      </button>
+      <button class="sb-item" onclick="switchPage('withdraw',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Withdraw
+      </button>
+      <button class="sb-item" onclick="switchPage('assets',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        Assets
+      </button>
+      <button class="sb-item" onclick="switchPage('markets',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Markets
+      </button>
+      <button class="sb-item" onclick="switchPage('trade',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+        Trade
+      </button>
+      <button class="sb-item" onclick="switchPage('subscribe',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
+        Subscribe
+      </button>
+      <button class="sb-item" onclick="switchPage('signals',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
+        Signals
+      </button>
+      <button class="sb-item" onclick="switchPage('stake',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        Stake
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ══════════════ MAIN ══════════════ -->
+  <div class="main">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span id="page-title">Dashboard</span>
+      </div>
+      <div class="topbar-right">
+        <div class="tb-bell" onclick="toggleNotif()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <div class="tb-avatar" id="avatar-el" onclick="toggleProfile()">SW</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+
+      <!-- ════════════════════ DASHBOARD PAGE ════════════════════ -->
+      <div class="page active" id="page-dashboard">
+
+        <!-- REAL TradingView ticker tape widget -->
+        <div class="tv-ticker">
+          <iframe src="https://s.tradingview.com/embed-widget/ticker-tape/?locale=en#%7B%22symbols%22%3A%5B%7B%22proName%22%3A%22BITSTAMP%3ABTCUSD%22%2C%22title%22%3A%22Bitcoin%22%7D%2C%7B%22proName%22%3A%22COMEX%3AGC1!%22%2C%22title%22%3A%22Gold%22%7D%2C%7B%22proName%22%3A%22NASDAQ%3AAAPL%22%2C%22title%22%3A%22Apple%22%7D%2C%7B%22proName%22%3A%22NASDAQ%3ATSLA%22%2C%22title%22%3A%22Tesla%22%7D%2C%7B%22proName%22%3A%22FX_IDC%3AEURUSD%22%2C%22title%22%3A%22EUR%2FUSD%22%7D%2C%7B%22proName%22%3A%22BINANCE%3AETHUSDT%22%2C%22title%22%3A%22Ethereum%22%7D%5D%2C%22showSymbolLogo%22%3Atrue%2C%22isTransparent%22%3Atrue%2C%22displayMode%22%3A%22adaptive%22%2C%22colorTheme%22%3A%22dark%22%7D" scrolling="no" allowtransparency="true" frameborder="0" lang="en"></iframe>
+        </div>
+
+        <!-- 2-COL BODY -->
+        <div class="dash-body">
+
+          <!-- LEFT -->
+          <div class="dash-left">
+
+            <!-- BALANCE CARD -->
+            <div class="balance-card">
+              <div class="balance-top">
+                <div class="balance-top-left">
+                  <div class="balance-icon">⚖️</div>
+                  <span class="balance-lbl">Available Balance</span>
+                </div>
+                <button class="dots-btn" onclick="toggleBalMenu()">
+                  <span></span><span></span><span></span>
+                </button>
+              </div>
+              <div class="balance-amount" id="bal-display">$0.00</div>
+              <div class="balance-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="18 15 12 9 6 15"/></svg>
+                0%
+              </div>
+              <div class="bal-dots">
+                <div class="bal-dot active"></div>
+                <div class="bal-dot"></div>
+                <div class="bal-dot"></div>
+                <div class="bal-dot"></div>
+              </div>
+            </div>
+
+            <!-- PROMO BANNER -->
+            <div class="promo">
+              <h3>Get more powerful features now!</h3>
+              <p>Unlock advanced trading tools today with a limited 20% discount across our platform upgrades now available.</p>
+              <div class="promo-btns">
+                <button class="promo-btn-white" onclick="switchPage('subscribe',null)">Upgrade to Pro</button>
+                <button class="promo-btn-ghost">Get 20% off for today</button>
+              </div>
+            </div>
+
+            <!-- BUY / SELL / CONVERT -->
+            <div class="bsc-row">
+              <button class="bsc-btn active-buy" id="bsc-buy" onclick="setBSC('buy')">Buy</button>
+              <button class="bsc-btn" id="bsc-sell" onclick="setBSC('sell')">Sell</button>
+              <button class="bsc-btn" id="bsc-convert" onclick="setBSC('convert')">Convert</button>
+            </div>
+
+            <!-- TRADE FORM -->
+            <div id="trade-form-area">
+              <label class="t-label">Type</label>
+              <select class="t-select" id="trade-type-sel" onchange="updateTradeAsset()">
+                <option value="crypto">Crypto</option>
+                <option value="stocks">Stocks</option>
+                <option value="forex">Forex</option>
+                <option value="commodities">Commodities</option>
+              </select>
+
+              <label class="t-label">Amount</label>
+              <div class="amount-wrap">
+                <input class="t-input" type="number" placeholder="100" id="trade-amt-inp"/>
+                <div class="amount-asset" id="asset-badge">
+                  BTC
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </div>
+              <div class="current-bal">Current BTC balance: <span id="trade-bal-show">$0.00</span></div>
+
+              <div class="sltp-grid">
+                <div class="sltp-col">
+                  <label>Stop Loss:</label>
+                  <div class="sltp-input-wrap">
+                    <input class="sltp-input" type="number" placeholder="0.00" id="sl-inp"/>
+                    <span class="sltp-badge" id="sl-badge">BTC</span>
+                  </div>
+                </div>
+                <div class="sltp-col">
+                  <label>Take Profit:</label>
+                  <div class="sltp-input-wrap">
+                    <input class="sltp-input" type="number" placeholder="0.00" id="tp-inp"/>
+                    <span class="sltp-badge" id="tp-badge">BTC</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="lev-label">Leverage:</div>
+              <div class="lev-row">
+                <input class="lev-input" type="text" placeholder="Enter leverage..." id="lev-inp"/>
+                <div class="lev-chip" onclick="pickLev(this,'50x')">50x</div>
+                <div class="lev-chip" onclick="pickLev(this,'250x')">250x</div>
+                <div class="lev-chip" onclick="pickLev(this,'500x')">500x</div>
+              </div>
+
+              <label class="t-label">Duration:</label>
+              <select class="t-select" id="dur-sel">
+                <option>2 Minutes</option>
+                <option>5 Minutes</option>
+                <option>15 Minutes</option>
+                <option>30 Minutes</option>
+                <option>1 Hour</option>
+                <option>4 Hours</option>
+                <option>1 Day</option>
+              </select>
+
+              <button class="action-btn buy" id="trade-action-btn" onclick="placeTrade()">Buy</button>
+            </div>
+
+            <!-- TRADES TABLE -->
+            <div class="trades-wrap">
+              <div class="trades-header">
+                <span class="trades-word">Trades</span>
+                <button class="trades-tab active" onclick="tradeTab('open',this)" id="tab-open">Open</button>
+                <button class="trades-tab" onclick="tradeTab('closed',this)" id="tab-closed">Closed</button>
+              </div>
+              <div class="trades-search-row">
+                <input class="trades-search" type="text" placeholder="Search for deposits..."/>
+                <select class="trades-filter">
+                  <option>All</option><option>Crypto</option><option>Stocks</option><option>Forex</option>
+                </select>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th><th>Reference</th><th>Type</th>
+                    <th>Amount</th><th>Leverage</th><th>Stop Loss</th>
+                    <th>Take Profit</th><th>Duration</th>
+                  </tr>
+                </thead>
+                <tbody id="trades-body">
+                  <tr><td class="empty-td" colspan="8">No open trades yet</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+          </div><!-- /dash-left -->
+
+          <!-- RIGHT COLUMN -->
+          <div class="dash-right">
+
+            <!-- Categories -->
+            <div class="right-block">
+              <div class="right-block-title">Categories</div>
+              <div class="right-block-sub">No categories yet. <a href="#" onclick="switchPage('deposit',null)">Deposit now</a> to see your portfolio breakdown.</div>
+            </div>
+
+            <!-- Signal strength -->
+            <div class="right-block">
+              <div class="sig-row">
+                <span class="sig-lbl">Signal strength</span>
+                <span class="sig-pct" id="sig-pct-el">0%</span>
+              </div>
+              <div class="sig-track">
+                <div class="sig-fill" id="sig-fill-el" style="width:0%"></div>
+              </div>
+            </div>
+
+            <!-- TradingView Advanced Chart -->
+            <div class="tv-chart">
+              <iframe
+                src="https://s.tradingview.com/widgetembed/?frameElementId=tv_adv&symbol=NASDAQ%3AAAPL&interval=D&hidesidetoolbar=0&symboledit=1&saveimage=0&toolbarbg=1a1a1a&studies=[]&theme=dark&style=1&timezone=Etc%2FUTC&withdateranges=1&showpopupbutton=1&locale=en&hide_top_toolbar=0&allow_symbol_change=1"
+                height="320"
+                allowtransparency="true"
+                allowfullscreen=""
+                frameborder="0">
+              </iframe>
+            </div>
+
+            <!-- Your Top Assets -->
+            <div class="assets-block">
+              <div class="assets-title">Your Top Assets</div>
+              <div class="assets-search-row">
+                <input class="assets-search" type="text" placeholder="Search for assets..."/>
+                <select class="assets-filter">
+                  <option>All</option><option>Crypto</option><option>Stock</option><option>Forex</option>
+                </select>
+              </div>
+              <div class="assets-thead">
+                <span>Asset</span><span>Amount</span><span>Type</span><span>Value</span>
+              </div>
+              <!-- Asset rows -->
+              <div class="asset-row">
+                <div class="asset-info">
+                  <div class="asset-ico" style="background:rgba(247,147,26,0.18);color:#f7931a">₿</div>
+                  <div class="asset-name">Bitcoin<small>/BTC</small></div>
+                </div>
+                <div class="asset-amt" id="btc-amt-r">0</div>
+                <div class="asset-type">Crypto</div>
+                <div class="asset-val" id="btc-val-r">$0.00</div>
+              </div>
+              <div class="asset-row">
+                <div class="asset-info">
+                  <div class="asset-ico" style="background:rgba(255,255,255,0.08);color:#ccc">🍎</div>
+                  <div class="asset-name">Apple<small>/AAPL</small></div>
+                </div>
+                <div class="asset-amt">0</div>
+                <div class="asset-type">Stock</div>
+                <div class="asset-val">$0.00</div>
+              </div>
+              <div class="asset-row">
+                <div class="asset-info">
+                  <div class="asset-ico" style="background:rgba(100,100,255,0.15);color:#8888ff">A</div>
+                  <div class="asset-name">AAVE<small>/AAVE</small></div>
+                </div>
+                <div class="asset-amt">0</div>
+                <div class="asset-type">Crypto</div>
+                <div class="asset-val">$0.00</div>
+              </div>
+              <div class="asset-row">
+                <div class="asset-info">
+                  <div class="asset-ico" style="background:rgba(0,200,180,0.15);color:#00b8b0">A</div>
+                  <div class="asset-name">Abbot Labs<small>/ABT</small></div>
+                </div>
+                <div class="asset-amt">0</div>
+                <div class="asset-type">Stock</div>
+                <div class="asset-val">$0.00</div>
+              </div>
+              <div class="asset-row">
+                <div class="asset-info">
+                  <div class="asset-ico" style="background:rgba(0,200,120,0.15);color:#00c878">₳</div>
+                  <div class="asset-name">Cardano<small>/ADA</small></div>
+                </div>
+                <div class="asset-amt">0</div>
+                <div class="asset-type">Crypto</div>
+                <div class="asset-val">$0.00</div>
+              </div>
+              <div class="asset-row">
+                <div class="asset-info">
+                  <div class="asset-ico" style="background:rgba(255,60,60,0.15);color:#ff5f5f">A</div>
+                  <div class="asset-name">Adobe<small>/ADBE</small></div>
+                </div>
+                <div class="asset-amt">0</div>
+                <div class="asset-type">Stock</div>
+                <div class="asset-val">$0.00</div>
+              </div>
+              <div class="asset-row">
+                <div class="asset-info">
+                  <div class="asset-ico" style="background:rgba(30,30,30,0.8);color:#aaa">▶</div>
+                  <div class="asset-name">Analog Dev.<small>/ADI</small></div>
+                </div>
+                <div class="asset-amt">0</div>
+                <div class="asset-type">Stock</div>
+                <div class="asset-val">$0.00</div>
+              </div>
+              <div class="asset-row">
+                <div class="asset-info">
+                  <div class="asset-ico" style="background:rgba(255,120,0,0.15);color:#ff8c00">A</div>
+                  <div class="asset-name">Algorand<small>/ALGO</small></div>
+                </div>
+                <div class="asset-amt">0</div>
+                <div class="asset-type">Crypto</div>
+                <div class="asset-val">$0.00</div>
+              </div>
+            </div>
+
+          </div><!-- /dash-right -->
+        </div><!-- /dash-body -->
+      </div><!-- /page-dashboard -->
+
+      <!-- ════════════════════ DEPOSIT PAGE ════════════════════ -->
+      <div class="page" id="page-deposit">
+        <div class="inner-wrap">
+          <div class="inner-title">💰 Deposit Funds</div>
+          <div class="inner-sub">Submit a deposit request. Our admin team will approve it within 24 hours.</div>
+          <div class="wallet-box">
+            Send your payment to any of these addresses, then submit the form below:<br>
+            <strong>BTC:</strong> 1A2B3C4D5E6F7G8H9I0J1K2L3M4N5O6P<br>
+            <strong>Bank:</strong> GTBank · Acc: 0123456789 · SwiftExpress Ltd<br>
+            <strong>USDT TRC20:</strong> TXyz123abc456def789ghiJKL
+          </div>
+          <div class="f-group">
+            <label>Amount (USD)</label>
+            <input type="number" id="dep-amt" placeholder="e.g. 500"/>
+          </div>
+          <div class="f-group">
+            <label>Payment Method</label>
+            <select id="dep-method">
+              <option value="">Select method...</option>
+              <option>Bitcoin (BTC)</option>
+              <option>Bank Transfer</option>
+              <option>USDT (TRC20)</option>
+              <option>Ethereum (ETH)</option>
+            </select>
+          </div>
+          <div class="f-group">
+            <label>Transaction ID / Reference</label>
+            <input type="text" id="dep-ref" placeholder="Paste your transaction ID or proof"/>
+          </div>
+          <button class="sub-btn" onclick="doDeposit()">Submit Deposit Request</button>
+          <div class="msg-box" id="dep-msg"></div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ WITHDRAW PAGE ════════════════════ -->
+      <div class="page" id="page-withdraw">
+        <div class="inner-wrap">
+          <div class="inner-title">💸 Withdraw Funds</div>
+          <div class="inner-sub">Withdrawals are reviewed and processed within 24 hours.</div>
+          <div class="f-group">
+            <label>Available Balance</label>
+            <div class="avail-bal" id="wd-avail-show">$0.00</div>
+          </div>
+          <div class="f-group">
+            <label>Amount (USD)</label>
+            <input type="number" id="wd-amt" placeholder="e.g. 200"/>
+          </div>
+          <div class="f-group">
+            <label>Withdrawal Method</label>
+            <select id="wd-method">
+              <option value="">Select method...</option>
+              <option>Bitcoin (BTC)</option>
+              <option>Bank Transfer</option>
+              <option>USDT (TRC20)</option>
+            </select>
+          </div>
+          <div class="f-group">
+            <label>Your Wallet / Account Number</label>
+            <input type="text" id="wd-acct" placeholder="BTC address or bank account number"/>
+          </div>
+          <button class="sub-btn" onclick="doWithdraw()">Submit Withdrawal Request</button>
+          <div class="msg-box" id="wd-msg"></div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ ASSETS PAGE ════════════════════ -->
+      <div class="page" id="page-assets">
+        <div class="inner-wrap" style="max-width:900px">
+          <div class="inner-title">📦 My Assets</div>
+          <div class="inner-sub">Full portfolio breakdown across all asset classes.</div>
+          <table>
+            <thead><tr><th>Asset</th><th>Amount</th><th>Type</th><th>Price</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="asset-ico" style="width:24px;height:24px;border-radius:50%;background:rgba(247,147,26,0.18);color:#f7931a;display:flex;align-items:center;justify-content:center;font-size:11px;">₿</div>Bitcoin <small style="color:var(--gray)">/BTC</small></div></td><td id="pa-btc-amt">0</td><td>Crypto</td><td id="pa-btc-price">$--</td><td id="pa-btc-val">$0.00</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div class="asset-ico" style="width:24px;height:24px;border-radius:50%;background:rgba(100,100,255,0.15);color:#627eea;display:flex;align-items:center;justify-content:center;font-size:11px;">Ξ</div>Ethereum <small style="color:var(--gray)">/ETH</small></div></td><td>0</td><td>Crypto</td><td id="pa-eth-price">$--</td><td>$0.00</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div style="width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:center;font-size:11px;">🍎</div>Apple <small style="color:var(--gray)">/AAPL</small></div></td><td>0</td><td>Stock</td><td>$224.50</td><td>$0.00</td></tr>
+              <tr><td><div style="display:flex;align-items:center;gap:8px"><div style="width:24px;height:24px;border-radius:50%;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;font-size:11px;">🥇</div>Gold <small style="color:var(--gray)">/XAU</small></div></td><td>0</td><td>Commodity</td><td>$2,045</td><td>$0.00</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ════════════════════ MARKETS PAGE ════════════════════ -->
+      <div class="page" id="page-markets">
+        <div class="fullframe-page">
+          <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tv_markets&symbol=NASDAQ%3AAAPL&interval=D&theme=dark&style=1&locale=en&toolbar_bg=1a1a1a&allow_symbol_change=1&hide_side_toolbar=0&withdateranges=1" allowtransparency="true" allowfullscreen=""></iframe>
+        </div>
+      </div>
+
+      <!-- ════════════════════ TRADE PAGE ════════════════════ -->
+      <div class="page" id="page-trade">
+        <div class="fullframe-page">
+          <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tv_trade&symbol=BINANCE%3ABTCUSDT&interval=15&theme=dark&style=1&locale=en&toolbar_bg=1a1a1a&allow_symbol_change=1&hide_side_toolbar=0" allowtransparency="true" allowfullscreen=""></iframe>
+        </div>
+      </div>
+
+      <!-- ════════════════════ SUBSCRIBE PAGE ════════════════════ -->
+      <div class="page" id="page-subscribe">
+        <div class="simple-page">
+          <h2>📺 Subscribe</h2>
+          <div class="sub">Upgrade for advanced features, priority support and exclusive signals.</div>
+          <div class="plan-cards">
+            <div class="plan-card">
+              <div class="plan-roi">FREE</div>
+              <div class="plan-name">Basic Plan</div>
+              <button class="plan-btn dim" disabled>Current Plan</button>
+            </div>
+            <div class="plan-card featured">
+              <div class="plan-roi">$49</div>
+              <div class="plan-name">Pro Plan / month</div>
+              <button class="plan-btn">Upgrade to Pro</button>
+            </div>
+            <div class="plan-card">
+              <div class="plan-roi" style="color:#d4a017">$149</div>
+              <div class="plan-name">Elite Plan / month</div>
+              <button class="plan-btn gold">Go Elite</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ SIGNALS PAGE ════════════════════ -->
+      <div class="page" id="page-signals">
+        <div class="simple-page">
+          <h2>📡 Trading Signals</h2>
+          <div class="sub">Live signals from our expert analysts. Upgrade to Pro to unlock all signals.</div>
+          <div class="signal-cards">
+            <div class="signal-card"><div class="signal-card-left"><h4>BTC/USD — BUY</h4><p>Entry: $95,000 · Target: $102,000 · Stop: $91,000</p></div><div class="sig-chip sig-buy">STRONG BUY</div></div>
+            <div class="signal-card"><div class="signal-card-left"><h4>ETH/USD — BUY</h4><p>Entry: $3,200 · Target: $3,800 · Stop: $2,900</p></div><div class="sig-chip sig-buy">BUY</div></div>
+            <div class="signal-card"><div class="signal-card-left"><h4>AAPL — HOLD</h4><p>Current: $224.50 · Analyst target: $240.00</p></div><div class="sig-chip sig-hold">HOLD</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ STAKE PAGE ════════════════════ -->
+      <div class="page" id="page-stake">
+        <div class="simple-page">
+          <h2>🏆 Stake Assets</h2>
+          <div class="sub">Earn passive rewards by staking your crypto assets.</div>
+          <div class="stake-cards">
+            <div class="stake-card"><div class="stake-card-top"><div class="stake-ico" style="background:rgba(247,147,26,0.18);color:#f7931a">₿</div><div><div style="font-weight:600;font-size:13px">Bitcoin</div><div style="color:var(--gray);font-size:11px">BTC</div></div></div><div class="stake-apy">4.5% APY</div><div class="stake-period">30-day lock period</div><button class="stake-btn">Stake BTC</button></div>
+            <div class="stake-card"><div class="stake-card-top"><div class="stake-ico" style="background:rgba(100,100,255,0.15);color:#627eea">Ξ</div><div><div style="font-weight:600;font-size:13px">Ethereum</div><div style="color:var(--gray);font-size:11px">ETH</div></div></div><div class="stake-apy">6.2% APY</div><div class="stake-period">60-day lock period</div><button class="stake-btn">Stake ETH</button></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- NOTIFICATIONS PANEL -->
+<div class="notif-overlay" id="notif-overlay" onclick="closeNotif()"></div>
+<div class="notif-panel" id="notif-panel" style="display:none">
+  <div class="notif-hdr">🔔 Notifications</div>
+  <div id="notif-body"><div class="notif-empty">No notifications yet</div></div>
+</div>
+
+<!-- PROFILE DROPDOWN -->
+<div class="profile-overlay" id="profile-overlay" onclick="closeProfile()"></div>
+<div class="profile-panel" id="profile-panel" style="display:none">
+  <div class="profile-head">
+    <div class="profile-head-name" id="pd-name">Loading...</div>
+    <div class="profile-head-email" id="pd-email">--</div>
+  </div>
+  <div class="profile-item" onclick="switchPage('deposit',null);closeProfile()">💰 Deposit Funds</div>
+  <div class="profile-item" onclick="switchPage('withdraw',null);closeProfile()">💸 Withdraw</div>
+  <div class="profile-item" onclick="switchPage('assets',null);closeProfile()">📦 My Assets</div>
+  <div class="profile-item danger" onclick="doLogout()">🚪 Logout</div>
+</div>
+
+<!-- CHAT BUTTON -->
+<div class="chat-btn">
+  💬
+  <div class="chat-notif">1</div>
+</div>
+
+<script>
+const {createClient}=supabase;
+const sb=createClient('https://tnvbiricxztlxppdqphh.supabase.co','sb_publishable_sbf6NMGko9Jtm9ySrjk4UA_iNCn-pnI');
+let user=null,wallet=null,bscMode='buy';
+
+/* ──────── INIT ──────── */
+/* ──────── INIT ──────── */
+async function init(){
+  document.getElementById('loading-screen').style.display='flex';
+  document.querySelector('.app').style.opacity='0';
+
+  // Retry getSession up to 30 times with 300ms gap = 9 seconds max
+  let session=null;
+  for(let i=0;i<30;i++){
+    const {data}=await sb.auth.getSession();
+    if(data?.session){session=data.session;break;}
+    await new Promise(r=>setTimeout(r,300));
+  }
+
+  // If STILL no session, check if we just logged in via localStorage flag
+  if(!session){
+    const justLoggedIn=localStorage.getItem('sb_logged_in');
+    if(justLoggedIn){
+      // Wait a bit more and try one last time
+      await new Promise(r=>setTimeout(r,2000));
+      const {data}=await sb.auth.getSession();
+      session=data?.session||null;
+    }
+  }
+
+  // Clear the flag regardless
+  localStorage.removeItem('sb_logged_in');
+
+  if(!session){
+    window.location.replace('login.html');
+    return;
+  }
+
+  // ✅ Session confirmed — show dashboard
+  user=session.user;
+  document.getElementById('loading-screen').style.display='none';
+  document.querySelector('.app').style.opacity='1';
+
+  try{
+    const [{data:profile},{data:wal}]=await Promise.all([
+      sb.from('profiles').select('*').eq('id',user.id).single(),
+      sb.from('wallets').select('*').eq('user_id',user.id).single()
+    ]);
+    wallet=wal;
+    const name=profile?.full_name||user.email.split('@')[0]||'User';
+    const initials=name.trim().split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('avatar-el').textContent=initials;
+    document.getElementById('pd-name').textContent=name;
+    document.getElementById('pd-email').textContent=user.email;
+  }catch(e){
+    const name=user.email.split('@')[0]||'User';
+    document.getElementById('avatar-el').textContent=name.slice(0,2).toUpperCase();
+    document.getElementById('pd-name').textContent=name;
+    document.getElementById('pd-email').textContent=user.email;
+  }
+
+  refreshBalances();
+  loadTrades();
+  loadNotifs();
+  fetchPrices();
+  setInterval(fetchPrices,30000);
+  setTimeout(()=>{
+    const v=Math.floor(Math.random()*20)+2;
+    document.getElementById('sig-pct-el').textContent=v+'%';
+    document.getElementById('sig-fill-el').style.width=v+'%';
+  },1200);
+
+  // Watch for logout only
+  sb.auth.onAuthStateChange((event)=>{
+    if(event==='SIGNED_OUT') window.location.replace('login.html');
+  });
+}
+
+function refreshBalances(){
+  if(!wallet)return;
+  const total=(+wallet.btc_balance||0)+(+wallet.stocks_balance||0)+(+wallet.forex_balance||0);
+  const fmt='$'+total.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('bal-display').textContent=fmt;
+  document.getElementById('wd-avail-show').textContent=fmt;
+  document.getElementById('trade-bal-show').textContent='$'+(+wallet.btc_balance||0).toLocaleString('en',{minimumFractionDigits:2});
+  document.getElementById('btc-val-r').textContent='$'+(+wallet.btc_balance||0).toLocaleString('en',{minimumFractionDigits:2});
+  document.getElementById('pa-btc-val').textContent='$'+(+wallet.btc_balance||0).toLocaleString('en',{minimumFractionDigits:2});
+}
+
+/* ──────── PRICES ──────── */
+async function fetchPrices(){
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd');
+    const d=await r.json();
+    if(d.bitcoin?.usd){
+      document.getElementById('pa-btc-price').textContent='$'+d.bitcoin.usd.toLocaleString('en');
+    }
+    if(d.ethereum?.usd){
+      document.getElementById('pa-eth-price').textContent='$'+d.ethereum.usd.toLocaleString('en');
+    }
+  }catch(e){}
+}
+
+/* ──────── TRADE ──────── */
+function setBSC(mode){
+  bscMode=mode;
+  ['buy','sell','convert'].forEach(m=>{
+    const el=document.getElementById('bsc-'+m);
+    el.className='bsc-btn';
+    if(m===mode) el.classList.add(mode==='sell'?'active-sell':'active-buy');
+  });
+  const btn=document.getElementById('trade-action-btn');
+  btn.textContent=mode.charAt(0).toUpperCase()+mode.slice(1);
+  btn.className='action-btn '+(mode==='sell'?'sell-mode':'buy');
+}
+
+function pickLev(el,val){
+  document.querySelectorAll('.lev-chip').forEach(c=>c.classList.remove('picked'));
+  el.classList.add('picked');
+  document.getElementById('lev-inp').value=val;
+}
+
+function updateTradeAsset(){
+  const type=document.getElementById('trade-type-sel').value;
+  const map={crypto:'BTC',stocks:'AAPL',forex:'EUR',commodities:'GOLD'};
+  const sym=map[type]||'BTC';
+  document.getElementById('asset-badge').innerHTML=sym+' <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:9px;height:9px"><polyline points="6 9 12 15 18 9"/></svg>';
+  document.getElementById('sl-badge').textContent=sym;
+  document.getElementById('tp-badge').textContent=sym;
+}
+
+async function placeTrade(){
+  const amt=parseFloat(document.getElementById('trade-amt-inp').value);
+  if(!amt||amt<=0){alert('Please enter a valid amount.');return;}
+  const total=(+wallet?.btc_balance||0)+(+wallet?.stocks_balance||0)+(+wallet?.forex_balance||0);
+  if(amt>total){alert('Insufficient balance. Please deposit funds first.');return;}
+  const sl=document.getElementById('sl-inp').value;
+  const tp=document.getElementById('tp-inp').value;
+  const lev=document.getElementById('lev-inp').value;
+  const dur=document.getElementById('dur-sel').value;
+  const type=document.getElementById('trade-type-sel').value;
+  await sb.from('transactions').insert({
+    user_id:user.id,type:bscMode,amount:amt,
+    payment_method:type,status:'pending',
+    proof_url:JSON.stringify({sl,tp,lev,dur})
+  });
+  alert('✅ Trade placed successfully!');
+  document.getElementById('trade-amt-inp').value='';
+  loadTrades();
+}
+
+/* ──────── TRADES TABLE ──────── */
+let tradesMode='open';
+async function loadTrades(){
+  const {data}=await sb.from('transactions').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+  const tbody=document.getElementById('trades-body');
+  if(!data||!data.length){
+    tbody.innerHTML='<tr><td class="empty-td" colspan="8">No trades yet</td></tr>';
+    return;
+  }
+  const filtered=data.filter(t=>tradesMode==='open'?t.status==='pending':t.status!=='pending');
+  if(!filtered.length){
+    tbody.innerHTML='<tr><td class="empty-td" colspan="8">No '+(tradesMode)+' trades</td></tr>';
+    return;
+  }
+  tbody.innerHTML=filtered.map(t=>{
+    let extra={sl:'--',tp:'--',lev:'--',dur:'--'};
+    try{if(t.proof_url&&t.proof_url.startsWith('{'))extra=JSON.parse(t.proof_url);}catch(e){}
+    return`<tr>
+      <td style="color:var(--gray);white-space:nowrap">${new Date(t.created_at).toLocaleDateString('en-GB')}</td>
+      <td style="color:var(--gray);font-family:monospace;font-size:11px">${t.id.slice(0,8).toUpperCase()}</td>
+      <td>${t.payment_method||'--'}</td>
+      <td style="font-weight:600">$${parseFloat(t.amount).toLocaleString()}</td>
+      <td style="color:var(--gray)">${extra.lev||'--'}</td>
+      <td style="color:var(--gray)">${extra.sl||'--'}</td>
+      <td style="color:var(--gray)">${extra.tp||'--'}</td>
+      <td style="color:var(--gray)">${extra.dur||'--'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function tradeTab(mode,el){
+  tradesMode=mode;
+  document.querySelectorAll('.trades-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  loadTrades();
+}
+
+/* ──────── DEPOSIT ──────── */
+async function doDeposit(){
+  const amt=parseFloat(document.getElementById('dep-amt').value);
+  const method=document.getElementById('dep-method').value;
+  const ref=document.getElementById('dep-ref').value.trim();
+  const msg=document.getElementById('dep-msg');
+  if(!amt||amt<=0)return showMsg(msg,'Please enter a valid amount.','err');
+  if(!method)return showMsg(msg,'Please select a payment method.','err');
+  if(!ref)return showMsg(msg,'Please enter your transaction ID.','err');
+  const {error}=await sb.from('transactions').insert({user_id:user.id,type:'deposit',amount:amt,payment_method:method,proof_url:ref,status:'pending'});
+  if(error)return showMsg(msg,'Error: '+error.message,'err');
+  showMsg(msg,'✅ Deposit submitted! Admin will approve within 24 hours.','ok');
+  document.getElementById('dep-amt').value='';
+  document.getElementById('dep-ref').value='';
+  document.getElementById('dep-method').value='';
+}
+
+/* ──────── WITHDRAWAL ──────── */
+async function doWithdraw(){
+  const amt=parseFloat(document.getElementById('wd-amt').value);
+  const method=document.getElementById('wd-method').value;
+  const acct=document.getElementById('wd-acct').value.trim();
+  const msg=document.getElementById('wd-msg');
+  const total=(+wallet?.btc_balance||0)+(+wallet?.stocks_balance||0)+(+wallet?.forex_balance||0);
+  if(!amt||amt<=0)return showMsg(msg,'Please enter a valid amount.','err');
+  if(amt>total)return showMsg(msg,'Insufficient balance.','err');
+  if(!method)return showMsg(msg,'Please select a withdrawal method.','err');
+  if(!acct)return showMsg(msg,'Please enter your account or wallet address.','err');
+  const {error}=await sb.from('transactions').insert({user_id:user.id,type:'withdrawal',amount:amt,payment_method:method,proof_url:acct,status:'pending'});
+  if(error)return showMsg(msg,'Error: '+error.message,'err');
+  showMsg(msg,'✅ Withdrawal submitted! Processing within 24 hours.','ok');
+  document.getElementById('wd-amt').value='';
+  document.getElementById('wd-acct').value='';
+  document.getElementById('wd-method').value='';
+}
+
+/* ──────── NOTIFICATIONS ──────── */
+async function loadNotifs(){
+  const {data}=await sb.from('notifications').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
+  const el=document.getElementById('notif-body');
+  if(!data||!data.length){el.innerHTML='<div class="notif-empty">No notifications yet</div>';return;}
+  el.innerHTML=data.map(n=>`<div class="notif-item${n.is_read?'':' unread'}"><h5>${n.title}</h5><p>${n.message}</p></div>`).join('');
+  sb.from('notifications').update({is_read:true}).eq('user_id',user.id);
+}
+
+/* ──────── UI HELPERS ──────── */
+function switchPage(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  document.getElementById('page-title').textContent=name.charAt(0).toUpperCase()+name.slice(1);
+  closeNotif();closeProfile();
+}
+
+function toggleNotif(){
+  const p=document.getElementById('notif-panel');
+  const o=document.getElementById('notif-overlay');
+  const open=p.style.display==='block';
+  p.style.display=open?'none':'block';
+  o.classList.toggle('open',!open);
+  document.getElementById('profile-panel').style.display='none';
+  document.getElementById('profile-overlay').classList.remove('open');
+}
+function closeNotif(){
+  document.getElementById('notif-panel').style.display='none';
+  document.getElementById('notif-overlay').classList.remove('open');
+}
+function toggleProfile(){
+  const p=document.getElementById('profile-panel');
+  const o=document.getElementById('profile-overlay');
+  const open=p.style.display==='block';
+  p.style.display=open?'none':'block';
+  o.classList.toggle('open',!open);
+  document.getElementById('notif-panel').style.display='none';
+  document.getElementById('notif-overlay').classList.remove('open');
+}
+function closeProfile(){
+  document.getElementById('profile-panel').style.display='none';
+  document.getElementById('profile-overlay').classList.remove('open');
+}
+function doLogout(){sb.auth.signOut().then(()=>{window.location.href='login.html';});}
+function showMsg(el,txt,type){el.textContent=txt;el.className='msg-box '+type+' show';}
+function toggleBalMenu(){}
+
+init();
+</script>
+</body>
+</html>

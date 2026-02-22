@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SwiftExpress — Sign In</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#050810;--bg2:#080d1a;--bg3:#0c1220;--card:#0f1626;--border:#1a2540;--border2:#243050;--blue:#3b82f6;--blue2:#2563eb;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--white:#f0f4ff;--gray:#8899bb;--gray2:#4a5980;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--white);font-family:'Outfit',sans-serif;overflow:hidden;}
+
+/* Grid background */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.04) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0;}
+
+/* Orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0;}
+.orb1{width:700px;height:700px;background:radial-gradient(circle,rgba(59,130,246,0.12),transparent);top:-200px;left:-200px;}
+.orb2{width:500px;height:500px;background:radial-gradient(circle,rgba(6,182,212,0.09),transparent);bottom:-100px;right:-100px;}
+
+/* Layout */
+.page{display:flex;height:100vh;position:relative;z-index:1;}
+
+/* LEFT PANEL */
+.left{
+  flex:1;
+  display:flex;flex-direction:column;justify-content:center;
+  padding:60px 72px;
+  border-right:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.left::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,var(--blue),transparent);opacity:0.4;}
+
+.logo{display:flex;align-items:center;gap:10px;font-size:1.4rem;font-weight:800;letter-spacing:-0.5px;text-decoration:none;color:var(--white);position:absolute;top:36px;left:72px;}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--cyan));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;}
+.logo span{color:var(--blue);}
+
+.left-content{max-width:440px;}
+.left-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);color:var(--blue);padding:6px 14px;border-radius:100px;font-size:0.75rem;font-weight:600;letter-spacing:0.5px;margin-bottom:28px;}
+.left-tag::before{content:'●';font-size:0.4rem;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+.left-title{font-size:clamp(2.2rem,3.5vw,3.2rem);font-weight:900;line-height:1.1;letter-spacing:-1.5px;margin-bottom:16px;}
+.left-title .grad{background:linear-gradient(135deg,#fff 30%,var(--blue) 70%,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.left-sub{color:var(--gray);font-size:1rem;line-height:1.7;margin-bottom:44px;}
+
+/* Stats */
+.stats{display:flex;gap:32px;margin-bottom:44px;}
+.stat{padding-left:16px;border-left:2px solid var(--blue);}
+.stat-n{font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:700;background:linear-gradient(135deg,var(--white),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.stat-l{color:var(--gray2);font-size:0.78rem;margin-top:2px;}
+
+/* Live ticker mini */
+.mini-ticker{display:flex;flex-direction:column;gap:10px;}
+.tick-row{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 18px;}
+.tick-left{display:flex;align-items:center;gap:12px;}
+.tick-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.95rem;}
+.tick-sym{font-weight:700;font-size:0.88rem;}
+.tick-name{color:var(--gray);font-size:0.72rem;margin-top:1px;}
+.tick-right{text-align:right;}
+.tick-price{font-family:'JetBrains Mono',monospace;font-size:0.9rem;font-weight:700;}
+.tick-chg{font-size:0.72rem;margin-top:2px;padding:2px 7px;border-radius:100px;}
+.up{color:var(--green);background:rgba(16,185,129,0.1);}
+.dn{color:var(--red);background:rgba(239,68,68,0.1);}
+
+/* RIGHT PANEL */
+.right{
+  width:520px;
+  display:flex;align-items:center;justify-content:center;
+  padding:40px 60px;
+  overflow-y:auto;
+}
+.form-wrap{width:100%;max-width:400px;}
+
+.form-header{margin-bottom:36px;}
+.form-title{font-size:2rem;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
+.form-sub{color:var(--gray);font-size:0.92rem;line-height:1.5;}
+.form-sub a{color:var(--blue);text-decoration:none;font-weight:600;}
+.form-sub a:hover{text-decoration:underline;}
+
+/* Fields */
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:0.78rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--gray);margin-bottom:8px;}
+.field-wrap{position:relative;}
+.field-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:1rem;color:var(--gray2);}
+.field input{
+  width:100%;
+  background:var(--card);
+  border:1px solid var(--border);
+  color:var(--white);
+  padding:14px 16px 14px 44px;
+  border-radius:10px;
+  font-size:0.95rem;
+  font-family:'Outfit',sans-serif;
+  outline:none;
+  transition:border 0.2s,box-shadow 0.2s;
+}
+.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,0.1);}
+.field input::placeholder{color:var(--gray2);}
+
+/* Remember + Forgot */
+.field-extras{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+.checkbox-wrap{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.85rem;color:var(--gray);}
+.checkbox-wrap input{width:auto;padding:0;accent-color:var(--blue);}
+.forgot{color:var(--blue);font-size:0.85rem;text-decoration:none;font-weight:600;}
+.forgot:hover{text-decoration:underline;}
+
+/* Submit button */
+.btn-submit{
+  width:100%;background:var(--blue);color:#fff;
+  border:none;padding:15px;border-radius:10px;
+  font-size:1rem;font-weight:700;
+  font-family:'Outfit',sans-serif;
+  cursor:pointer;transition:all 0.2s;
+  box-shadow:0 4px 24px rgba(59,130,246,0.35);
+  letter-spacing:0.2px;
+}
+.btn-submit:hover{background:var(--blue2);transform:translateY(-1px);box-shadow:0 8px 32px rgba(59,130,246,0.5);}
+.btn-submit:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:12px;margin:22px 0;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.divider span{color:var(--gray2);font-size:0.78rem;}
+
+/* Google btn */
+.btn-google{
+  width:100%;background:transparent;color:var(--white);
+  border:1px solid var(--border2);padding:13px;border-radius:10px;
+  font-size:0.92rem;font-weight:600;font-family:'Outfit',sans-serif;
+  cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:10px;
+}
+.btn-google:hover{border-color:rgba(255,255,255,0.2);background:rgba(255,255,255,0.03);}
+
+/* Message */
+.msg{margin-top:16px;padding:13px 16px;border-radius:10px;font-size:0.88rem;display:none;line-height:1.5;}
+.msg.error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;}
+.msg.success{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);color:#6ee7b7;}
+.msg.show{display:block;}
+
+/* Bottom nav */
+.back-home{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);color:var(--gray);font-size:0.82rem;text-decoration:none;display:flex;align-items:center;gap:6px;transition:color 0.2s;z-index:10;}
+.back-home:hover{color:var(--white);}
+
+@media(max-width:900px){
+  .left{display:none;}
+  .right{width:100%;padding:40px 24px;}
+  body{overflow:auto;}
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.form-wrap{animation:fadeUp 0.5s ease both;}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div class="page">
+  <!-- LEFT PANEL -->
+  <div class="left">
+    <a href="index.html" class="logo"><div class="logo-icon">&#9889;</div>Swift<span>Express</span></a>
+    <div class="left-content">
+      <div class="left-tag">Trusted by 50,000+ Investors</div>
+      <div class="left-title">Welcome<br>back to <span class="grad">SwiftExpress</span></div>
+      <p class="left-sub">Your portfolio is waiting. Sign in to check your live balance, approve transactions, and monitor the markets.</p>
+      <div class="stats">
+        <div class="stat"><div class="stat-n">$2.4B+</div><div class="stat-l">Volume Traded</div></div>
+        <div class="stat"><div class="stat-n">99.8%</div><div class="stat-l">Uptime</div></div>
+        <div class="stat"><div class="stat-n">24/7</div><div class="stat-l">Support</div></div>
+      </div>
+      <div class="mini-ticker">
+        <div class="tick-row">
+          <div class="tick-left"><div class="tick-ico" style="background:rgba(247,147,26,0.15)">&#8383;</div><div><div class="tick-sym">Bitcoin</div><div class="tick-name">BTC / USD</div></div></div>
+          <div class="tick-right"><div class="tick-price" id="lp-btc">$--</div><div class="tick-chg up" id="lc-btc">--</div></div>
+        </div>
+        <div class="tick-row">
+          <div class="tick-left"><div class="tick-ico" style="background:rgba(98,126,234,0.15)">&#926;</div><div><div class="tick-sym">Ethereum</div><div class="tick-name">ETH / USD</div></div></div>
+          <div class="tick-right"><div class="tick-price" id="lp-eth">$--</div><div class="tick-chg up" id="lc-eth">--</div></div>
+        </div>
+        <div class="tick-row">
+          <div class="tick-left"><div class="tick-ico" style="background:rgba(20,241,149,0.1)">&#9711;</div><div><div class="tick-sym">Solana</div><div class="tick-name">SOL / USD</div></div></div>
+          <div class="tick-right"><div class="tick-price" id="lp-sol">$--</div><div class="tick-chg up" id="lc-sol">--</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right">
+    <div class="form-wrap">
+      <div class="form-header">
+        <div class="form-title">Sign In &#128075;</div>
+        <div class="form-sub">Don't have an account? <a href="register.html">Create one free &rarr;</a></div>
+      </div>
+
+      <div class="field">
+        <label>Email Address</label>
+        <div class="field-wrap">
+          <span class="field-icon">&#128231;</span>
+          <input type="email" id="email" placeholder="you@example.com" autocomplete="email"/>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <div class="field-wrap">
+          <span class="field-icon">&#128274;</span>
+          <input type="password" id="password" placeholder="Your password" autocomplete="current-password"/>
+        </div>
+      </div>
+
+      <div class="field-extras">
+        <label class="checkbox-wrap"><input type="checkbox" id="remember"/> Remember me</label>
+        <a href="#" class="forgot">Forgot password?</a>
+      </div>
+
+      <button class="btn-submit" id="loginBtn" onclick="doLogin()">Sign In to Dashboard</button>
+
+      <div class="divider"><span>or continue with</span></div>
+      <button class="btn-google" onclick="doGoogle()">
+        <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="msg" id="loginMsg"></div>
+    </div>
+  </div>
+</div>
+
+<a href="index.html" class="back-home">&#8592; Back to homepage</a>
+
+<script>
+const {createClient}=supabase;
+const sb=createClient('https://tnvbiricxztlxppdqphh.supabase.co','sb_publishable_sbf6NMGko9Jtm9ySrjk4UA_iNCn-pnI');
+
+async function doLogin(){
+  const email=document.getElementById('email').value.trim();
+  const pass=document.getElementById('password').value;
+  const btn=document.getElementById('loginBtn');
+  const msg=document.getElementById('loginMsg');
+  if(!email||!pass)return showMsg(msg,'Please fill in all fields.','error');
+  btn.disabled=true;
+  btn.textContent='Signing in...';
+
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){
+    showMsg(msg,'Invalid email or password. Please try again.','error');
+    btn.disabled=false;
+    btn.textContent='Sign In to Dashboard';
+    return;
+  }
+
+  showMsg(msg,'&#9989; Signed in! Loading...','success');
+
+  // Store session token directly in localStorage so dashboard can read it instantly
+  localStorage.setItem('sb_user_id', data.user.id);
+  localStorage.setItem('sb_user_email', data.user.email);
+  localStorage.setItem('sb_logged_in', 'true');
+
+  // Give Supabase extra time to fully persist the session
+  await new Promise(r=>setTimeout(r,2000));
+
+  try{
+    const {data:p}=await sb.from('profiles').select('is_admin').eq('id',data.user.id).single();
+    window.location.replace(p?.is_admin?'admin.html':'dashboard.html');
+  }catch(e){
+    window.location.replace('dashboard.html');
+  }
+}
+
+async function doGoogle(){
+  const {error}=await sb.auth.signInWithOAuth({provider:'google'});
+  if(error)showMsg(document.getElementById('loginMsg'),error.message,'error');
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function showMsg(el,text,type){el.innerHTML=text;el.className='msg '+type+' show';}
+
+// Live prices
+async function fetchPrices(){
+  try{
+    const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana&vs_currencies=usd&include_24hr_change=true');
+    const d=await r.json();
+    const pairs=[['btc','bitcoin'],['eth','ethereum'],['sol','solana']];
+    pairs.forEach(([s,id])=>{
+      const price=d[id]?.usd||0;
+      const chg=(d[id]?.usd_24h_change||0).toFixed(2);
+      const isUp=parseFloat(chg)>=0;
+      const priceStr='$'+(price<10?price.toFixed(2):price.toLocaleString('en',{maximumFractionDigits:0}));
+      const chgStr=(isUp?'+':'')+chg+'%';
+      [document.getElementById('lp-'+s),document.getElementById('lp-'+s+'2')].forEach(el=>{if(el)el.textContent=priceStr;});
+      const ce=document.getElementById('lc-'+s);if(ce){ce.textContent=chgStr;ce.className='tick-chg '+(isUp?'up':'dn');}
+    });
+  }catch(e){}
+}
+fetchPrices();
+setInterval(fetchPrices,30000);
+</script>
+</body>
+</html>

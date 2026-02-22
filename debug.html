@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>SwiftExpress Debug</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{background:#0f0f0f;color:#e0e0e0;font-family:monospace;padding:30px;font-size:14px;}
+h2{color:#3b82f6;margin-bottom:20px;}
+.log{background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:16px;margin-bottom:16px;line-height:2;}
+.ok{color:#2ecc71;} .err{color:#e74c3c;} .warn{color:#f59e0b;}
+button{background:#3b82f6;color:#fff;border:none;padding:10px 20px;border-radius:6px;cursor:pointer;font-size:14px;margin:6px;}
+button:hover{background:#2563eb;}
+.big{font-size:18px;font-weight:bold;margin-bottom:10px;}
+</style>
+</head>
+<body>
+<h2>🔍 SwiftExpress Auth Debugger</h2>
+<div class="log" id="log">Running checks...<br/></div>
+<button onclick="runChecks()">🔄 Run Again</button>
+<button onclick="clearSession()">🗑️ Clear Session & Logout</button>
+<button onclick="window.location.href='login.html'">→ Go to Login</button>
+<button onclick="window.location.href='dashboard.html'">→ Go to Dashboard</button>
+
+<script>
+const {createClient}=supabase;
+const sb=createClient('https://tnvbiricxztlxppdqphh.supabase.co','sb_publishable_sbf6NMGko9Jtm9ySrjk4UA_iNCn-pnI');
+
+function log(msg, type=''){
+  document.getElementById('log').innerHTML += `<span class="${type}">${msg}</span><br/>`;
+}
+
+async function runChecks(){
+  document.getElementById('log').innerHTML = '';
+  log('=== AUTH DEBUG REPORT ===', 'warn');
+  log('Time: ' + new Date().toLocaleTimeString());
+  log('');
+
+  // Check 1: localStorage keys
+  log('--- localStorage ---', 'warn');
+  let sbKeys = [];
+  for(let i=0; i<localStorage.length; i++){
+    const k = localStorage.key(i);
+    if(k.includes('supabase') || k.includes('sb-') || k.includes('auth')){
+      sbKeys.push(k);
+      const val = localStorage.getItem(k);
+      log('KEY: ' + k, 'ok');
+      try{
+        const parsed = JSON.parse(val);
+        if(parsed?.access_token) log('  ✅ Has access_token: ' + parsed.access_token.slice(0,20)+'...', 'ok');
+        if(parsed?.user?.email) log('  ✅ User email: ' + parsed.user.email, 'ok');
+        if(parsed?.expires_at) log('  ⏰ Expires: ' + new Date(parsed.expires_at*1000).toLocaleString(), 'warn');
+      }catch(e){ log('  Value: ' + (val||'').slice(0,80), ''); }
+    }
+  }
+  if(sbKeys.length === 0) log('❌ NO Supabase keys in localStorage — session was never saved!', 'err');
+  log('');
+
+  // Check 2: getSession
+  log('--- getSession() ---', 'warn');
+  try{
+    const {data, error} = await sb.auth.getSession();
+    if(error) log('❌ getSession error: ' + error.message, 'err');
+    else if(data?.session){
+      log('✅ Session found!', 'ok');
+      log('  User: ' + data.session.user.email, 'ok');
+      log('  ID: ' + data.session.user.id, 'ok');
+      log('  Token expires: ' + new Date(data.session.expires_at*1000).toLocaleString(), 'ok');
+    } else {
+      log('❌ getSession returned NULL — no active session', 'err');
+    }
+  }catch(e){ log('❌ getSession threw: ' + e.message, 'err'); }
+  log('');
+
+  // Check 3: profiles table
+  log('--- Database Check ---', 'warn');
+  try{
+    const {data, error} = await sb.from('profiles').select('*').limit(1);
+    if(error) log('❌ profiles query error: ' + error.message, 'err');
+    else log('✅ profiles table accessible, rows: ' + (data?.length||0), 'ok');
+  }catch(e){ log('❌ profiles threw: ' + e.message, 'err'); }
+
+  try{
+    const {data, error} = await sb.from('wallets').select('*').limit(1);
+    if(error) log('❌ wallets query error: ' + error.message, 'err');
+    else log('✅ wallets table accessible, rows: ' + (data?.length||0), 'ok');
+  }catch(e){ log('❌ wallets threw: ' + e.message, 'err'); }
+
+  log('');
+  log('--- sb_logged_in flag ---', 'warn');
+  log('Value: ' + (localStorage.getItem('sb_logged_in')||'NOT SET'));
+
+  log('');
+  log('=== DONE ===', 'warn');
+}
+
+async function clearSession(){
+  await sb.auth.signOut();
+  localStorage.clear();
+  log('✅ Session cleared! All localStorage wiped.', 'ok');
+}
+
+runChecks();
+</script>
+</body>
+</html>

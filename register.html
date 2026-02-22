@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SwiftExpress — Create Account</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#050810;--bg2:#080d1a;--bg3:#0c1220;--card:#0f1626;--border:#1a2540;--border2:#243050;--blue:#3b82f6;--blue2:#2563eb;--cyan:#06b6d4;--green:#10b981;--red:#ef4444;--white:#f0f4ff;--gray:#8899bb;--gray2:#4a5980;}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--white);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(59,130,246,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,0.04) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0;}
+.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0;}
+.orb1{width:700px;height:700px;background:radial-gradient(circle,rgba(59,130,246,0.12),transparent);top:-200px;right:-200px;}
+.orb2{width:500px;height:500px;background:radial-gradient(circle,rgba(6,182,212,0.09),transparent);bottom:-100px;left:-100px;}
+
+.page{display:flex;min-height:100vh;position:relative;z-index:1;}
+
+/* LEFT */
+.left{flex:1;display:flex;flex-direction:column;justify-content:center;padding:80px 72px;border-right:1px solid var(--border);position:relative;overflow:hidden;}
+.left::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(to bottom,transparent,var(--blue),transparent);opacity:0.4;}
+.logo{display:flex;align-items:center;gap:10px;font-size:1.4rem;font-weight:800;letter-spacing:-0.5px;text-decoration:none;color:var(--white);position:absolute;top:36px;left:72px;}
+.logo-icon{width:30px;height:30px;background:linear-gradient(135deg,var(--blue),var(--cyan));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:0.9rem;}
+.logo span{color:var(--blue);}
+
+.left-content{max-width:440px;}
+.left-tag{display:inline-flex;align-items:center;gap:8px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);color:var(--blue);padding:6px 14px;border-radius:100px;font-size:0.75rem;font-weight:600;letter-spacing:0.5px;margin-bottom:28px;}
+.left-tag::before{content:'●';font-size:0.4rem;animation:blink 1.5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+.left-title{font-size:clamp(2rem,3.2vw,3rem);font-weight:900;line-height:1.1;letter-spacing:-1.5px;margin-bottom:16px;}
+.left-title .grad{background:linear-gradient(135deg,#fff 30%,var(--blue) 70%,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.left-sub{color:var(--gray);font-size:0.95rem;line-height:1.7;margin-bottom:36px;}
+
+/* Perks */
+.perks{display:flex;flex-direction:column;gap:14px;margin-bottom:36px;}
+.perk{display:flex;align-items:flex-start;gap:14px;}
+.perk-icon{width:36px;height:36px;border-radius:8px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;margin-top:1px;}
+.perk h5{font-size:0.92rem;font-weight:700;margin-bottom:2px;}
+.perk p{color:var(--gray);font-size:0.82rem;line-height:1.5;}
+
+/* Plans mini */
+.plans-mini{display:flex;gap:10px;}
+.plan-chip{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;transition:all 0.2s;cursor:pointer;}
+.plan-chip.active{border-color:var(--blue);background:rgba(59,130,246,0.06);}
+.plan-chip-roi{font-family:'JetBrains Mono',monospace;font-size:1.3rem;font-weight:800;color:var(--blue);}
+.plan-chip-name{color:var(--gray);font-size:0.72rem;margin-top:3px;}
+
+/* RIGHT */
+.right{width:540px;display:flex;align-items:flex-start;justify-content:center;padding:80px 60px;overflow-y:auto;}
+.form-wrap{width:100%;max-width:420px;}
+
+.form-header{margin-bottom:32px;}
+.form-title{font-size:2rem;font-weight:800;letter-spacing:-0.5px;margin-bottom:8px;}
+.form-sub{color:var(--gray);font-size:0.92rem;line-height:1.5;}
+.form-sub a{color:var(--blue);text-decoration:none;font-weight:600;}
+.form-sub a:hover{text-decoration:underline;}
+
+/* Progress bar */
+.progress-wrap{margin-bottom:28px;}
+.progress-label{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--gray);margin-bottom:8px;}
+.progress-bar{height:4px;background:var(--border);border-radius:100px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:100px;transition:width 0.4s ease;}
+
+/* Steps */
+.step{display:none;}
+.step.active{display:block;animation:fadeUp 0.4s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+.step-title{font-size:1rem;font-weight:700;color:var(--gray);margin-bottom:20px;display:flex;align-items:center;gap:8px;}
+.step-num{width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;font-size:0.72rem;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+
+/* Fields */
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:0.78rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--gray);margin-bottom:7px;}
+.field-wrap{position:relative;}
+.field-icon{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:1rem;color:var(--gray2);}
+.field input,.field select{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  color:var(--white);padding:14px 16px 14px 44px;
+  border-radius:10px;font-size:0.95rem;font-family:'Outfit',sans-serif;
+  outline:none;transition:border 0.2s,box-shadow 0.2s;
+}
+.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,0.1);}
+.field input::placeholder{color:var(--gray2);}
+.field select{color:var(--white);}
+.field select option{background:var(--bg3);}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* Strength */
+.strength-wrap{margin-top:8px;display:flex;gap:4px;align-items:center;}
+.str-bar{flex:1;height:3px;border-radius:100px;background:var(--border);transition:background 0.3s;}
+.str-bar.weak{background:var(--red);}
+.str-bar.fair{background:var(--gold, #f59e0b);}
+.str-bar.good{background:var(--cyan);}
+.str-bar.strong{background:var(--green);}
+.str-label{font-size:0.72rem;color:var(--gray);margin-left:6px;min-width:44px;}
+
+/* Terms */
+.terms-check{display:flex;align-items:flex-start;gap:10px;margin-bottom:24px;cursor:pointer;}
+.terms-check input{margin-top:3px;accent-color:var(--blue);flex-shrink:0;}
+.terms-check span{color:var(--gray);font-size:0.82rem;line-height:1.5;}
+.terms-check a{color:var(--blue);text-decoration:none;}
+
+/* Buttons */
+.btn-next,.btn-back,.btn-submit{
+  border:none;border-radius:10px;
+  font-size:1rem;font-weight:700;font-family:'Outfit',sans-serif;
+  cursor:pointer;transition:all 0.2s;padding:15px;
+}
+.btn-next,.btn-submit{width:100%;background:var(--blue);color:#fff;box-shadow:0 4px 24px rgba(59,130,246,0.35);}
+.btn-next:hover,.btn-submit:hover{background:var(--blue2);transform:translateY(-1px);box-shadow:0 8px 32px rgba(59,130,246,0.5);}
+.btn-next:disabled,.btn-submit:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
+.btn-back{background:transparent;color:var(--gray);border:1px solid var(--border);padding:13px 24px;margin-right:10px;}
+.btn-back:hover{border-color:var(--border2);color:var(--white);}
+.btn-row{display:flex;align-items:center;margin-top:4px;}
+
+/* Plan selector */
+.plan-select-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
+.plan-option{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:18px 12px;text-align:center;cursor:pointer;transition:all 0.2s;}
+.plan-option:hover{border-color:rgba(59,130,246,0.4);}
+.plan-option.selected{border-color:var(--blue);background:rgba(59,130,246,0.07);}
+.po-roi{font-family:'JetBrains Mono',monospace;font-size:1.6rem;font-weight:800;color:var(--blue);}
+.po-name{font-size:0.78rem;font-weight:700;margin:4px 0 2px;}
+.po-min{color:var(--gray);font-size:0.7rem;}
+
+/* Success state */
+.success-state{text-align:center;padding:20px 0;}
+.success-icon{font-size:3.5rem;margin-bottom:20px;animation:pop 0.5s ease;}
+@keyframes pop{0%{transform:scale(0.5)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.success-title{font-size:1.8rem;font-weight:800;margin-bottom:10px;}
+.success-sub{color:var(--gray);font-size:0.92rem;line-height:1.7;}
+
+/* Message */
+.msg{margin-top:16px;padding:13px 16px;border-radius:10px;font-size:0.88rem;display:none;line-height:1.5;}
+.msg.error{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:#fca5a5;}
+.msg.success{background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);color:#6ee7b7;}
+.msg.show{display:block;}
+
+.back-home{display:block;text-align:center;margin-top:24px;color:var(--gray);font-size:0.82rem;text-decoration:none;}
+.back-home:hover{color:var(--white);}
+
+@media(max-width:900px){.left{display:none;}.right{width:100%;padding:40px 24px;}}
+</style>
+</head>
+<body>
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<div class="page">
+  <!-- LEFT PANEL -->
+  <div class="left">
+    <a href="index.html" class="logo"><div class="logo-icon">&#9889;</div>Swift<span>Express</span></a>
+    <div class="left-content">
+      <div class="left-tag">Start in under 2 minutes</div>
+      <div class="left-title">Join the <span class="grad">fastest growing</span> investment platform</div>
+      <p class="left-sub">Create your free account and start growing your wealth today with crypto, stocks, and forex.</p>
+      <div class="perks">
+        <div class="perk"><div class="perk-icon">&#128200;</div><div><h5>Live Market Access</h5><p>Real-time prices on Bitcoin, Ethereum, forex, and 220+ assets.</p></div></div>
+        <div class="perk"><div class="perk-icon">&#128274;</div><div><h5>Bank-Grade Security</h5><p>256-bit encryption, 2FA, and cold storage wallets protect your funds.</p></div></div>
+        <div class="perk"><div class="perk-icon">&#9889;</div><div><h5>Instant Withdrawals</h5><p>Request a withdrawal anytime. Processed within 24 hours.</p></div></div>
+        <div class="perk"><div class="perk-icon">&#128202;</div><div><h5>Smart Dashboard</h5><p>Track every dollar, every profit, every transaction in one place.</p></div></div>
+      </div>
+      <div class="plans-mini">
+        <div class="plan-chip"><div class="plan-chip-roi">5%</div><div class="plan-chip-name">Starter / week</div></div>
+        <div class="plan-chip active"><div class="plan-chip-roi">12%</div><div class="plan-chip-name">Growth / week</div></div>
+        <div class="plan-chip"><div class="plan-chip-roi">20%</div><div class="plan-chip-name">Elite / week</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right">
+    <div class="form-wrap">
+      <div class="form-header">
+        <div class="form-title">Create Account &#127775;</div>
+        <div class="form-sub">Already have an account? <a href="login.html">Sign in &rarr;</a></div>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="progress-wrap">
+        <div class="progress-label"><span id="stepLabel">Step 1 of 3 — Personal Info</span><span id="stepPct">33%</span></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:33%"></div></div>
+      </div>
+
+      <!-- STEP 1: Personal Info -->
+      <div class="step active" id="step1">
+        <div class="step-title"><div class="step-num">1</div> Personal Information</div>
+        <div class="row2">
+          <div class="field"><label>First Name</label><div class="field-wrap"><span class="field-icon">&#128100;</span><input type="text" id="fname" placeholder="John" autocomplete="given-name"/></div></div>
+          <div class="field"><label>Last Name</label><div class="field-wrap"><span class="field-icon">&#128100;</span><input type="text" id="lname" placeholder="Doe" autocomplete="family-name"/></div></div>
+        </div>
+        <div class="field"><label>Email Address</label><div class="field-wrap"><span class="field-icon">&#128231;</span><input type="email" id="email" placeholder="you@example.com" autocomplete="email"/></div></div>
+        <div class="field"><label>Phone Number</label><div class="field-wrap"><span class="field-icon">&#128222;</span><input type="tel" id="phone" placeholder="+234 800 000 0000" autocomplete="tel"/></div></div>
+        <div class="field"><label>Country</label><div class="field-wrap"><span class="field-icon">&#127758;</span>
+          <select id="country">
+            <option value="">Select your country...</option>
+            <option>Nigeria</option><option>Ghana</option><option>Kenya</option>
+            <option>South Africa</option><option>United Kingdom</option>
+            <option>United States</option><option>Canada</option>
+            <option>Australia</option><option>Germany</option><option>France</option>
+            <option>UAE</option><option>India</option><option>Other</option>
+          </select>
+        </div></div>
+        <button class="btn-next" id="next1" onclick="goStep(2)">Continue &rarr;</button>
+      </div>
+
+      <!-- STEP 2: Security -->
+      <div class="step" id="step2">
+        <div class="step-title"><div class="step-num">2</div> Secure Your Account</div>
+        <div class="field"><label>Password</label>
+          <div class="field-wrap"><span class="field-icon">&#128274;</span>
+            <input type="password" id="password" placeholder="Create a strong password" oninput="checkStrength(this.value)" autocomplete="new-password"/>
+          </div>
+          <div class="strength-wrap">
+            <div class="str-bar" id="sb1"></div>
+            <div class="str-bar" id="sb2"></div>
+            <div class="str-bar" id="sb3"></div>
+            <div class="str-bar" id="sb4"></div>
+            <span class="str-label" id="strLabel">Too short</span>
+          </div>
+        </div>
+        <div class="field"><label>Confirm Password</label><div class="field-wrap"><span class="field-icon">&#128275;</span><input type="password" id="password2" placeholder="Repeat your password" autocomplete="new-password"/></div></div>
+        <div class="field"><label>Referral Code (optional)</label><div class="field-wrap"><span class="field-icon">&#127873;</span><input type="text" id="referral" placeholder="Enter code if you have one"/></div></div>
+        <div class="btn-row">
+          <button class="btn-back" onclick="goStep(1)">&#8592; Back</button>
+          <button class="btn-next" style="flex:1" onclick="goStep(3)">Continue &rarr;</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Plan + Submit -->
+      <div class="step" id="step3">
+        <div class="step-title"><div class="step-num">3</div> Choose Investment Plan</div>
+        <div class="plan-select-grid">
+          <div class="plan-option" onclick="selectPlan(this,'starter')">
+            <div class="po-roi">5%</div>
+            <div class="po-name">Starter</div>
+            <div class="po-min">Min $100</div>
+          </div>
+          <div class="plan-option selected" onclick="selectPlan(this,'growth')">
+            <div class="po-roi">12%</div>
+            <div class="po-name">Growth</div>
+            <div class="po-min">Min $5,000</div>
+          </div>
+          <div class="plan-option" onclick="selectPlan(this,'elite')">
+            <div class="po-roi">20%</div>
+            <div class="po-name">Elite</div>
+            <div class="po-min">Min $50,000</div>
+          </div>
+        </div>
+        <input type="hidden" id="selectedPlan" value="growth"/>
+
+        <label class="terms-check">
+          <input type="checkbox" id="terms"/>
+          <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I understand investing involves risk.</span>
+        </label>
+
+        <div class="btn-row">
+          <button class="btn-back" onclick="goStep(2)">&#8592; Back</button>
+          <button class="btn-next btn-submit" style="flex:1" id="submitBtn" onclick="doRegister()">Create My Account &#128640;</button>
+        </div>
+        <div class="msg" id="regMsg"></div>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div class="step" id="stepSuccess">
+        <div class="success-state">
+          <div class="success-icon">&#127881;</div>
+          <div class="success-title">Account Created!</div>
+          <div class="success-sub">Welcome to SwiftExpress! Please check your email to verify your account, then sign in to access your dashboard.</div>
+          <a href="login.html" class="btn-next" style="display:block;margin-top:28px;text-decoration:none;text-align:center;padding:15px;border-radius:10px;">Go to Sign In &rarr;</a>
+        </div>
+      </div>
+
+      <a href="index.html" class="back-home">&#8592; Back to homepage</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const {createClient}=supabase;
+const sb=createClient('https://tnvbiricxztlxppdqphh.supabase.co','sb_publishable_sbf6NMGko9Jtm9ySrjk4UA_iNCn-pnI');
+
+let currentStep=1;
+
+function goStep(n){
+  // Validate before advancing
+  if(n>currentStep){
+    if(currentStep===1){
+      const fname=document.getElementById('fname').value.trim();
+      const lname=document.getElementById('lname').value.trim();
+      const email=document.getElementById('email').value.trim();
+      const country=document.getElementById('country').value;
+      if(!fname||!lname||!email||!country){alert('Please fill in all fields before continuing.');return;}
+      if(!email.includes('@')){alert('Please enter a valid email address.');return;}
+    }
+    if(currentStep===2){
+      const pass=document.getElementById('password').value;
+      const pass2=document.getElementById('password2').value;
+      if(pass.length<8){alert('Password must be at least 8 characters.');return;}
+      if(pass!==pass2){alert('Passwords do not match. Please try again.');return;}
+    }
+  }
+  document.getElementById('step'+currentStep).classList.remove('active');
+  document.getElementById('step'+n).classList.add('active');
+  currentStep=n;
+  const labels=['','Step 1 of 3 — Personal Info','Step 2 of 3 — Security','Step 3 of 3 — Investment Plan'];
+  const pcts=['','33%','66%','100%'];
+  document.getElementById('stepLabel').textContent=labels[n];
+  document.getElementById('stepPct').textContent=pcts[n];
+  document.getElementById('progressFill').style.width=pcts[n];
+}
+
+function selectPlan(el,plan){
+  document.querySelectorAll('.plan-option').forEach(p=>p.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('selectedPlan').value=plan;
+}
+
+function checkStrength(val){
+  const bars=[document.getElementById('sb1'),document.getElementById('sb2'),document.getElementById('sb3'),document.getElementById('sb4')];
+  const label=document.getElementById('strLabel');
+  bars.forEach(b=>{b.className='str-bar';});
+  if(val.length===0){label.textContent='Too short';return;}
+  let score=0;
+  if(val.length>=8)score++;
+  if(/[A-Z]/.test(val))score++;
+  if(/[0-9]/.test(val))score++;
+  if(/[^A-Za-z0-9]/.test(val))score++;
+  const levels=[['weak','Weak'],['fair','Fair'],['good','Good'],['strong','Strong']];
+  for(let i=0;i<score;i++){bars[i].classList.add(levels[score-1][0]);}
+  label.textContent=levels[score-1][1];
+}
+
+async function doRegister(){
+  const msg=document.getElementById('regMsg');
+  const btn=document.getElementById('submitBtn');
+  const terms=document.getElementById('terms').checked;
+  if(!terms){showMsg(msg,'Please accept the Terms of Service to continue.','error');return;}
+  const fname=document.getElementById('fname').value.trim();
+  const lname=document.getElementById('lname').value.trim();
+  const email=document.getElementById('email').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const country=document.getElementById('country').value;
+  const pass=document.getElementById('password').value;
+  const plan=document.getElementById('selectedPlan').value;
+  btn.disabled=true;btn.textContent='Creating your account...';
+  const {data,error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:fname+' '+lname}}});
+  if(error){showMsg(msg,error.message,'error');btn.disabled=false;btn.textContent='Create My Account &#128640;';return;}
+  // Update profile with extra details
+  if(data.user){
+    await sb.from('profiles').update({full_name:fname+' '+lname,phone,country}).eq('id',data.user.id);
+  }
+  // Show success
+  document.getElementById('step3').classList.remove('active');
+  document.getElementById('stepSuccess').classList.add('active');
+  document.getElementById('progressFill').style.width='100%';
+}
+
+function showMsg(el,text,type){el.innerHTML=text;el.className='msg '+type+' show';}
+</script>
+</body>
+</html>

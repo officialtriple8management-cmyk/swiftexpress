@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Swift Express — Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+    :root{--green:#00C896;--green2:#00A87E;--dark:#080C0F;--dark2:#0E1419;--dark3:#151C23;--border:#1E2830;--gray:#5A6B7A;--light:#B8C8D4;--white:#EEF4F8;--red:#FF5050;--gold:#F5A623;--purple:#8B5CF6;}
+    body{background:var(--dark);color:var(--white);font-family:'DM Sans',sans-serif;display:flex;min-height:100vh;}
+    .sidebar{width:240px;background:var(--dark2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 0;position:fixed;height:100vh;z-index:50;}
+    .logo{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;padding:0 24px;margin-bottom:8px;}
+    .logo span{color:var(--gold);}
+    .admin-badge{margin:0 24px 28px;background:rgba(245,166,35,0.12);border:1px solid rgba(245,166,35,0.2);color:var(--gold);padding:4px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;width:fit-content;}
+    .nav-label{font-size:0.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gray);padding:0 24px;margin-bottom:8px;}
+    .nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;margin:0 10px;border-radius:8px;cursor:pointer;transition:all 0.2s;color:var(--gray);font-size:0.9rem;font-weight:500;}
+    .nav-item:hover{background:var(--dark3);color:var(--white);}
+    .nav-item.active{background:rgba(245,166,35,0.1);color:var(--gold);}
+    .nav-sep{height:1px;background:var(--border);margin:12px 14px;}
+    .sidebar-bottom{margin-top:auto;padding:0 14px;}
+    .logout-btn{width:100%;background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.2);color:var(--red);padding:10px;border-radius:8px;cursor:pointer;font-size:0.85rem;font-family:'DM Sans',sans-serif;}
+    .main{margin-left:240px;flex:1;padding:32px;min-height:100vh;}
+    .page{display:none;} .page.active{display:block;}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
+    .page-title{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;}
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px;}
+    .stat-card{background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:22px;}
+    .stat-label{font-size:0.78rem;font-weight:600;letter-spacing:0.5px;text-transform:uppercase;color:var(--gray);margin-bottom:10px;}
+    .stat-value{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;}
+    .stat-sub{font-size:0.8rem;color:var(--gray);margin-top:6px;}
+    .card{background:var(--dark2);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px;}
+    .card-title{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;margin-bottom:20px;}
+    table{width:100%;border-collapse:collapse;}
+    th{font-size:0.72rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--gray);padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);}
+    td{padding:13px 14px;font-size:0.87rem;border-bottom:1px solid rgba(30,40,48,0.5);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    .badge{padding:4px 10px;border-radius:100px;font-size:0.72rem;font-weight:700;}
+    .badge-pending{background:rgba(245,166,35,0.12);color:var(--gold);}
+    .badge-approved{background:rgba(0,200,150,0.12);color:var(--green);}
+    .badge-rejected{background:rgba(255,80,80,0.12);color:var(--red);}
+    .badge-admin{background:rgba(139,92,246,0.15);color:var(--purple);}
+    .badge-active{background:rgba(0,200,150,0.12);color:var(--green);}
+    .badge-suspended{background:rgba(255,80,80,0.12);color:var(--red);}
+    .btn{padding:7px 14px;border-radius:6px;border:none;cursor:pointer;font-size:0.8rem;font-weight:600;font-family:'DM Sans',sans-serif;transition:all 0.2s;margin:2px;}
+    .btn-green{background:rgba(0,200,150,0.15);color:var(--green);border:1px solid rgba(0,200,150,0.2);}
+    .btn-red{background:rgba(255,80,80,0.12);color:var(--red);border:1px solid rgba(255,80,80,0.2);}
+    .btn-gold{background:rgba(245,166,35,0.12);color:var(--gold);border:1px solid rgba(245,166,35,0.2);}
+    .btn-primary{background:var(--green);color:var(--dark);border:none;padding:10px 22px;border-radius:8px;font-weight:700;cursor:pointer;font-family:'Syne',sans-serif;}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;}
+    .modal-overlay.open{display:flex;}
+    .modal{background:var(--dark2);border:1px solid var(--border);border-radius:16px;padding:32px;width:90%;max-width:500px;}
+    .modal-title{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;margin-bottom:6px;}
+    .modal-sub{color:var(--gray);font-size:0.85rem;margin-bottom:22px;}
+    .modal-close{float:right;background:none;border:none;color:var(--gray);font-size:1.2rem;cursor:pointer;}
+    .field{margin-bottom:14px;}
+    .field label{display:block;font-size:0.75rem;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;color:var(--light);margin-bottom:7px;}
+    .field input,.field select,.field textarea{width:100%;background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:12px 14px;border-radius:8px;font-size:0.9rem;font-family:'DM Sans',sans-serif;outline:none;}
+    .field input:focus,.field select:focus{border-color:var(--gold);}
+    .field input::placeholder{color:var(--gray);}
+    .modal-btn{width:100%;padding:13px;border-radius:8px;border:none;font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;margin-top:8px;}
+    .modal-btn.gold{background:var(--gold);color:var(--dark);}
+    .modal-btn.green{background:var(--green);color:var(--dark);}
+    .modal-btn.red{background:var(--red);color:var(--white);}
+    .msg{margin-top:12px;padding:11px 14px;border-radius:8px;font-size:0.85rem;display:none;}
+    .msg.error{background:rgba(255,80,80,0.1);border:1px solid rgba(255,80,80,0.3);color:#FF8080;}
+    .msg.success{background:rgba(0,200,150,0.1);border:1px solid rgba(0,200,150,0.3);color:var(--green);}
+    .msg.show{display:block;}
+    .search-bar{background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:10px 16px;border-radius:8px;font-size:0.9rem;font-family:'DM Sans',sans-serif;outline:none;width:280px;}
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo">Swift<span>Express</span></div>
+  <div class="admin-badge">ADMIN PANEL</div>
+  <div class="nav-label">Dashboard</div>
+  <div class="nav-item active" onclick="showPage('overview',this)">📊 Overview</div>
+  <div class="nav-item" onclick="showPage('users',this)">👥 All Users</div>
+  <div class="nav-sep"></div>
+  <div class="nav-label">Finance</div>
+  <div class="nav-item" onclick="showPage('deposits',this)">💰 Deposits</div>
+  <div class="nav-item" onclick="showPage('withdrawals',this)">💸 Withdrawals</div>
+  <div class="nav-item" onclick="showPage('balances',this)">⚖️ Edit Balances</div>
+  <div class="nav-sep"></div>
+  <div class="nav-label">Tools</div>
+  <div class="nav-item" onclick="showPage('notify',this)">📢 Send Notification</div>
+  <div class="sidebar-bottom">
+    <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
+  </div>
+</aside>
+
+<main class="main">
+  <!-- OVERVIEW -->
+  <div class="page active" id="page-overview">
+    <div class="topbar"><div class="page-title">🏦 Admin Overview</div><div style="color:var(--gray);font-size:0.85rem" id="admin-date"></div></div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value" id="stat-users">--</div><div class="stat-sub">Registered investors</div></div>
+      <div class="stat-card"><div class="stat-label">Funds Under Management</div><div class="stat-value" style="color:var(--green)" id="stat-aum">--</div><div class="stat-sub">Total portfolio value</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Deposits</div><div class="stat-value" style="color:var(--gold)" id="stat-dep">--</div><div class="stat-sub">Awaiting approval</div></div>
+      <div class="stat-card"><div class="stat-label">Pending Withdrawals</div><div class="stat-value" style="color:var(--red)" id="stat-wd">--</div><div class="stat-sub">Awaiting processing</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Pending Deposits</div>
+      <table><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Tx Reference</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody id="pending-deps"><tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table>
+    </div>
+    <div class="card">
+      <div class="card-title">Pending Withdrawals</div>
+      <table><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Wallet/Account</th><th>Date</th><th>Actions</th></tr></thead>
+      <tbody id="pending-wds"><tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table>
+    </div>
+  </div>
+
+  <!-- USERS -->
+  <div class="page" id="page-users">
+    <div class="topbar"><div class="page-title">👥 All Users</div><input class="search-bar" placeholder="Search name or email..." oninput="filterUsers(this.value)"/></div>
+    <div class="card"><table><thead><tr><th>Name</th><th>Email</th><th>Country</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+    <tbody id="users-table"><tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <!-- DEPOSITS -->
+  <div class="page" id="page-deposits">
+    <div class="topbar"><div class="page-title">💰 All Deposits</div></div>
+    <div class="card"><table><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Reference</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+    <tbody id="all-deps"><tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <!-- WITHDRAWALS -->
+  <div class="page" id="page-withdrawals">
+    <div class="topbar"><div class="page-title">💸 All Withdrawals</div></div>
+    <div class="card"><table><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Wallet/Account</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+    <tbody id="all-wds"><tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <!-- EDIT BALANCES -->
+  <div class="page" id="page-balances">
+    <div class="topbar"><div class="page-title">⚖️ Edit User Balances</div></div>
+    <div class="card"><table><thead><tr><th>Name</th><th>Email</th><th>BTC ($)</th><th>Stocks ($)</th><th>Forex ($)</th><th>Profit ($)</th><th>Action</th></tr></thead>
+    <tbody id="balance-table"><tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <!-- SEND NOTIFICATION -->
+  <div class="page" id="page-notify">
+    <div class="topbar"><div class="page-title">📢 Send Notification</div></div>
+    <div class="card" style="max-width:560px">
+      <div class="card-title">Send a message to any user</div>
+      <div class="field"><label>Select User</label><select id="notif-user"><option value="">Loading...</option></select></div>
+      <div class="field"><label>Title</label><input type="text" id="notif-title" placeholder="e.g. Deposit Approved"/></div>
+      <div class="field"><label>Message</label><textarea id="notif-msg" rows="4" placeholder="Your deposit has been approved..." style="background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:12px 14px;border-radius:8px;font-size:0.9rem;font-family:'DM Sans',sans-serif;outline:none;width:100%;resize:vertical;"></textarea></div>
+      <button class="btn-primary" onclick="sendNotification()">Send Notification</button>
+      <div class="msg" id="notif-result"></div>
+    </div>
+  </div>
+</main>
+
+<!-- EDIT BALANCE MODAL -->
+<div class="modal-overlay" id="editBalModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('editBal')">X</button>
+    <div class="modal-title">Edit Balance</div>
+    <div class="modal-sub" id="editBal-name">User</div>
+    <input type="hidden" id="editBal-uid"/>
+    <div class="field"><label>BTC Balance ($)</label><input type="number" id="eb-btc" step="0.01" min="0"/></div>
+    <div class="field"><label>Stocks Balance ($)</label><input type="number" id="eb-stocks" step="0.01" min="0"/></div>
+    <div class="field"><label>Forex Balance ($)</label><input type="number" id="eb-forex" step="0.01" min="0"/></div>
+    <div class="field"><label>Total Profit ($)</label><input type="number" id="eb-profit" step="0.01" min="0"/></div>
+    <button class="modal-btn gold" onclick="saveBalance()">Save Changes</button>
+    <div class="msg" id="eb-msg"></div>
+  </div>
+</div>
+
+<!-- REJECT MODAL -->
+<div class="modal-overlay" id="rejectModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('reject')">X</button>
+    <div class="modal-title">Reject Transaction</div>
+    <div class="modal-sub">Add a note to explain the rejection to the user.</div>
+    <input type="hidden" id="reject-id"/>
+    <div class="field"><label>Reason</label><input type="text" id="reject-note" placeholder="e.g. Invalid transaction ID provided"/></div>
+    <button class="modal-btn red" onclick="confirmReject()">Confirm Rejection</button>
+    <div class="msg" id="reject-msg"></div>
+  </div>
+</div>
+
+<script>
+const {createClient}=supabase;
+const sb=createClient('https://tnvbiricxztlxppdqphh.supabase.co','sb_publishable_sbf6NMGko9Jtm9ySrjk4UA_iNCn-pnI');
+let allUsers=[];
+
+async function init(){
+  document.body.style.opacity='0';
+  document.body.style.transition='opacity 0.4s';
+
+  // Retry getting session up to 20 times — handles file:// delay
+  let session=null;
+  for(let i=0;i<20;i++){
+    const {data}=await sb.auth.getSession();
+    if(data?.session){session=data.session;break;}
+    await new Promise(r=>setTimeout(r,300));
+  }
+
+  if(!session){window.location.replace('login.html');return;}
+
+  // Check admin status
+  try{
+    const {data:p}=await sb.from('profiles').select('is_admin').eq('id',session.user.id).single();
+    if(!p?.is_admin){
+      alert('Access denied. Admins only.');
+      window.location.replace('dashboard.html');
+      return;
+    }
+  }catch(e){
+    alert('Could not verify admin access. Please log in again.');
+    window.location.replace('login.html');
+    return;
+  }
+
+  // ✅ Admin confirmed — show page
+  document.body.style.opacity='1';
+  const dateEl=document.getElementById('admin-date');
+  if(dateEl) dateEl.textContent=new Date().toLocaleDateString('en',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  loadAll();
+
+  // Listen for logout
+  sb.auth.onAuthStateChange((event)=>{
+    if(event==='SIGNED_OUT') window.location.replace('login.html');
+  });
+}
+
+async function loadAll(){
+  await loadUsers();
+  loadStats();
+  loadPendingDeposits();
+  loadPendingWithdrawals();
+  loadAllDeposits();
+  loadAllWithdrawals();
+  loadBalancesTable();
+  populateNotifUsers();
+}
+
+async function loadUsers(){
+  const {data}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
+  allUsers=data||[];
+  renderUsers(allUsers);
+}
+
+function renderUsers(users){
+  if(!users.length){document.getElementById('users-table').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">No users found</td></tr>';return;}
+  document.getElementById('users-table').innerHTML=users.map(u=>`<tr>
+    <td><strong>${u.full_name||'--'}</strong></td>
+    <td style="color:var(--gray)">${u.email||'--'}</td>
+    <td>${u.country||'--'}</td>
+    <td>${u.is_admin?'<span class="badge badge-admin">Admin</span>':u.is_suspended?'<span class="badge badge-suspended">Suspended</span>':'<span class="badge badge-active">Active</span>'}</td>
+    <td style="color:var(--gray);font-size:0.8rem">${new Date(u.created_at).toLocaleDateString()}</td>
+    <td>${u.is_suspended?`<button class="btn btn-green" onclick="toggleSuspend('${u.id}',false)">Unsuspend</button>`:`<button class="btn btn-red" onclick="toggleSuspend('${u.id}',true)">Suspend</button>`}
+    ${!u.is_admin?`<button class="btn btn-gold" onclick="makeAdmin('${u.id}')">Make Admin</button>`:''}</td></tr>`).join('');
+}
+
+function filterUsers(q){
+  renderUsers(allUsers.filter(u=>(u.full_name||'').toLowerCase().includes(q.toLowerCase())||(u.email||'').toLowerCase().includes(q.toLowerCase())));
+}
+
+async function loadStats(){
+  const {data:w}=await sb.from('wallets').select('btc_balance,stocks_balance,forex_balance');
+  const aum=(w||[]).reduce((s,x)=>s+(x.btc_balance||0)+(x.stocks_balance||0)+(x.forex_balance||0),0);
+  const {data:pd}=await sb.from('transactions').select('id').eq('type','deposit').eq('status','pending');
+  const {data:pw}=await sb.from('transactions').select('id').eq('type','withdrawal').eq('status','pending');
+  document.getElementById('stat-users').textContent=allUsers.length;
+  document.getElementById('stat-aum').textContent='$'+aum.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('stat-dep').textContent=pd?.length||0;
+  document.getElementById('stat-wd').textContent=pw?.length||0;
+}
+
+async function loadPendingDeposits(){
+  const {data}=await sb.from('transactions').select('*,profiles(full_name,email)').eq('type','deposit').eq('status','pending').order('created_at',{ascending:false});
+  const el=document.getElementById('pending-deps');
+  if(!data?.length){el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">No pending deposits</td></tr>';return;}
+  el.innerHTML=data.map(t=>`<tr>
+    <td><strong>${t.profiles?.full_name||'--'}</strong><br><small style="color:var(--gray)">${t.profiles?.email||''}</small></td>
+    <td style="color:var(--green);font-weight:700">$${parseFloat(t.amount).toLocaleString()}</td>
+    <td>${t.payment_method||'--'}</td>
+    <td style="color:var(--gray);font-size:0.8rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.proof_url||'--'}</td>
+    <td style="color:var(--gray);font-size:0.8rem">${new Date(t.created_at).toLocaleDateString()}</td>
+    <td><button class="btn btn-green" onclick="approveDeposit('${t.id}','${t.user_id}',${t.amount})">Approve</button>
+    <button class="btn btn-red" onclick="openReject('${t.id}')">Reject</button></td></tr>`).join('');
+}
+
+async function loadPendingWithdrawals(){
+  const {data}=await sb.from('transactions').select('*,profiles(full_name,email)').eq('type','withdrawal').eq('status','pending').order('created_at',{ascending:false});
+  const el=document.getElementById('pending-wds');
+  if(!data?.length){el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">No pending withdrawals</td></tr>';return;}
+  el.innerHTML=data.map(t=>`<tr>
+    <td><strong>${t.profiles?.full_name||'--'}</strong><br><small style="color:var(--gray)">${t.profiles?.email||''}</small></td>
+    <td style="color:var(--red);font-weight:700">$${parseFloat(t.amount).toLocaleString()}</td>
+    <td>${t.payment_method||'--'}</td>
+    <td style="color:var(--gray);font-size:0.8rem">${t.proof_url||'--'}</td>
+    <td style="color:var(--gray);font-size:0.8rem">${new Date(t.created_at).toLocaleDateString()}</td>
+    <td><button class="btn btn-green" onclick="approveWithdrawal('${t.id}','${t.user_id}',${t.amount})">Approve</button>
+    <button class="btn btn-red" onclick="openReject('${t.id}')">Reject</button></td></tr>`).join('');
+}
+
+async function loadAllDeposits(){
+  const {data}=await sb.from('transactions').select('*,profiles(full_name,email)').eq('type','deposit').order('created_at',{ascending:false});
+  document.getElementById('all-deps').innerHTML=(data||[]).map(t=>`<tr>
+    <td>${t.profiles?.full_name||'--'}</td>
+    <td style="font-weight:600">$${parseFloat(t.amount).toLocaleString()}</td>
+    <td>${t.payment_method||'--'}</td>
+    <td style="color:var(--gray);font-size:0.8rem">${t.proof_url||'--'}</td>
+    <td><span class="badge badge-${t.status}">${cap(t.status)}</span></td>
+    <td style="color:var(--gray);font-size:0.8rem">${new Date(t.created_at).toLocaleDateString()}</td>
+    <td>${t.status==='pending'?`<button class="btn btn-green" onclick="approveDeposit('${t.id}','${t.user_id}',${t.amount})">Approve</button>`:'--'}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">No deposits</td></tr>';
+}
+
+async function loadAllWithdrawals(){
+  const {data}=await sb.from('transactions').select('*,profiles(full_name,email)').eq('type','withdrawal').order('created_at',{ascending:false});
+  document.getElementById('all-wds').innerHTML=(data||[]).map(t=>`<tr>
+    <td>${t.profiles?.full_name||'--'}</td>
+    <td style="font-weight:600">$${parseFloat(t.amount).toLocaleString()}</td>
+    <td>${t.payment_method||'--'}</td>
+    <td style="color:var(--gray);font-size:0.8rem">${t.proof_url||'--'}</td>
+    <td><span class="badge badge-${t.status}">${cap(t.status)}</span></td>
+    <td style="color:var(--gray);font-size:0.8rem">${new Date(t.created_at).toLocaleDateString()}</td>
+    <td>${t.status==='pending'?`<button class="btn btn-green" onclick="approveWithdrawal('${t.id}','${t.user_id}',${t.amount})">Approve</button>`:'--'}</td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">No withdrawals</td></tr>';
+}
+
+async function loadBalancesTable(){
+  const {data}=await sb.from('wallets').select('*,profiles(full_name,email)');
+  document.getElementById('balance-table').innerHTML=(data||[]).map(w=>`<tr>
+    <td><strong>${w.profiles?.full_name||'--'}</strong></td>
+    <td style="color:var(--gray);font-size:0.8rem">${w.profiles?.email||'--'}</td>
+    <td>$${(w.btc_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
+    <td>$${(w.stocks_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
+    <td>$${(w.forex_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
+    <td style="color:var(--green)">$${(w.total_profit||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
+    <td><button class="btn btn-gold" onclick="openEditBal('${w.user_id}','${w.profiles?.full_name||'User'}',${w.btc_balance||0},${w.stocks_balance||0},${w.forex_balance||0},${w.total_profit||0})">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">No data</td></tr>';
+}
+
+function populateNotifUsers(){
+  document.getElementById('notif-user').innerHTML='<option value="">Select user...</option>'+allUsers.filter(u=>!u.is_admin).map(u=>`<option value="${u.id}">${u.full_name||u.email}</option>`).join('');
+}
+
+async function approveDeposit(txId,userId,amount){
+  if(!confirm(`Approve deposit of $${amount}? This will add $${amount} to the user's balance.`))return;
+  // Get current wallet
+  const {data:w, error:we}=await sb.from('wallets').select('btc_balance,total_deposited').eq('user_id',userId).single();
+  if(we){alert('Error reading wallet: '+we.message);return;}
+  const newBal=(parseFloat(w?.btc_balance)||0)+parseFloat(amount);
+  const newDep=(parseFloat(w?.total_deposited)||0)+parseFloat(amount);
+  // Update wallet balance
+  const {error:ue}=await sb.from('wallets').update({
+    btc_balance:newBal,
+    total_deposited:newDep
+  }).eq('user_id',userId);
+  if(ue){alert('Error updating balance: '+ue.message);return;}
+  // Mark transaction approved
+  const {error:te}=await sb.from('transactions').update({
+    status:'approved',
+    admin_note:'Approved by admin'
+  }).eq('id',txId);
+  if(te){alert('Balance updated but transaction error: '+te.message);}
+  // Send notification
+  await sb.from('notifications').insert({
+    user_id:userId,
+    title:'Deposit Approved ✅',
+    message:`Your deposit of $${parseFloat(amount).toLocaleString()} has been approved and credited to your account.`,
+    is_read:false
+  });
+  alert(`✅ Success! $${parseFloat(amount).toLocaleString()} added to user balance.`);
+  loadAll();
+}
+
+async function approveWithdrawal(txId,userId,amount){
+  if(!confirm(`Approve withdrawal of $${amount}? This will deduct from user balance.`))return;
+  const {data:w, error:we}=await sb.from('wallets').select('btc_balance,total_withdrawn').eq('user_id',userId).single();
+  if(we){alert('Error reading wallet: '+we.message);return;}
+  const newBal=Math.max(0,(parseFloat(w?.btc_balance)||0)-parseFloat(amount));
+  const newWith=(parseFloat(w?.total_withdrawn)||0)+parseFloat(amount);
+  const {error:ue}=await sb.from('wallets').update({
+    btc_balance:newBal,
+    total_withdrawn:newWith
+  }).eq('user_id',userId);
+  if(ue){alert('Error updating balance: '+ue.message);return;}
+  const {error:te}=await sb.from('transactions').update({
+    status:'approved',
+    admin_note:'Withdrawal processed by admin'
+  }).eq('id',txId);
+  if(te){alert('Balance updated but transaction error: '+te.message);}
+  await sb.from('notifications').insert({
+    user_id:userId,
+    title:'Withdrawal Processed ✅',
+    message:`Your withdrawal of $${parseFloat(amount).toLocaleString()} has been processed successfully.`,
+    is_read:false
+  });
+  alert(`✅ Withdrawal of $${parseFloat(amount).toLocaleString()} approved!`);
+  loadAll();
+}
+
+function openReject(txId){
+  document.getElementById('reject-id').value=txId;
+  document.getElementById('reject-note').value='';
+  openModal('reject');
+}
+async function confirmReject(){
+  const txId=document.getElementById('reject-id').value;
+  const note=document.getElementById('reject-note').value.trim();
+  const msg=document.getElementById('reject-msg');
+  if(!note)return showMsg(msg,'Add a reason','error');
+  await sb.from('transactions').update({status:'rejected',admin_note:note}).eq('id',txId);
+  showMsg(msg,'Transaction rejected','success');
+  setTimeout(()=>{closeModal('reject');loadAll();},1000);
+}
+
+function openEditBal(uid,name,btc,stocks,forex,profit){
+  document.getElementById('editBal-uid').value=uid;
+  document.getElementById('editBal-name').textContent='Editing: '+name;
+  document.getElementById('eb-btc').value=btc;
+  document.getElementById('eb-stocks').value=stocks;
+  document.getElementById('eb-forex').value=forex;
+  document.getElementById('eb-profit').value=profit;
+  openModal('editBal');
+}
+async function saveBalance(){
+  const uid=document.getElementById('editBal-uid').value;
+  const msg=document.getElementById('eb-msg');
+  const {error}=await sb.from('wallets').update({btc_balance:parseFloat(document.getElementById('eb-btc').value)||0,
+    stocks_balance:parseFloat(document.getElementById('eb-stocks').value)||0,
+    forex_balance:parseFloat(document.getElementById('eb-forex').value)||0,
+    total_profit:parseFloat(document.getElementById('eb-profit').value)||0
+  }).eq('user_id',uid);
+  if(error)return showMsg(msg,'Error saving','error');
+  showMsg(msg,'Balance updated!','success');
+  setTimeout(()=>{closeModal('editBal');loadAll();},1000);
+}
+
+async function sendNotification(){
+  const uid=document.getElementById('notif-user').value;
+  const title=document.getElementById('notif-title').value.trim();
+  const message=document.getElementById('notif-msg').value.trim();
+  const msg=document.getElementById('notif-result');
+  if(!uid||!title||!message)return showMsg(msg,'Fill in all fields','error');
+  const {error}=await sb.from('notifications').insert({user_id:uid,title,message,is_read:false});
+  if(error)return showMsg(msg,'Error sending','error');
+  showMsg(msg,'Notification sent!','success');
+  document.getElementById('notif-title').value='';
+  document.getElementById('notif-msg').value='';
+}
+
+async function toggleSuspend(uid,suspend){
+  if(!confirm((suspend?'Suspend':'Unsuspend')+' this user?'))return;
+  await sb.from('profiles').update({is_suspended:suspend}).eq('id',uid);
+  loadUsers();
+}
+async function makeAdmin(uid){
+  if(!confirm('Give admin access to this user? They will have full control.'))return;
+  await sb.from('profiles').update({is_admin:true}).eq('id',uid);
+  loadUsers();
+}
+
+function showPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+}
+function openModal(t){document.getElementById(t+'Modal').classList.add('open');}
+function closeModal(t){document.getElementById(t+'Modal').classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+function doLogout(){sb.auth.signOut().then(()=>window.location.href='login.html');}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+function showMsg(el,text,type){el.textContent=text;el.className='msg '+type+' show';}
+init();
+</script>
+</body>
+</html>
