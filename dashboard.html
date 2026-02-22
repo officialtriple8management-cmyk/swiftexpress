@@ -501,7 +501,39 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 }
 
 @media(max-width:1100px){.dash-right{display:none;}}
-@media(max-width:800px){.sidebar{display:none;}.dash-body{grid-template-columns:1fr;}}
+@media(max-width:800px){
+  .sidebar{
+    width:100%;height:auto;position:relative;flex-direction:row;
+    flex-wrap:nowrap;overflow-x:auto;padding:8px;gap:4px;
+    border-right:none;border-bottom:1px solid var(--border);
+    height:56px;align-items:center;
+  }
+  .sb-logo{padding:4px 10px 4px;border-bottom:none;}
+  .sb-logo-box{width:24px;height:24px;}
+  .sb-logo-text{font-size:13px;}
+  .sb-section-label{display:none;}
+  .sb-sep{display:none;}
+  .sb-item{padding:6px 10px;min-width:auto;white-space:nowrap;font-size:11px;border-radius:6px;flex-shrink:0;}
+  .sb-item svg{width:13px;height:13px;}
+  .app{flex-direction:column;}
+  .topbar{padding:8px 14px;}
+  .main-content{overflow-y:auto;height:calc(100vh - 56px);}
+  .dash-body{grid-template-columns:1fr;}
+  .inner-wrap{padding:16px;}
+  .inner-title{font-size:16px;}
+  .ticker-wrap{height:44px;}
+}
+@media(max-width:480px){
+  .topbar-title{font-size:13px;}
+  .bal-amount{font-size:22px;}
+  .promo-banner{padding:16px;}
+  .promo-heading{font-size:14px;}
+  .promo-btns{flex-direction:column;gap:8px;}
+  .tabs-row{gap:6px;}
+  .tab-btn{padding:6px 12px;font-size:12px;}
+  .trades-table th,.trades-table td{padding:8px 6px;font-size:11px;}
+  .form-row{flex-direction:column;}
+}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━ DEPOSIT MODAL ━━━━━━━━━━━━━━━━━━━━━━━━ */
 .modal-overlay{
@@ -646,7 +678,10 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
   <div class="main">
 
     <!-- TOPBAR -->
-    <div class="topbar">
+    <!-- MOBILE HAMBURGER -->
+  <button id="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;position:fixed;bottom:20px;right:20px;width:52px;height:52px;border-radius:50%;background:#3b82f6;border:none;color:#fff;font-size:20px;cursor:pointer;z-index:500;box-shadow:0 4px 20px rgba(59,130,246,0.4);">☰</button>
+
+  <div class="topbar">
       <div class="topbar-left">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span id="page-title">Dashboard</span>
@@ -1485,6 +1520,21 @@ function closeProfile(){
   document.getElementById('profile-panel').style.display='none';
   document.getElementById('profile-overlay').classList.remove('open');
 }
+
+/* ── MOBILE SIDEBAR ── */
+function toggleMobileSidebar(){
+  const sb=document.querySelector('.sidebar');
+  sb.style.display=sb.style.display==='none'?'flex':'none';
+}
+window.addEventListener('resize',()=>{
+  const btn=document.getElementById('mobile-menu-btn');
+  if(btn) btn.style.display=window.innerWidth<=800?'flex':'none';
+  if(window.innerWidth>800){
+    document.querySelector('.sidebar').style.display='';
+  }
+});
+window.dispatchEvent(new Event('resize'));
+
 function doLogout(){sb.auth.signOut().then(()=>{window.location.href='login.html';});}
 function showMsg(el,txt,type){el.textContent=txt;el.className='msg-box '+type+' show';}
 function toggleBalMenu(){}

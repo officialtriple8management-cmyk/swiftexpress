@@ -69,24 +69,72 @@
     .msg.show{display:block;}
     .search-bar{background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:10px 16px;border-radius:8px;font-size:0.9rem;font-family:'DM Sans',sans-serif;outline:none;width:280px;}
   
-.wallet-addr-card{background:#1e1e1e;border:1px solid #2d2d2d;border-radius:10px;padding:18px 20px;}
-.wallet-addr-card h4{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+.wallet-addr-card{background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:18px 20px;margin-bottom:12px;}
+.wallet-addr-card h4{font-size:0.9rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--white);}
 .wallet-addr-input{
-  width:100%;background:#141414;border:1px solid #383838;
-  color:#e8e8e8;padding:10px 14px;border-radius:7px;
+  width:100%;background:var(--dark2);border:1px solid var(--border);
+  color:var(--white);padding:10px 14px;border-radius:7px;
   font-size:12px;font-family:monospace;outline:none;
-  transition:border 0.15s;
+  transition:border 0.15s;margin-bottom:6px;
 }
-.wallet-addr-input:focus{border-color:#1db954;}
-.wallet-toggle{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:#888;}
-.toggle-switch{width:36px;height:20px;background:#333;border-radius:10px;position:relative;cursor:pointer;transition:all 0.2s;border:none;}
-.toggle-switch.on{background:#1db954;}
+.wallet-addr-input:focus{border-color:var(--gold);}
+.wallet-toggle{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12px;color:var(--gray);}
+.toggle-switch{width:36px;height:20px;background:var(--border);border-radius:10px;position:relative;cursor:pointer;transition:all 0.2s;border:none;flex-shrink:0;}
+.toggle-switch.on{background:var(--green);}
 .toggle-switch::after{content:'';position:absolute;width:14px;height:14px;background:#fff;border-radius:50%;top:3px;left:3px;transition:all 0.2s;}
 .toggle-switch.on::after{left:19px;}
+.addr-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.addr-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
 
 </style>
 </head>
 <body>
+
+<!-- LOADING OVERLAY -->
+<div id="admin-loader" style="position:fixed;inset:0;background:#080C0F;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
+  <div style="font-family:Syne,sans-serif;font-size:1.4rem;font-weight:800;color:#F5A623">Swift<span style="color:#fff">Express</span></div>
+  <div id="loader-msg" style="color:#5A6B7A;font-size:13px;min-height:20px">Loading admin panel...</div>
+  <div style="width:180px;height:3px;background:#1E2830;border-radius:2px;overflow:hidden">
+    <div style="height:100%;background:#F5A623;border-radius:2px;animation:ldBar 1.2s ease-in-out infinite"></div>
+  </div>
+  <button onclick="location.reload()" style="margin-top:8px;background:none;border:1px solid #1E2830;color:#5A6B7A;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:12px">Refresh</button>
+</div>
+<style>
+@keyframes ldBar{0%{width:0;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0;margin-left:100%}}
+
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:768px){
+  .sidebar{
+    width:100%;height:auto;position:relative;
+    flex-direction:row;flex-wrap:wrap;
+    padding:12px;gap:4px;
+    border-right:none;border-bottom:1px solid var(--border);
+  }
+  .logo{font-size:1rem;padding:4px 8px;margin-bottom:0;}
+  .admin-badge{margin:0 8px 0 0;padding:3px 8px;font-size:0.65rem;}
+  .nav-label{display:none;}
+  .nav-sep{display:none;}
+  .nav-item{padding:7px 10px;margin:0;font-size:0.78rem;border-radius:6px;}
+  .sidebar-bottom{margin-top:0;margin-left:auto;padding:0;}
+  .logout-btn{padding:7px 14px;font-size:0.78rem;border-radius:6px;}
+  .main{margin-left:0;padding:16px;}
+  .stats-grid{grid-template-columns:1fr 1fr;gap:10px;}
+  .stat-value{font-size:1.4rem;}
+  .page-title{font-size:1.2rem;}
+  .topbar{flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:16px;}
+  .search-bar{width:100%;}
+  table{font-size:0.78rem;}
+  th,td{padding:8px 6px;}
+  body{flex-direction:column;}
+  .card{padding:14px;}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:1fr;}
+  .sidebar{overflow-x:auto;flex-wrap:nowrap;white-space:nowrap;}
+  .nav-item{flex-shrink:0;}
+}
+</style>
+
 <aside class="sidebar">
   <div class="logo">Swift<span>Express</span></div>
   <div class="admin-badge">ADMIN PANEL</div>
@@ -160,23 +208,28 @@
 
   <!-- WALLET ADDRESSES PAGE -->
   <div class="page" id="page-wallets">
-    <div class="topbar"><div class="page-title">💳 Wallet Addresses</div></div>
-    <div class="card" style="max-width:700px">
+    <div class="topbar">
+      <div class="page-title">💳 Wallet Addresses</div>
+    </div>
+    <div class="card" style="max-width:720px">
       <div class="card-title">Manage Deposit Addresses</div>
-      <p style="color:#888;font-size:12px;margin-bottom:20px;line-height:1.6">
-        Add your real wallet addresses below. You can add multiple addresses per method — the system will automatically rotate them so each user gets a different address. Click <strong>+ Add Address</strong> to add more.
+      <p style="color:var(--gray);font-size:0.85rem;margin-bottom:22px;line-height:1.6">
+        Add your real wallet addresses below. Add <strong>multiple per method</strong> for automatic rotation — each deposit will use the least-used address.
       </p>
       <div id="wallet-addr-list">
-        <div style="text-align:center;color:#888;padding:24px">Loading addresses...</div>
+        <div style="text-align:center;color:var(--gray);padding:32px">
+          <div style="font-size:24px;margin-bottom:8px">⏳</div>
+          Loading wallet addresses...
+        </div>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap;">
-        <button onclick="saveWalletAddresses()" style="background:#1db954;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">💾 Save All</button>
-        <button onclick="loadWalletAddresses()" style="background:#242424;color:#aaa;border:1px solid #383838;padding:12px 20px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit">🔄 Refresh</button>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:24px;flex-wrap:wrap;">
+        <button onclick="saveWalletAddresses()" class="btn-primary" style="font-family:inherit;padding:11px 26px;border-radius:8px;font-size:0.9rem">💾 Save All Addresses</button>
+        <button onclick="loadWalletAddresses()" style="background:var(--dark3);color:var(--gray);border:1px solid var(--border);padding:11px 20px;border-radius:8px;font-size:0.85rem;cursor:pointer;font-family:inherit">🔄 Refresh</button>
       </div>
-      <div style="margin-top:10px;font-size:12px;color:#666;line-height:1.6">
-        💡 Addresses rotate automatically — the least-used address is always shown first to users.
+      <div style="margin-top:12px;font-size:0.8rem;color:var(--gray);line-height:1.6">
+        💡 The system automatically gives each user the <strong>least-used address</strong> when they deposit.
       </div>
-      <div id="wallet-save-msg" style="margin-top:14px;font-size:13px;padding:10px 14px;border-radius:7px;display:none"></div>
+      <div id="wallet-save-msg" style="margin-top:14px;font-size:0.85rem;padding:11px 14px;border-radius:8px;display:none"></div>
     </div>
   </div>
 
@@ -229,40 +282,65 @@ const sb=createClient('https://tnvbiricxztlxppdqphh.supabase.co','sb_publishable
 let allUsers=[];
 
 async function init(){
-  document.body.style.opacity='0';
-  document.body.style.transition='opacity 0.4s';
+  const loader=document.getElementById('admin-loader');
+  const showLoader=()=>{if(loader)loader.style.display='flex';};
+  const hideLoader=()=>{if(loader)loader.style.display='none';};
+  const setLoaderMsg=(m)=>{const el=document.getElementById('loader-msg');if(el)el.textContent=m;};
 
-  // Retry getting session up to 20 times — handles file:// delay
+  showLoader();
+  setLoaderMsg('Checking session...');
+
+  // Get session with retries
   let session=null;
-  for(let i=0;i<20;i++){
+  for(let i=0;i<15;i++){
     const {data}=await sb.auth.getSession();
     if(data?.session){session=data.session;break;}
-    await new Promise(r=>setTimeout(r,300));
+    await new Promise(r=>setTimeout(r,400));
+    setLoaderMsg('Loading... ('+(i+1)+')');
   }
 
-  if(!session){window.location.replace('login.html');return;}
-
-  // Check admin status
-  try{
-    const {data:p}=await sb.from('profiles').select('is_admin').eq('id',session.user.id).single();
-    if(!p?.is_admin){
-      alert('Access denied. Admins only.');
-      window.location.replace('dashboard.html');
-      return;
-    }
-  }catch(e){
-    alert('Could not verify admin access. Please log in again.');
+  if(!session){
+    setLoaderMsg('No session — redirecting to login...');
+    await new Promise(r=>setTimeout(r,800));
     window.location.replace('login.html');
     return;
   }
 
-  // ✅ Admin confirmed — show page
-  document.body.style.opacity='1';
+  setLoaderMsg('Verifying admin access...');
+
+  // Check admin — but DON'T redirect on failure, show error instead
+  let isAdmin=false;
+  try{
+    const {data:p,error:pe}=await sb.from('profiles').select('is_admin').eq('id',session.user.id).single();
+    if(pe) throw new Error(pe.message);
+    isAdmin=p?.is_admin===true;
+  }catch(e){
+    // Show error ON the loader instead of redirecting
+    setLoaderMsg('⚠️ Error: '+e.message+'. Retrying...');
+    await new Promise(r=>setTimeout(r,1500));
+    // One more try
+    try{
+      const {data:p2}=await sb.from('profiles').select('is_admin').eq('id',session.user.id).single();
+      isAdmin=p2?.is_admin===true;
+    }catch(e2){
+      setLoaderMsg('❌ Cannot load profile. Please refresh the page.');
+      return; // Don't redirect — let user see the error
+    }
+  }
+
+  if(!isAdmin){
+    setLoaderMsg('❌ Access denied — admin only.');
+    await new Promise(r=>setTimeout(r,1500));
+    window.location.replace('dashboard.html');
+    return;
+  }
+
+  // ✅ All good — hide loader and show content
+  hideLoader();
   const dateEl=document.getElementById('admin-date');
   if(dateEl) dateEl.textContent=new Date().toLocaleDateString('en',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   loadAll();
 
-  // Listen for logout
   sb.auth.onAuthStateChange((event)=>{
     if(event==='SIGNED_OUT') window.location.replace('login.html');
   });
