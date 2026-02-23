@@ -61,6 +61,8 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--white);fo
 .sb-item svg{width:15px;height:15px;flex-shrink:0;}
 .sb-item:hover{background:rgba(255,255,255,0.05);color:var(--white2);}
 .sb-item.active{background:rgba(255,255,255,0.07);color:#fff;}
+.sb-item.danger-item{color:#e74c3c !important;}
+.sb-item.danger-item:hover{background:rgba(231,76,60,0.08);color:#e74c3c;}
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ MAIN ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 .main{flex:1;display:flex;flex-direction:column;min-width:0;height:100vh;overflow:hidden;}
@@ -696,6 +698,85 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 .modal-msg.err{background:rgba(231,76,60,0.08);border:1px solid rgba(231,76,60,0.2);color:#fca5a5;display:block;}
 .modal-msg.ok{background:rgba(46,204,113,0.08);border:1px solid rgba(46,204,113,0.2);color:#6ee7b7;display:block;}
 .no-addr{color:#e74c3c;font-size:12px;font-style:italic;}
+
+/* ── PROFILE DROPDOWN ENHANCED ── */
+.profile-panel{width:300px;}
+.pi-icon{
+  width:34px;height:34px;border-radius:8px;
+  background:var(--card);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;color:var(--gray);
+}
+.pi-title{font-size:13px;font-weight:600;color:var(--white);}
+.pi-sub{font-size:11px;color:var(--gray);margin-top:1px;}
+.pd-section-label{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--gray2);padding:8px 16px 4px;
+}
+.profile-item{gap:12px;padding:10px 14px;align-items:center;}
+
+/* ── SETTINGS PANEL ── */
+.settings-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  z-index:1800;display:none;backdrop-filter:blur(3px);
+}
+.settings-overlay.open{display:block;}
+.settings-panel{
+  position:fixed;top:0;right:0;bottom:0;width:320px;
+  background:var(--sidebar);border-left:1px solid var(--border);
+  z-index:1900;transform:translateX(100%);
+  transition:transform 0.25s ease;
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+.settings-panel.open{transform:translateX(0);}
+.settings-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:18px 20px;border-bottom:1px solid var(--border);
+  font-size:16px;font-weight:700;flex-shrink:0;
+}
+.settings-close{
+  width:28px;height:28px;border-radius:6px;background:var(--card);
+  border:1px solid var(--border);display:flex;align-items:center;
+  justify-content:center;cursor:pointer;color:var(--gray);font-size:14px;
+}
+.settings-user{
+  display:flex;align-items:center;gap:12px;
+  padding:16px 20px;border-bottom:1px solid var(--border);
+}
+.settings-user-avatar{
+  width:48px;height:48px;border-radius:50%;
+  background:linear-gradient(135deg,#3b82f6,#06b6d4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:15px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.settings-user-name{font-size:13px;font-weight:700;}
+.settings-user-email{font-size:11px;color:var(--gray);}
+.settings-not-verified{
+  display:inline-flex;align-items:center;gap:4px;
+  color:#e74c3c;font-size:10px;font-weight:700;margin-top:3px;
+}
+.settings-section-label{
+  font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--gray2);padding:14px 20px 6px;
+}
+.settings-item{
+  display:flex;align-items:center;gap:14px;
+  padding:13px 20px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.03);
+  transition:background 0.12s;
+}
+.settings-item:hover{background:var(--card);}
+.settings-item-icon{
+  width:38px;height:38px;border-radius:9px;
+  background:var(--card);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--gray);flex-shrink:0;
+}
+.settings-item-title{font-size:13px;font-weight:600;color:var(--white);}
+.settings-item-sub{font-size:11px;color:var(--gray);margin-top:1px;}
+@media(max-width:800px){
+  .settings-panel{width:100%;}
+  .profile-panel{width:280px;}
+}
 </style>
 </head>
 <body>
@@ -748,42 +829,72 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
       <span class="sb-logo-text">SwiftExpress</span>
     </div>
     <nav class="sb-nav">
+
+      <!-- ── MAIN ── -->
+      <div class="sb-section-label">Main</div>
       <button class="sb-item active" onclick="switchPage('dashboard',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         Dashboard
       </button>
       <button class="sb-item" onclick="switchPage('dashboard',this);setTimeout(openDepositModal,100)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
         Deposit
       </button>
       <button class="sb-item" onclick="switchPage('withdraw',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
         Withdraw
       </button>
       <button class="sb-item" onclick="switchPage('assets',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
         Assets
       </button>
-      <button class="sb-item" onclick="switchPage('markets',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Markets
+      <button class="sb-item" onclick="switchPage('referrals',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Referrals
       </button>
+
+      <div class="sb-sep"></div>
+
+      <!-- ── TRADING ACTIONS ── -->
+      <div class="sb-section-label">Trading Actions</div>
       <button class="sb-item" onclick="switchPage('trade',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
         Trade
       </button>
-      <button class="sb-item" onclick="switchPage('subscribe',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
-        Subscribe
+      <button class="sb-item" onclick="switchPage('markets',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Watchlist
+      </button>
+      <button class="sb-item" onclick="switchPage('swap',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+        Swap
+      </button>
+      <button class="sb-item" onclick="switchPage('stake',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        Staking
       </button>
       <button class="sb-item" onclick="switchPage('signals',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1"/></svg>
         Signals
       </button>
-      <button class="sb-item" onclick="switchPage('stake',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
-        Stake
+
+      <div class="sb-sep"></div>
+
+      <!-- ── SETUP ── -->
+      <div class="sb-section-label">Setup</div>
+      <button class="sb-item" onclick="switchPage('subscribe',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
+        Subscribe
       </button>
+      <button class="sb-item" onclick="openSettingsPanel()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Settings
+      </button>
+      <button class="sb-item danger-item" onclick="doLogout()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Log Out
+      </button>
+
     </nav>
   </aside>
 
@@ -1218,6 +1329,46 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
         </div>
       </div>
 
+
+      <!-- ════════════════════ SWAP PAGE ════════════════════ -->
+      <div class="page" id="page-swap">
+        <div class="inner-wrap">
+          <div class="inner-title">🔄 Swap Assets</div>
+          <div class="inner-sub">Instantly exchange between assets at the best rates.</div>
+          <div style="margin-top:32px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px;max-width:420px;">
+            <div class="f-group"><label>From</label><select class="t-select"><option>Bitcoin (BTC)</option><option>Ethereum (ETH)</option><option>USDT</option></select></div>
+            <div style="text-align:center;margin:8px 0;color:var(--gray);font-size:20px;cursor:pointer;">⇅</div>
+            <div class="f-group"><label>To</label><select class="t-select"><option>USDT</option><option>Bitcoin (BTC)</option><option>Ethereum (ETH)</option></select></div>
+            <div class="f-group"><label>Amount</label><input class="t-input" type="number" placeholder="0.00"/></div>
+            <button class="sub-btn">Swap Now</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ REFERRALS PAGE ════════════════════ -->
+      <div class="page" id="page-referrals">
+        <div class="inner-wrap">
+          <div class="inner-title">👥 Referrals</div>
+          <div class="inner-sub">Invite friends and earn rewards when they deposit.</div>
+          <div style="margin-top:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;max-width:500px;">
+            <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">Your Referral Link</div>
+            <div style="display:flex;gap:8px;">
+              <input class="t-input" id="ref-link-input" readonly value="https://swiftexpress-qzgn.vercel.app/register.html?ref=USER" style="flex:1;font-size:11px;color:var(--gray);"/>
+              <button onclick="copyRefLink()" class="sub-btn" style="width:auto;padding:10px 18px;white-space:nowrap;">Copy</button>
+            </div>
+            <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;">
+                <div style="font-size:22px;font-weight:800;color:var(--green)">0</div>
+                <div style="font-size:11px;color:var(--gray);margin-top:2px;">Total Referrals</div>
+              </div>
+              <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;">
+                <div style="font-size:22px;font-weight:800;color:var(--blue)">$0.00</div>
+                <div style="font-size:11px;color:var(--gray);margin-top:2px;">Total Earned</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- ════════════════════ SIGNALS PAGE ════════════════════ -->
       <div class="page" id="page-signals">
         <div class="simple-page">
@@ -1257,14 +1408,71 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 <!-- PROFILE DROPDOWN -->
 <div class="profile-overlay" id="profile-overlay" onclick="closeProfile()"></div>
 <div class="profile-panel" id="profile-panel" style="display:none">
-  <div class="profile-head">
-    <div class="profile-head-name" id="pd-name">Loading...</div>
-    <div class="profile-head-email" id="pd-email">--</div>
+  <!-- Header -->
+  <div class="profile-head" style="display:flex;align-items:center;gap:12px;padding:16px;">
+    <div class="tb-avatar" style="width:44px;height:44px;font-size:14px;flex-shrink:0;" id="pd-avatar">SW</div>
+    <div style="min-width:0;">
+      <div class="profile-head-name" id="pd-name" style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading...</div>
+      <div class="profile-head-email" id="pd-email" style="font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">--</div>
+      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.2);color:#e74c3c;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:3px;letter-spacing:0.5px;">NOT VERIFIED</div>
+    </div>
   </div>
-  <div class="profile-item" onclick="switchPage('deposit',null);closeProfile()">💰 Deposit Funds</div>
-  <div class="profile-item" onclick="switchPage('withdraw',null);closeProfile()">💸 Withdraw</div>
-  <div class="profile-item" onclick="switchPage('assets',null);closeProfile()">📦 My Assets</div>
-  <div class="profile-item danger" onclick="doLogout()">🚪 Logout</div>
+
+  <!-- Payments -->
+  <div class="profile-item" onclick="switchPage('dashboard',null);setTimeout(openDepositModal,100);closeProfile()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+    <div><div class="pi-title">Payments</div><div class="pi-sub">Deposit and withdraw</div></div>
+  </div>
+
+  <div class="pd-section-label">Profile</div>
+
+  <div class="profile-item" onclick="openSettingsPanel('verification');closeProfile()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div><div class="pi-title">Verification</div><div class="pi-sub">Verify your identity</div></div>
+  </div>
+
+  <div class="profile-item" onclick="openSettingsPanel('personal');closeProfile()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div><div class="pi-title">Personal</div><div class="pi-sub">Your personal information</div></div>
+  </div>
+
+  <div class="profile-item" onclick="openSettingsPanel('security');closeProfile()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <div><div class="pi-title">Security</div><div class="pi-sub">Email and password</div></div>
+  </div>
+
+  <div class="profile-item" onclick="switchPage('subscribe',null);closeProfile()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+    <div><div class="pi-title">Upgrade Tier</div><div class="pi-sub">Increase account features</div></div>
+  </div>
+
+  <div class="pd-section-label">More</div>
+
+  <div class="profile-item" onclick="switchPage('referrals',null);closeProfile()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+    <div><div class="pi-title">Referrals</div><div class="pi-sub">Invite friends and earn</div></div>
+  </div>
+
+  <div class="profile-item" onclick="switchPage('swap',null);closeProfile()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+    <div><div class="pi-title">Connect Wallet</div><div class="pi-sub">Link external wallet</div></div>
+  </div>
+
+  <div class="profile-item" onclick="switchPage('signals',null);closeProfile()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
+    <div><div class="pi-title">Copy Experts</div><div class="pi-sub">Mirror expert trades</div></div>
+  </div>
+
+  <div class="profile-item" onclick="openSettingsPanel();closeProfile()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+    <div><div class="pi-title">Settings</div><div class="pi-sub">Account preferences</div></div>
+  </div>
+
+  <div style="height:1px;background:var(--border);margin:6px 0;"></div>
+  <div class="profile-item danger" onclick="doLogout()">
+    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+    <div><div class="pi-title" style="color:#e74c3c">Log Out</div></div>
+  </div>
 </div>
 
 <!-- CHAT BUTTON -->
@@ -1761,6 +1969,38 @@ function setMobileUserInfo(email){
 }
 // Update fetchPrices interval to be more frequent for live feel
 
+/* ──────── SETTINGS PANEL ──────── */
+function openSettingsPanel(section){
+  document.getElementById('settings-overlay').classList.add('open');
+  document.getElementById('settings-panel').classList.add('open');
+  // Populate user info
+  if(user){
+    const initials=(user.email||'SW').slice(0,2).toUpperCase();
+    const nameEl=document.getElementById('sp-name');
+    const emailEl=document.getElementById('sp-email');
+    const avEl=document.getElementById('sp-avatar');
+    if(nameEl) nameEl.textContent=user.user_metadata?.full_name||user.email||'User';
+    if(emailEl) emailEl.textContent=user.email||'--';
+    if(avEl) avEl.textContent=initials;
+  }
+  // Scroll to section if specified
+  if(section){
+    setTimeout(()=>{
+      const el=document.getElementById('sp-'+section);
+      if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+    },300);
+  }
+}
+function closeSettingsPanel(){
+  document.getElementById('settings-overlay').classList.remove('open');
+  document.getElementById('settings-panel').classList.remove('open');
+}
+
+function copyRefLink(){
+  const el=document.getElementById("ref-link-input");
+  if(el){navigator.clipboard.writeText(el.value).catch(()=>{el.select();document.execCommand("copy");});}
+  alert("Referral link copied!");}
+
 function doLogout(){sb.auth.signOut().then(()=>{window.location.href='login.html';});}
 function showMsg(el,txt,type){el.textContent=txt;el.className='msg-box '+type+' show';}
 function toggleBalMenu(){}
@@ -1808,6 +2048,54 @@ init();
 
     <button class="modal-dep-btn" id="dep-submit-btn" onclick="submitDeposit()">Deposit</button>
     <div class="modal-msg" id="mod-msg"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════ SETTINGS PANEL ══════════════ -->
+<div class="settings-overlay" id="settings-overlay" onclick="closeSettingsPanel()"></div>
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-header">
+    <span>Settings</span>
+    <button class="settings-close" onclick="closeSettingsPanel()">✕</button>
+  </div>
+
+  <!-- User info -->
+  <div class="settings-user">
+    <div class="settings-user-avatar" id="sp-avatar">SW</div>
+    <div>
+      <div class="settings-user-name" id="sp-name">Loading...</div>
+      <div class="settings-user-email" id="sp-email">--</div>
+      <div class="settings-not-verified">● Not Verified</div>
+    </div>
+  </div>
+
+  <!-- Payments -->
+  <div class="settings-item" onclick="closeSettingsPanel();switchPage('dashboard',null);setTimeout(openDepositModal,100)">
+    <div class="settings-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+    <div><div class="settings-item-title">Payments</div><div class="settings-item-sub">Deposit and withdraw</div></div>
+  </div>
+
+  <div class="settings-section-label">Profile</div>
+
+  <div class="settings-item" id="sp-verification">
+    <div class="settings-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div><div class="settings-item-title">Verification</div><div class="settings-item-sub">Verification and confirmation of identity</div></div>
+  </div>
+
+  <div class="settings-item" id="sp-personal">
+    <div class="settings-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+    <div><div class="settings-item-title">Personal</div><div class="settings-item-sub">Your personal information</div></div>
+  </div>
+
+  <div class="settings-item" id="sp-security">
+    <div class="settings-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+    <div><div class="settings-item-title">Security</div><div class="settings-item-sub">Email and password</div></div>
+  </div>
+
+  <div class="settings-item" onclick="closeSettingsPanel();switchPage('subscribe',null)">
+    <div class="settings-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+    <div><div class="settings-item-title">Upgrade Tier</div><div class="settings-item-sub">Increase account features</div></div>
   </div>
 </div>
 
