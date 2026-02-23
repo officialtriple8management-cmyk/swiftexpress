@@ -826,6 +826,42 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
   #page-user-profile .inner-wrap > div:nth-child(2){grid-template-columns:1fr !important;}
   #page-personal-info .f-group ~ .f-group{grid-template-columns:1fr !important;}
 }
+
+/* ── WATCHLIST FILTER BTNS ── */
+.wl-filter-btn{background:var(--card);border:1px solid var(--border);color:var(--gray);padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.15s;}
+.wl-filter-btn.active{background:var(--blue);border-color:var(--blue);color:#fff;}
+/* ── PRICE CARD ── */
+.price-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px;transition:border 0.2s;cursor:default;}
+.price-card:hover{border-color:var(--border2);}
+.price-card-top{display:flex;align-items:center;justify-content:space-between;}
+.price-card-ico{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0;}
+.price-card-sym{font-size:13px;font-weight:800;color:var(--white);}
+.price-card-name{font-size:10px;color:var(--gray);margin-top:1px;}
+.price-card-price{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums;}
+.price-card-chg{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;}
+.price-card-chg.up{background:rgba(16,185,129,0.1);color:var(--green);}
+.price-card-chg.dn{background:rgba(239,68,68,0.1);color:#ef4444;}
+.price-card-bar{height:3px;border-radius:2px;background:var(--border);overflow:hidden;margin-top:4px;}
+.price-card-fill{height:100%;border-radius:2px;transition:width 0.8s ease;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── CURRENT PLAN HIGHLIGHT ── */
+.plan-card.current-plan{
+  border-color:var(--blue) !important;
+  box-shadow:0 0 0 1px rgba(59,130,246,0.3),0 8px 32px rgba(59,130,246,0.15) !important;
+  position:relative;
+}
+.current-plan-chip{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--blue);color:#fff;font-size:10px;font-weight:800;
+  padding:4px 14px;border-radius:20px;letter-spacing:0.5px;
+  white-space:nowrap;z-index:2;
+}
+.plan-get-btn.current-btn{
+  background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);
+  color:var(--blue);cursor:default;
+}
+.plan-get-btn.current-btn:hover{background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);}
 </style>
 </head>
 <body>
@@ -1311,8 +1347,24 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 
       <!-- ════════════════════ MARKETS PAGE ════════════════════ -->
       <div class="page" id="page-markets">
-        <div class="fullframe-page">
-          <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tv_markets&symbol=NASDAQ%3AAAPL&interval=D&theme=dark&style=1&locale=en&toolbar_bg=1a1a1a&allow_symbol_change=1&hide_side_toolbar=0&withdateranges=1" allowtransparency="true" allowfullscreen=""></iframe>
+        <div class="inner-wrap" style="max-width:900px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+            <div>
+              <div class="inner-title" style="margin-bottom:2px;">📈 Live Market Prices</div>
+              <div style="font-size:12px;color:var(--gray);">Real-time prices — updates every 10 seconds</div>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="wl-filter-btn active" onclick="setWLFilter('all',this)">All</button>
+              <button class="wl-filter-btn" onclick="setWLFilter('crypto',this)">Crypto</button>
+              <button class="wl-filter-btn" onclick="setWLFilter('stocks',this)">Stocks</button>
+              <button class="wl-filter-btn" onclick="setWLFilter('forex',this)">Forex</button>
+            </div>
+          </div>
+
+          <div id="wl-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;">
+            <!-- Populated by JS -->
+            <div style="color:var(--gray);font-size:13px;padding:20px;">Loading live prices...</div>
+          </div>
         </div>
       </div>
 
@@ -1326,12 +1378,25 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
       <!-- ════════════════════ SUBSCRIBE PAGE ════════════════════ -->
       <div class="page" id="page-subscribe">
         <div class="sub-page-wrap">
+
+          <!-- Current Plan Banner -->
+          <div id="current-plan-banner" style="display:none;background:linear-gradient(135deg,rgba(59,130,246,0.12),rgba(6,182,212,0.08));border:1px solid rgba(59,130,246,0.25);border-radius:12px;padding:16px 20px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <div style="font-size:22px;">🏆</div>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--white);">Your Current Plan: <span id="banner-tier-name" style="color:var(--blue);">Starter</span></div>
+                <div style="font-size:11px;color:var(--gray);margin-top:2px;">Upgrade anytime to unlock higher returns and features.</div>
+              </div>
+            </div>
+            <div id="banner-tier-badge" style="background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:var(--blue);font-size:11px;font-weight:800;padding:5px 14px;border-radius:20px;letter-spacing:0.5px;">STARTER TIER</div>
+          </div>
+
           <div class="sub-page-title">Investment Plans</div>
           <div class="sub-page-sub">Transparent returns. No hidden fees. Start with any amount.</div>
           <div class="plan-cards">
 
             <!-- STARTER -->
-            <div class="plan-card">
+            <div class="plan-card" id="plan-card-starter">
               <div class="plan-label">Starter Plan</div>
               <div class="plan-pct"><sup></sup>5<sup style="font-size:22px">%</sup></div>
               <div class="plan-freq">Weekly Return</div>
@@ -1344,11 +1409,11 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
                 <li>Withdraw anytime</li>
                 <li style="color:#e74c3c;">Limited balance: $10,000</li>
               </ul>
-              <button class="plan-get-btn" onclick="openDepositModal()">Get Started</button>
+              <button class="plan-get-btn" id="plan-btn-starter" onclick="selectPlan('Starter','$100 - $4,999')">Get Started</button>
             </div>
 
             <!-- GROWTH (featured) -->
-            <div class="plan-card featured">
+            <div class="plan-card featured" id="plan-card-growth">
               <div class="plan-badge">Most Popular</div>
               <div class="plan-label">Growth Plan</div>
               <div class="plan-pct"><sup></sup>12<sup style="font-size:22px">%</sup></div>
@@ -1362,11 +1427,11 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
                 <li>Dedicated account manager</li>
                 <li style="color:#3b82f6;">Balance limit: $100,000</li>
               </ul>
-              <button class="plan-get-btn" onclick="openDepositModal()">Get Started</button>
+              <button class="plan-get-btn" id="plan-btn-growth" onclick="selectPlan('Growth','$5,000 - $49,999')">Get Started</button>
             </div>
 
             <!-- ELITE -->
-            <div class="plan-card">
+            <div class="plan-card" id="plan-card-elite">
               <div class="plan-label">Elite Plan</div>
               <div class="plan-pct"><sup></sup>20<sup style="font-size:22px">%</sup></div>
               <div class="plan-freq">Weekly Return</div>
@@ -1379,7 +1444,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
                 <li>Tax reporting support</li>
                 <li style="color:#00C896;font-weight:700;">Unlimited balance</li>
               </ul>
-              <button class="plan-get-btn" onclick="openDepositModal()">Get Started</button>
+              <button class="plan-get-btn" id="plan-btn-elite" onclick="selectPlan('Elite','$50,000+')">Get Started</button>
             </div>
 
           </div>
@@ -1672,15 +1737,85 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 
       <!-- ════════════════════ CONNECT WALLET PAGE ════════════════════ -->
       <div class="page" id="page-connect-wallet">
-        <div class="inner-wrap" style="max-width:540px;">
+        <div class="inner-wrap" style="max-width:600px;">
           <div class="inner-title">🔗 Connect Wallet</div>
-          <div class="inner-sub" style="margin-bottom:24px;">Link your external crypto wallet to SwiftExpress.</div>
-          <div style="display:grid;gap:12px;">
-            <div class="wallet-opt" onclick="alert('MetaMask connection coming soon!')"><div style="font-size:28px;">🦊</div><div><div style="font-weight:700;font-size:14px;">MetaMask</div><div style="font-size:11px;color:var(--gray);">Browser extension wallet</div></div><div style="margin-left:auto;color:var(--gray);">›</div></div>
-            <div class="wallet-opt" onclick="alert('WalletConnect coming soon!')"><div style="font-size:28px;">🔵</div><div><div style="font-weight:700;font-size:14px;">WalletConnect</div><div style="font-size:11px;color:var(--gray);">Scan QR with mobile wallet</div></div><div style="margin-left:auto;color:var(--gray);">›</div></div>
-            <div class="wallet-opt" onclick="alert('Coinbase Wallet coming soon!')"><div style="font-size:28px;">🔷</div><div><div style="font-weight:700;font-size:14px;">Coinbase Wallet</div><div style="font-size:11px;color:var(--gray);">Coinbase self-custody wallet</div></div><div style="margin-left:auto;color:var(--gray);">›</div></div>
-            <div class="wallet-opt" onclick="alert('Trust Wallet coming soon!')"><div style="font-size:28px;">🛡️</div><div><div style="font-weight:700;font-size:14px;">Trust Wallet</div><div style="font-size:11px;color:var(--gray);">Mobile crypto wallet</div></div><div style="margin-left:auto;color:var(--gray);">›</div></div>
+          <div class="inner-sub" style="margin-bottom:24px;">Link your external crypto wallet to SwiftExpress for seamless transfers.</div>
+
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray);margin-bottom:10px;">Popular</div>
+          <div style="display:grid;gap:10px;margin-bottom:20px;">
+            <div class="wallet-opt" onclick="showWalletConnect('MetaMask')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#e2761b,#f6851b);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🦊</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">MetaMask</div><div style="font-size:11px;color:var(--gray);">Browser extension &amp; mobile wallet</div></div>
+              <div style="font-size:10px;background:rgba(16,185,129,0.1);color:var(--green);border:1px solid rgba(16,185,129,0.2);padding:2px 8px;border-radius:10px;font-weight:700;">Popular</div>
+            </div>
+            <div class="wallet-opt" onclick="showWalletConnect('WalletConnect')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#3b99fc,#1572ef);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🔵</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">WalletConnect</div><div style="font-size:11px;color:var(--gray);">Scan QR with any mobile wallet</div></div>
+              <div style="color:var(--gray);font-size:16px;">›</div>
+            </div>
+            <div class="wallet-opt" onclick="showWalletConnect('Coinbase Wallet')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#0052ff,#1a66ff);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🔷</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">Coinbase Wallet</div><div style="font-size:11px;color:var(--gray);">Self-custody by Coinbase</div></div>
+              <div style="color:var(--gray);font-size:16px;">›</div>
+            </div>
+            <div class="wallet-opt" onclick="showWalletConnect('Phantom')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#ab9ff2,#7c5fe0);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👻</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">Phantom</div><div style="font-size:11px;color:var(--gray);">Solana &amp; multi-chain wallet</div></div>
+              <div style="font-size:10px;background:rgba(171,159,242,0.1);color:#ab9ff2;border:1px solid rgba(171,159,242,0.2);padding:2px 8px;border-radius:10px;font-weight:700;">Solana</div>
+            </div>
           </div>
+
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--gray);margin-bottom:10px;">More Wallets</div>
+          <div style="display:grid;gap:10px;">
+            <div class="wallet-opt" onclick="showWalletConnect('Trust Wallet')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#3375bb,#2196f3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🛡️</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">Trust Wallet</div><div style="font-size:11px;color:var(--gray);">Multi-chain mobile wallet by Binance</div></div>
+              <div style="color:var(--gray);font-size:16px;">›</div>
+            </div>
+            <div class="wallet-opt" onclick="showWalletConnect('Exodus')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#0b45db,#8c41ed);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🌀</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">Exodus</div><div style="font-size:11px;color:var(--gray);">Desktop &amp; mobile multi-asset wallet</div></div>
+              <div style="color:var(--gray);font-size:16px;">›</div>
+            </div>
+            <div class="wallet-opt" onclick="showWalletConnect('Ledger')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#142533,#1c3a52);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🔐</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">Ledger</div><div style="font-size:11px;color:var(--gray);">Hardware wallet — maximum security</div></div>
+              <div style="font-size:10px;background:rgba(59,130,246,0.1);color:var(--blue);border:1px solid rgba(59,130,246,0.2);padding:2px 8px;border-radius:10px;font-weight:700;">Hardware</div>
+            </div>
+            <div class="wallet-opt" onclick="showWalletConnect('Trezor')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#1d9e6b,#00c896);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🟩</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">Trezor</div><div style="font-size:11px;color:var(--gray);">Open-source hardware wallet</div></div>
+              <div style="font-size:10px;background:rgba(59,130,246,0.1);color:var(--blue);border:1px solid rgba(59,130,246,0.2);padding:2px 8px;border-radius:10px;font-weight:700;">Hardware</div>
+            </div>
+            <div class="wallet-opt" onclick="showWalletConnect('Rainbow')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🌈</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">Rainbow</div><div style="font-size:11px;color:var(--gray);">Ethereum &amp; Layer 2 mobile wallet</div></div>
+              <div style="color:var(--gray);font-size:16px;">›</div>
+            </div>
+            <div class="wallet-opt" onclick="showWalletConnect('OKX Wallet')">
+              <div style="width:40px;height:40px;border-radius:10px;background:#000;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid var(--border);">⬛</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">OKX Wallet</div><div style="font-size:11px;color:var(--gray);">Multi-chain Web3 wallet by OKX</div></div>
+              <div style="color:var(--gray);font-size:16px;">›</div>
+            </div>
+            <div class="wallet-opt" onclick="showWalletConnect('Bybit Wallet')">
+              <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#f7a600,#ff6900);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🟠</div>
+              <div style="flex:1;"><div style="font-weight:700;font-size:13px;">Bybit Wallet</div><div style="font-size:11px;color:var(--gray);">Web3 wallet by Bybit exchange</div></div>
+              <div style="color:var(--gray);font-size:16px;">›</div>
+            </div>
+          </div>
+
+          <!-- Connect modal -->
+          <div id="wallet-connect-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(4px);">
+            <div style="background:var(--sidebar);border:1px solid var(--border);border-radius:16px;padding:28px;width:320px;text-align:center;">
+              <div style="font-size:36px;margin-bottom:12px;" id="wcm-icon">🦊</div>
+              <div style="font-size:16px;font-weight:700;margin-bottom:6px;" id="wcm-name">MetaMask</div>
+              <div style="font-size:12px;color:var(--gray);margin-bottom:20px;">Follow the prompts in your wallet app to complete the connection.</div>
+              <div style="width:48px;height:48px;border:3px solid var(--blue);border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 20px;"></div>
+              <div style="font-size:12px;color:var(--gray);margin-bottom:20px;">Waiting for wallet confirmation...</div>
+              <button onclick="document.getElementById('wallet-connect-modal').style.display='none'" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--white);padding:11px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;">Cancel</button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -1816,7 +1951,7 @@ async function init(){
     document.getElementById('pd-name').textContent=name;
     document.getElementById('pd-email').textContent=user.email;
   setMobileUserInfo(user.email);
-  setTimeout(()=>{populateProfilePage();loadSettings();},500);
+  setTimeout(()=>{populateProfilePage();loadSettings();updateSubscribePage();},500);
   }catch(e){
     const name=user.email.split('@')[0]||'User';
     document.getElementById('avatar-el').textContent=name.slice(0,2).toUpperCase();
@@ -2133,9 +2268,9 @@ async function submitDeposit(){
     }
 
     msg.className='modal-msg ok';
-    msg.textContent='✅ Deposit submitted! Admin will approve within 24 hours.';
+    msg.innerHTML='<strong>✅ Deposit Submitted Successfully!</strong><br><span style="font-size:11px;line-height:1.6;display:block;margin-top:6px;">Your deposit is now under review. Our team will confirm it within <strong>24 - 48 hours</strong>. You will be notified once it has been approved and credited to your account.</span>';
     btn.textContent='Submitted!';
-    setTimeout(()=>{closeDepositModal();btn.disabled=false;btn.textContent='Deposit';loadTrades();},2500);
+    setTimeout(()=>{closeDepositModal();btn.disabled=false;btn.textContent='Deposit';loadTrades();},5000);
   }catch(e){
     msg.className='modal-msg err';
     msg.textContent='Error: '+(e.message||'Something went wrong. Please try again.');
@@ -2177,6 +2312,9 @@ async function loadNotifs(){
 function switchPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
+  // Start/stop watchlist ticker
+  if(name==='markets') startWatchlist(); else stopWatchlist();
+  if(name==='subscribe') updateSubscribePage();
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   if(btn)btn.classList.add('active');
   document.getElementById('page-title').textContent=name.charAt(0).toUpperCase()+name.slice(1);
@@ -2527,6 +2665,209 @@ function loadSettings(){
   if(showBal==='false'){ const el=document.getElementById('bal-display'); if(el) el.style.filter='blur(8px)'; const cb=document.getElementById('pref-showbal'); if(cb) cb.checked=false; }
 }
 
+/* ──────── WATCHLIST LIVE PRICES ──────── */
+const WL_ASSETS = [
+  {id:'bitcoin',sym:'BTC',name:'Bitcoin',cat:'crypto',icon:'₿',bg:'#f7931a',color:'#f7931a'},
+  {id:'ethereum',sym:'ETH',name:'Ethereum',cat:'crypto',icon:'Ξ',bg:'#627eea',color:'#627eea'},
+  {id:'solana',sym:'SOL',name:'Solana',cat:'crypto',icon:'◎',bg:'#9945ff',color:'#9945ff'},
+  {id:'ripple',sym:'XRP',name:'XRP',cat:'crypto',icon:'✕',bg:'#00aae4',color:'#00aae4'},
+  {id:'binancecoin',sym:'BNB',name:'BNB',cat:'crypto',icon:'B',bg:'#f3ba2f',color:'#f3ba2f'},
+  {id:'cardano',sym:'ADA',name:'Cardano',cat:'crypto',icon:'₳',bg:'#0033ad',color:'#4da6ff'},
+  {id:'dogecoin',sym:'DOGE',name:'Dogecoin',cat:'crypto',icon:'Ð',bg:'#c2a633',color:'#f2c94c'},
+  {id:'polkadot',sym:'DOT',name:'Polkadot',cat:'crypto',icon:'●',bg:'#e6007a',color:'#e6007a'},
+  // Stocks (static — no free API for stocks)
+  {id:'_aapl',sym:'AAPL',name:'Apple Inc.',cat:'stocks',icon:'',bg:'#555',color:'#aaa',static:true},
+  {id:'_tsla',sym:'TSLA',name:'Tesla',cat:'stocks',icon:'T',bg:'#cc0000',color:'#ff4444',static:true},
+  {id:'_msft',sym:'MSFT',name:'Microsoft',cat:'stocks',icon:'M',bg:'#0078d4',color:'#4da6ff',static:true},
+  {id:'_nvda',sym:'NVDA',name:'NVIDIA',cat:'stocks',icon:'N',bg:'#76b900',color:'#76b900',static:true},
+  {id:'_amzn',sym:'AMZN',name:'Amazon',cat:'stocks',icon:'A',bg:'#ff9900',color:'#ff9900',static:true},
+  {id:'_googl',sym:'GOOGL',name:'Alphabet',cat:'stocks',icon:'G',bg:'#4285f4',color:'#4285f4',static:true},
+  // Forex (static)
+  {id:'_eurusd',sym:'EUR/USD',name:'Euro / US Dollar',cat:'forex',icon:'€',bg:'#1a5276',color:'#5dade2',static:true},
+  {id:'_gbpusd',sym:'GBP/USD',name:'Pound / US Dollar',cat:'forex',icon:'£',bg:'#154360',color:'#85c1e9',static:true},
+  {id:'_usdjpy',sym:'USD/JPY',name:'US Dollar / Yen',cat:'forex',icon:'¥',bg:'#1b4332',color:'#52be80',static:true},
+  {id:'_gold',sym:'XAU/USD',name:'Gold',cat:'forex',icon:'Au',bg:'#7d6608',color:'#f4d03f',static:true},
+];
+
+// Static seed prices for stocks/forex (will jitter slightly)
+const STATIC_PRICES = {
+  '_aapl':{price:214.50,chg:1.23},
+  '_tsla':{price:248.75,chg:-2.15},
+  '_msft':{price:418.30,chg:0.87},
+  '_nvda':{price:875.60,chg:3.42},
+  '_amzn':{price:195.20,chg:-0.65},
+  '_googl':{price:168.45,chg:1.08},
+  '_eurusd':{price:1.0842,chg:0.12},
+  '_gbpusd':{price:1.2634,chg:-0.08},
+  '_usdjpy':{price:149.82,chg:0.23},
+  '_gold':{price:2034.50,chg:0.55},
+};
+
+let wlPrices = {};
+let wlFilter = 'all';
+let wlInterval = null;
+
+async function loadWatchlist(){
+  // Fetch crypto prices
+  const ids = WL_ASSETS.filter(a=>!a.static).map(a=>a.id).join(',');
+  try {
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids='+ids+'&vs_currencies=usd&include_24hr_change=true');
+    const d = await r.json();
+    WL_ASSETS.filter(a=>!a.static).forEach(a=>{
+      if(d[a.id]) wlPrices[a.id] = {price: d[a.id].usd, chg: d[a.id].usd_24h_change||0};
+    });
+  } catch(e){}
+  // Add static prices with tiny random jitter
+  WL_ASSETS.filter(a=>a.static).forEach(a=>{
+    const base = STATIC_PRICES[a.id];
+    if(base) {
+      const jitter = (Math.random()-0.5)*0.002;
+      wlPrices[a.id] = {price: base.price*(1+jitter), chg: base.chg + (Math.random()-0.5)*0.1};
+    }
+  });
+  renderWatchlist();
+}
+
+function setWLFilter(f, btn){
+  wlFilter = f;
+  document.querySelectorAll('.wl-filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderWatchlist();
+}
+
+function renderWatchlist(){
+  const grid = document.getElementById('wl-grid');
+  if(!grid) return;
+  const assets = wlFilter==='all' ? WL_ASSETS : WL_ASSETS.filter(a=>a.cat===wlFilter);
+  grid.innerHTML = assets.map(a=>{
+    const p = wlPrices[a.id];
+    if(!p) return '';
+    const isUp = p.chg >= 0;
+    const priceStr = a.sym.includes('/') && p.price < 100
+      ? p.price.toFixed(4)
+      : p.price > 100 ? '$'+p.price.toLocaleString('en',{minimumFractionDigits:2,maximumFractionDigits:2})
+      : '$'+p.price.toFixed(4);
+    const chgStr = (isUp?'+':'')+p.chg.toFixed(2)+'%';
+    const barPct = Math.min(100, Math.abs(p.chg)*10);
+    return `<div class="price-card">
+      <div class="price-card-top">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="price-card-ico" style="background:${a.bg}22;color:${a.color};">${a.icon}</div>
+          <div><div class="price-card-sym">${a.sym}</div><div class="price-card-name">${a.name}</div></div>
+        </div>
+        <div class="price-card-chg ${isUp?'up':'dn'}">${isUp?'▲':'▼'} ${chgStr}</div>
+      </div>
+      <div class="price-card-price" style="color:${isUp?'var(--green)':'#ef4444'}">${priceStr}</div>
+      <div class="price-card-bar"><div class="price-card-fill" style="width:${barPct}%;background:${isUp?'var(--green)':'#ef4444'};"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function startWatchlist(){
+  loadWatchlist();
+  if(wlInterval) clearInterval(wlInterval);
+  wlInterval = setInterval(loadWatchlist, 10000);
+}
+
+function stopWatchlist(){
+  if(wlInterval){ clearInterval(wlInterval); wlInterval=null; }
+}
+
+/* ──────── CONNECT WALLET ──────── */
+const walletIcons = {
+  'MetaMask':'🦊','WalletConnect':'🔵','Coinbase Wallet':'🔷','Phantom':'👻',
+  'Trust Wallet':'🛡️','Exodus':'🌀','Ledger':'🔐','Trezor':'🟩','Rainbow':'🌈',
+  'OKX Wallet':'⬛','Bybit Wallet':'🟠'
+};
+function showWalletConnect(name){
+  document.getElementById('wcm-name').textContent = name;
+  document.getElementById('wcm-icon').textContent = walletIcons[name]||'🔗';
+  document.getElementById('wallet-connect-modal').style.display = 'flex';
+  // Simulate connection attempt then close
+  setTimeout(()=>{
+    document.getElementById('wallet-connect-modal').style.display = 'none';
+    alert(name+' connection coming soon! This feature is under development.');
+  }, 3000);
+}
+
+/* ──────── SUBSCRIPTION PLAN SELECTION ──────── */
+let selectedPlan = '';
+
+function selectPlan(planName, range){
+  selectedPlan = planName;
+  // Open deposit modal with plan context note
+  openDepositModal();
+  // Set a note in the modal about the plan
+  setTimeout(()=>{
+    const noteEl = document.getElementById('deposit-plan-note');
+    if(noteEl){
+      noteEl.style.display = 'block';
+      noteEl.innerHTML = '📋 Subscribing to <strong>' + planName + ' Plan</strong> &mdash; Deposit range: ' + range;
+    }
+  }, 100);
+}
+
+function updateSubscribePage(){
+  const tier = (wallet && wallet.tier) ? wallet.tier : 'Starter';
+  const tierLower = tier.toLowerCase();
+
+  // Show current plan banner
+  const banner = document.getElementById('current-plan-banner');
+  const bannerName = document.getElementById('banner-tier-name');
+  const bannerBadge = document.getElementById('banner-tier-badge');
+  if(banner){
+    banner.style.display = 'flex';
+    if(bannerName) bannerName.textContent = tier + ' Plan';
+    if(bannerBadge){
+      bannerBadge.textContent = tier.toUpperCase() + ' TIER';
+      const colors = {starter:'rgba(59,130,246,0.15)',growth:'rgba(16,185,129,0.15)',elite:'rgba(245,158,11,0.15)'};
+      const textColors = {starter:'var(--blue)',growth:'var(--green)',elite:'#f59e0b'};
+      bannerBadge.style.background = colors[tierLower] || colors.starter;
+      bannerBadge.style.color = textColors[tierLower] || textColors.starter;
+    }
+  }
+
+  // Remove all existing current plan markers
+  ['starter','growth','elite'].forEach(t => {
+    const card = document.getElementById('plan-card-' + t);
+    const btn = document.getElementById('plan-btn-' + t);
+    if(card){
+      card.classList.remove('current-plan');
+      // Remove chip if exists
+      const existingChip = card.querySelector('.current-plan-chip');
+      if(existingChip) existingChip.remove();
+    }
+    if(btn){
+      btn.classList.remove('current-btn');
+      // Restore original onclick and text
+      const plans = {
+        starter:["selectPlan('Starter','$100 - $4,999')", 'Get Started'],
+        growth:["selectPlan('Growth','$5,000 - $49,999')", 'Get Started'],
+        elite:["selectPlan('Elite','$50,000+')", 'Get Started']
+      };
+      btn.setAttribute('onclick', plans[t][0]);
+      if(btn.textContent === 'Current Plan') btn.textContent = plans[t][1];
+    }
+  });
+
+  // Highlight current plan card
+  const currentCard = document.getElementById('plan-card-' + tierLower);
+  const currentBtn = document.getElementById('plan-btn-' + tierLower);
+  if(currentCard){
+    currentCard.classList.add('current-plan');
+    // Add chip badge
+    const chip = document.createElement('div');
+    chip.className = 'current-plan-chip';
+    chip.textContent = '✓ Your Current Plan';
+    currentCard.insertBefore(chip, currentCard.firstChild);
+  }
+  if(currentBtn){
+    currentBtn.classList.add('current-btn');
+    currentBtn.textContent = 'Current Plan';
+    currentBtn.setAttribute('onclick', '');
+  }
+}
+
 function doLogout(){sb.auth.signOut().then(()=>{window.location.href='login.html';});}
 function showMsg(el,txt,type){el.textContent=txt;el.className='msg-box '+type+' show';}
 function toggleBalMenu(){}
@@ -2573,7 +2914,7 @@ init();
     </div>
 
     <button class="modal-dep-btn" id="dep-submit-btn" onclick="submitDeposit()">Deposit</button>
-    <div class="modal-msg" id="mod-msg"></div>
+    <div class="modal-msg" id="mod-msg" style="margin-bottom:0;"></div>
   </div>
 </div>
 

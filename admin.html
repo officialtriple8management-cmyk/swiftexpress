@@ -265,6 +265,15 @@
       <input type="number" id="eb-profit" step="0.01" placeholder="e.g. 500 or -200" style="margin-top:6px;"/>
       <div style="font-size:11px;color:var(--gray);margin-top:6px;">Enter positive for profit, negative for loss. This shows on user dashboard.</div>
     </div>
+    <div class="field" style="background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:8px;padding:14px;margin-top:4px;">
+      <label style="color:#f59e0b;">🏆 Account Tier Level</label>
+      <select id="eb-tier" style="margin-top:8px;width:100%;background:var(--dark2);border:1px solid var(--border);color:var(--white);padding:10px 12px;border-radius:7px;font-size:13px;font-family:inherit;cursor:pointer;">
+        <option value="Starter">🥉 Starter — 5% weekly, $100–$4,999</option>
+        <option value="Growth">🥈 Growth — 12% weekly, $5,000–$49,999</option>
+        <option value="Elite">🥇 Elite — 20% weekly, $50,000+</option>
+      </select>
+      <div style="font-size:11px;color:var(--gray);margin-top:6px;">Changing tier updates the user's subscription plan and dashboard display.</div>
+    </div>
     <button class="modal-btn gold" onclick="saveBalance()" style="margin-top:8px;">💾 Save Changes</button>
     <div class="msg" id="eb-msg"></div>
   </div>
@@ -454,14 +463,20 @@ async function loadAllWithdrawals(){
 
 async function loadBalancesTable(){
   const {data}=await sb.from('wallets').select('*,profiles(full_name,email)');
-  document.getElementById('balance-table').innerHTML=(data||[]).map(w=>`<tr>
+  document.getElementById('balance-table').innerHTML=(data||[]).map(w=>{
+    const tier=w.tier||'Starter';
+    const tierColors={Starter:'#3b82f6',Growth:'#10b981',Elite:'#f59e0b'};
+    const tc=tierColors[tier]||tierColors.Starter;
+    return `<tr>
     <td><strong>${w.profiles?.full_name||'--'}</strong></td>
     <td style="color:var(--gray);font-size:0.8rem">${w.profiles?.email||'--'}</td>
     <td>$${(w.btc_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
     <td>$${(w.stocks_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
     <td>$${(w.forex_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
     <td style="color:var(--green)">$${(w.total_profit||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
-    <td><button class="btn btn-gold" onclick="openEditBal('${w.user_id}','${w.profiles?.full_name||'User'}',${w.btc_balance||0},${w.stocks_balance||0},${w.forex_balance||0},${w.total_profit||0})">Edit</button></td></tr>`).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">No data</td></tr>';
+    <td><span style="background:${tc}22;color:${tc};border:1px solid ${tc}44;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;">${tier}</span></td>
+    <td><button class="btn btn-gold" onclick="openEditBal('${w.user_id}','${w.profiles?.full_name||'User'}',${w.btc_balance||0},${w.stocks_balance||0},${w.forex_balance||0},${w.total_profit||0})">Edit</button></td></tr>`;
+  }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">No data</td></tr>';
 }
 
 function populateNotifUsers(){
@@ -539,26 +554,33 @@ async function confirmReject(){
   setTimeout(()=>{closeModal('reject');loadAll();},1000);
 }
 
-function openEditBal(uid,name,btc,stocks,forex,profit){
+async function openEditBal(uid,name,btc,stocks,forex,profit){
   document.getElementById('editBal-uid').value=uid;
   document.getElementById('editBal-name').textContent='Editing: '+name;
   document.getElementById('eb-btc').value=btc;
   document.getElementById('eb-stocks').value=stocks;
   document.getElementById('eb-forex').value=forex;
   document.getElementById('eb-profit').value=profit;
+  // Load current tier from DB
+  const {data:w} = await sb.from('wallets').select('tier').eq('user_id',uid).single();
+  const tierSel = document.getElementById('eb-tier');
+  if(tierSel) tierSel.value = (w && w.tier) ? w.tier : 'Starter';
   openModal('editBal');
 }
 async function saveBalance(){
   const uid=document.getElementById('editBal-uid').value;
   const msg=document.getElementById('eb-msg');
-  const {error}=await sb.from('wallets').update({btc_balance:parseFloat(document.getElementById('eb-btc').value)||0,
+  const tier=document.getElementById('eb-tier').value||'Starter';
+  const {error}=await sb.from('wallets').update({
+    btc_balance:parseFloat(document.getElementById('eb-btc').value)||0,
     stocks_balance:parseFloat(document.getElementById('eb-stocks').value)||0,
     forex_balance:parseFloat(document.getElementById('eb-forex').value)||0,
-    total_profit:parseFloat(document.getElementById('eb-profit').value)||0  // can be negative
+    total_profit:parseFloat(document.getElementById('eb-profit').value)||0,
+    tier:tier
   }).eq('user_id',uid);
-  if(error)return showMsg(msg,'Error saving','error');
-  showMsg(msg,'Balance updated!','success');
-  setTimeout(()=>{closeModal('editBal');loadAll();},1000);
+  if(error)return showMsg(msg,'Error saving: '+error.message,'error');
+  showMsg(msg,'Balance and tier updated to '+tier+'!','success');
+  setTimeout(()=>{closeModal('editBal');loadAll();},1200);
 }
 
 async function sendNotification(){
