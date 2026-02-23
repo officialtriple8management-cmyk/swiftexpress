@@ -971,7 +971,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
         <div class="tb-bell" onclick="toggleNotif()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </div>
-        <div class="tb-avatar" id="avatar-el" onclick="switchPage('user-profile',null)">SW</div>
+        <div class="tb-avatar" id="avatar-el" onclick="toggleProfile()">SW</div>
       </div>
     </div>
 
@@ -1711,7 +1711,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 <div class="profile-overlay" id="profile-overlay" onclick="closeProfile()"></div>
 <div class="profile-panel" id="profile-panel" style="display:none">
   <!-- Header -->
-  <div class="profile-head" style="display:flex;align-items:center;gap:12px;padding:16px;">
+  <div class="profile-head" style="display:flex;align-items:center;gap:12px;padding:16px;cursor:pointer;" onclick="switchPage('user-profile',null);closeProfile()">
     <div class="tb-avatar" style="width:44px;height:44px;font-size:14px;flex-shrink:0;" id="pd-avatar">SW</div>
     <div style="min-width:0;">
       <div class="profile-head-name" id="pd-name" style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading...</div>
