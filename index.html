@@ -132,7 +132,150 @@ footer{border-top:1px solid var(--border);background:var(--bg2);padding:60px;dis
 @keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
 .reveal{opacity:0;transform:translateY(28px);transition:all 0.7s ease;}
 .reveal.visible{opacity:1;transform:translateY(0);}
-@media(max-width:768px){.nav-links{display:none;}.markets-grid,.features-grid,.plans-grid,.testi-grid{grid-template-columns:1fr;}.steps-row{grid-template-columns:1fr 1fr;}.steps-row::before{display:none;}.mini-cards{grid-template-columns:1fr 1fr;}.preview-sidebar{display:none;}.preview-body{grid-template-columns:1fr;}footer{grid-template-columns:1fr;padding:40px 24px;}.footer-bottom,.disclaimer{padding:16px 24px;}.section{padding:70px 24px;}.trust{padding:24px;}nav{padding:0 20px;}}
+/* ━━━━━━━━━━━━━━━━━━ MOBILE HAMBURGER MENU ━━━━━━━━━━━━━━━━━━ */
+.hamburger-btn{
+  display:none;flex-direction:column;gap:5px;
+  background:none;border:none;cursor:pointer;padding:6px;z-index:200;
+}
+.hamburger-btn span{
+  display:block;width:22px;height:2px;
+  background:var(--white);border-radius:2px;transition:all 0.25s;
+}
+.mobile-nav-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.7);z-index:150;backdrop-filter:blur(4px);
+}
+.mobile-nav-overlay.open{display:block;}
+.mobile-nav-drawer{
+  position:fixed;top:0;right:0;bottom:0;width:280px;
+  background:var(--bg2);border-left:1px solid var(--border);
+  z-index:160;transform:translateX(100%);
+  transition:transform 0.28s ease;
+  display:flex;flex-direction:column;padding:28px 24px;gap:6px;
+}
+.mobile-nav-drawer.open{transform:translateX(0);}
+.mob-nav-close{
+  align-self:flex-end;background:none;border:none;
+  color:var(--gray);font-size:1.4rem;cursor:pointer;margin-bottom:12px;
+}
+.mobile-nav-drawer a{
+  color:var(--gray);text-decoration:none;font-size:1rem;
+  font-weight:500;padding:12px 0;border-bottom:1px solid var(--border);
+  transition:color 0.2s;
+}
+.mobile-nav-drawer a:hover{color:var(--white);}
+.mob-nav-btns{margin-top:16px;display:flex;flex-direction:column;gap:10px;}
+.mob-nav-btns a{text-align:center;padding:12px;border-radius:8px;}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RESPONSIVE — TABLET (≤900px)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/* ━━━━━━━━━━━━━━━━━━━━ TABLET ━━━━━━━━━━━━━━━━━━━━ */
+@media(max-width:1024px){
+  nav{padding:0 32px;}
+  .section{padding:80px 32px;}
+  .trust{padding:28px 32px;}
+  .markets-grid{grid-template-columns:1fr 1fr;}
+  .features-grid{grid-template-columns:1fr 1fr;}
+  .mini-cards{grid-template-columns:1fr 1fr;}
+  .plans-grid{grid-template-columns:1fr;}
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━ MOBILE ━━━━━━━━━━━━━━━━━━━━ */
+@media(max-width:768px){
+  /* NAV */
+  .nav-links{display:none;}
+  .nav-right{display:none;}
+  .hamburger-btn{display:flex;}
+  nav{padding:0 18px;height:58px;}
+
+  /* TICKER */
+  .ticker-wrap{height:34px;}
+  .tick{font-size:0.7rem;padding:0 18px;}
+
+  /* HERO */
+  .hero{padding:100px 18px 56px;min-height:auto;}
+  h1{font-size:clamp(2rem,9vw,3.2rem);letter-spacing:-1px;line-height:1.1;}
+  .hero-sub{font-size:0.9rem;margin-top:16px;}
+  .hero-tag{font-size:0.74rem;padding:6px 14px;margin-bottom:22px;}
+  .hero-ctas{flex-direction:column;align-items:stretch;gap:10px;width:100%;max-width:340px;margin:28px auto 0;}
+  .cta-big,.cta-ghost{width:100%;text-align:center;padding:14px 20px;font-size:0.95rem;}
+  .orb1{width:300px;height:300px;}
+  .orb2{width:250px;height:250px;}
+
+  /* DASHBOARD PREVIEW */
+  .dashboard-preview{margin-top:36px;border-radius:14px;}
+  .preview-sidebar{display:none;}
+  .preview-body{grid-template-columns:1fr;}
+  .mini-cards{grid-template-columns:1fr 1fr;gap:8px;}
+  .mini-card{padding:10px;}
+  .mc-val{font-size:0.9rem;}
+  .chart-area{height:130px;}
+
+  /* TRUST BAR */
+  .trust{padding:24px 20px;gap:16px;flex-wrap:wrap;justify-content:center;}
+  .trust-num{font-size:1.4rem;}
+  .trust-item{min-width:120px;}
+
+  /* SECTIONS */
+  .section{padding:56px 18px;}
+  .sec-title{font-size:clamp(1.6rem,6vw,2.2rem);letter-spacing:-0.5px;}
+  .sec-sub{font-size:0.88rem;}
+
+  /* MARKETS */
+  .markets-grid{grid-template-columns:1fr;gap:12px;}
+  .market-card{padding:18px;}
+
+  /* FEATURES */
+  .features-grid{grid-template-columns:1fr;gap:12px;}
+  .feat{padding:22px;}
+
+  /* HOW IT WORKS */
+  .steps-row{grid-template-columns:1fr 1fr;gap:32px 16px;}
+  .steps-row::before{display:none;}
+  .step-num{width:52px;height:52px;font-size:1rem;}
+
+  /* PLANS */
+  .plans-grid{grid-template-columns:1fr;gap:16px;}
+  .plan{padding:24px 20px;}
+  .plan-roi{font-size:2.4rem;}
+  .plan.popular::before{font-size:0.58rem;padding:4px 30px;top:16px;right:-26px;}
+
+  /* TESTIMONIALS */
+  .testi-grid{grid-template-columns:1fr;}
+
+  /* CTA SECTION */
+  .cta-section{padding:64px 18px;}
+  .cta-section h2{font-size:clamp(1.8rem,6vw,2.6rem);}
+  .cta-section p{font-size:0.9rem;}
+
+  /* FOOTER */
+  footer{grid-template-columns:1fr 1fr;padding:40px 18px;gap:28px;}
+  .footer-brand{grid-column:1/-1;}
+  .footer-bottom{flex-direction:column;gap:8px;text-align:center;padding:16px 18px;font-size:0.8rem;}
+  .disclaimer{padding:14px 18px;font-size:0.75rem;}
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━ SMALL MOBILE ━━━━━━━━━━━━━━━━━━━━ */
+@media(max-width:480px){
+  nav{height:54px;}
+  h1{font-size:1.9rem;}
+  .hero{padding:88px 14px 48px;}
+  .hero-ctas{max-width:100%;}
+  .mini-cards{grid-template-columns:1fr;}
+  .steps-row{grid-template-columns:1fr;gap:24px;}
+  .plan-roi{font-size:2.2rem;}
+  footer{grid-template-columns:1fr;gap:24px;}
+  .trust{flex-direction:column;gap:18px;text-align:center;}
+  .section{padding:44px 14px;}
+  .plans-grid,.markets-grid,.features-grid{gap:12px;}
+  .market-card{padding:16px;}
+  .feat{padding:18px;}
+  .step{padding:0 8px;}
+  .mc-top{gap:8px;}
+  .mc-ico{width:36px;height:36px;font-size:1rem;}
+}
+
 </style>
 </head>
 <body>
@@ -172,6 +315,9 @@ footer{border-top:1px solid var(--border);background:var(--bg2);padding:60px;dis
     <li><a href="#plans">Plans</a></li>
     <li><a href="#how">How It Works</a></li>
   </ul>
+  <button class="hamburger-btn" onclick="openMobNav()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
   <div class="nav-right">
     <a href="login.html" class="btn-outline">Sign In</a>
     <a href="register.html" class="btn-solid">Get Started &rarr;</a>
@@ -264,9 +410,9 @@ footer{border-top:1px solid var(--border);background:var(--bg2);padding:60px;dis
 <section class="section" id="plans">
   <div class="reveal"><div class="sec-tag">Investment Plans</div><div class="sec-title">Choose Your Plan</div><div class="sec-sub">Transparent returns. No hidden fees. Start with any amount.</div></div>
   <div class="plans-grid reveal">
-    <div class="plan"><div class="plan-name">Starter Plan</div><div class="plan-roi">5<span style="font-size:1.5rem">%</span></div><div class="plan-period">Weekly Return</div><div class="plan-min">Min: <span>$100</span> &middot; Max: <span>$4,999</span></div><ul class="plan-features"><li>Weekly profit credited</li><li>Crypto and Forex markets</li><li>Basic analytics dashboard</li><li>Email support</li><li>Withdraw anytime</li></ul><a href="register.html" class="plan-btn outline">Get Started</a></div>
-    <div class="plan popular"><div class="plan-name">Growth Plan</div><div class="plan-roi">12<span style="font-size:1.5rem">%</span></div><div class="plan-period">Weekly Return</div><div class="plan-min">Min: <span>$5,000</span> &middot; Max: <span>$49,999</span></div><ul class="plan-features"><li>Daily profit credited</li><li>Crypto, Forex and Stocks</li><li>Advanced analytics</li><li>Priority 24/7 support</li><li>Dedicated account manager</li></ul><a href="register.html" class="plan-btn solid">Get Started</a></div>
-    <div class="plan"><div class="plan-name">Elite Plan</div><div class="plan-roi">20<span style="font-size:1.5rem">%</span></div><div class="plan-period">Weekly Return</div><div class="plan-min">Min: <span>$50,000</span> &middot; No maximum</div><ul class="plan-features"><li>Daily profit credited</li><li>All markets and commodities</li><li>VIP analytics suite</li><li>Personal trader assigned</li><li>Tax reporting support</li></ul><a href="register.html" class="plan-btn outline">Get Started</a></div>
+    <div class="plan"><div class="plan-name">Starter Plan</div><div class="plan-roi">5<span style="font-size:1.5rem">%</span></div><div class="plan-period">Weekly Return</div><div class="plan-min">Min: <span>$100</span> &middot; Max: <span>$4,999</span></div><ul class="plan-features"><li>Weekly profit credited</li><li>Crypto and Forex markets</li><li>Basic analytics dashboard</li><li>Email support</li><li>Withdraw anytime</li><li style="color:#ef4444">Limited balance: $10,000</li></ul><a href="register.html" class="plan-btn outline">Get Started</a></div>
+    <div class="plan popular"><div class="plan-name">Growth Plan</div><div class="plan-roi">12<span style="font-size:1.5rem">%</span></div><div class="plan-period">Weekly Return</div><div class="plan-min">Min: <span>$5,000</span> &middot; Max: <span>$49,999</span></div><ul class="plan-features"><li>Daily profit credited</li><li>Crypto, Forex and Stocks</li><li>Advanced analytics</li><li>Priority 24/7 support</li><li>Dedicated account manager</li><li style="color:var(--blue)">Balance limit: $100,000</li></ul><a href="register.html" class="plan-btn solid">Get Started</a></div>
+    <div class="plan"><div class="plan-name">Elite Plan</div><div class="plan-roi">20<span style="font-size:1.5rem">%</span></div><div class="plan-period">Weekly Return</div><div class="plan-min">Min: <span>$50,000</span> &middot; No maximum</div><ul class="plan-features"><li>Daily profit credited</li><li>All markets and commodities</li><li>VIP analytics suite</li><li>Personal trader assigned</li><li>Tax reporting support</li><li style="color:var(--green);font-weight:700">Unlimited balance</li></ul><a href="register.html" class="plan-btn outline">Get Started</a></div>
   </div>
 </section>
 
@@ -333,5 +479,38 @@ if(ca){h.forEach((v,i)=>{const b=document.createElement('div');b.className='bar'
 const obs=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:0.1});
 document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
 </script>
+
+<!-- MOBILE NAV DRAWER -->
+<div class="mobile-nav-overlay" id="mob-overlay" onclick="closeMobNav()"></div>
+<div class="mobile-nav-drawer" id="mob-drawer">
+  <button class="mob-nav-close" onclick="closeMobNav()">✕</button>
+  <a href="#markets">Markets</a>
+  <a href="#features">Features</a>
+  <a href="#how">How It Works</a>
+  <a href="#plans">Plans</a>
+  <a href="#testimonials">Testimonials</a>
+  <div class="mob-nav-btns">
+    <a href="login.html" class="btn-outline" style="text-align:center;padding:11px;border-radius:8px;border:1px solid var(--border2);color:var(--white);text-decoration:none;font-weight:600;">Log In</a>
+    <a href="register.html" class="btn-solid" style="text-align:center;padding:11px;border-radius:8px;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;">Get Started</a>
+  </div>
+</div>
+
+<script>
+function openMobNav(){
+  document.getElementById('mob-drawer').classList.add('open');
+  document.getElementById('mob-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeMobNav(){
+  document.getElementById('mob-drawer').classList.remove('open');
+  document.getElementById('mob-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+// Close drawer when a nav link is clicked
+document.querySelectorAll('.mobile-nav-drawer a').forEach(a=>{
+  a.addEventListener('click',closeMobNav);
+});
+</script>
+
 </body>
 </html>
