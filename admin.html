@@ -149,6 +149,7 @@
   <div class="nav-item" onclick="showPage('wallets',this)">💳 Wallet Addresses</div>
   <div class="nav-sep"></div>
   <div class="nav-label">Tools</div>
+  <div class="nav-item" onclick="showPage('kyc',this)">🪪 KYC Verification</div>
   <div class="nav-item" onclick="showPage('notify',this)">📢 Send Notification</div>
   <div class="sidebar-bottom">
     <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
@@ -360,6 +361,8 @@ async function loadAll(){
   loadPendingWithdrawals();
   loadAllDeposits();
   loadAllWithdrawals();
+  // KYC badge count on nav
+  updateKYCBadge();
   loadBalancesTable();
   populateNotifUsers();
 }
@@ -580,6 +583,64 @@ async function makeAdmin(uid){
   if(!confirm('Give admin access to this user? They will have full control.'))return;
   await sb.from('profiles').update({is_admin:true}).eq('id',uid);
   loadUsers();
+}
+
+async function updateKYCBadge(){
+  const {data} = await sb.from('wallets').select('user_id').eq('kyc_status','pending').eq('kyc_verified',false);
+  const count = data?.length||0;
+  const navItem = document.querySelector('[onclick*="kyc"]');
+  if(navItem && count>0){
+    navItem.innerHTML = `🪪 KYC Verification <span style="background:#e74c3c;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:800;margin-left:6px;">${count}</span>`;
+  }
+}
+
+async function loadKYC(){
+  const {data, error} = await sb.from('wallets')
+    .select('*,profiles(full_name,email)')
+    .not('kyc_status', 'is', null)
+    .neq('kyc_status','')
+    .order('kyc_submitted_at',{ascending:false});
+  
+  const tbody = document.getElementById('kyc-table-body');
+  if(!tbody) return;
+  if(error || !data || data.length===0){
+    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--gray);padding:32px;">No KYC submissions yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(w => {
+    const statusColor = w.kyc_verified ? 'var(--green)' : w.kyc_status==='pending' ? '#f59e0b' : 'var(--gray)';
+    const statusText = w.kyc_verified ? '✅ Verified' : w.kyc_status==='pending' ? '⏳ Pending' : w.kyc_status||'--';
+    const docLink = w.kyc_document_url ? `<a href="${w.kyc_document_url}" target="_blank" style="color:var(--blue);font-size:11px;">View Doc 🔗</a>` : '--';
+    const actionBtn = !w.kyc_verified && w.kyc_status==='pending'
+      ? `<div style="display:flex;gap:6px;">
+           <button class="btn btn-green" onclick="verifyKYC('${w.user_id}',true)">✅ Verify</button>
+           <button class="btn" style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.2);" onclick="verifyKYC('${w.user_id}',false)">❌ Reject</button>
+         </div>`
+      : w.kyc_verified ? '<span style="color:var(--green);font-size:12px;">Verified ✓</span>'
+      : '--';
+    return `<tr>
+      <td><strong>${w.profiles?.full_name||'--'}</strong></td>
+      <td style="color:var(--gray);font-size:0.8rem">${w.profiles?.email||'--'}</td>
+      <td>${w.kyc_id_type||'--'}</td>
+      <td style="font-size:0.8rem;color:var(--gray)">${w.kyc_id_number||'--'}</td>
+      <td>${docLink}</td>
+      <td style="color:var(--gray);font-size:0.8rem">${w.kyc_submitted_at ? new Date(w.kyc_submitted_at).toLocaleDateString() : '--'}</td>
+      <td><span style="color:${statusColor};font-weight:600;font-size:12px;">${statusText}</span></td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function verifyKYC(userId, approve){
+  const action = approve ? 'verify' : 'reject';
+  if(!confirm(`Are you sure you want to ${action} this user's KYC?`)) return;
+  const {error} = await sb.from('wallets').update({
+    kyc_verified: approve,
+    kyc_status: approve ? 'verified' : 'rejected'
+  }).eq('user_id', userId);
+  if(error){ alert('Error: '+error.message); return; }
+  alert(approve ? '✅ User has been verified!' : '❌ KYC rejected.');
+  loadKYC();
 }
 
 function showPage(name,el){

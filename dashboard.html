@@ -777,6 +777,55 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
   .settings-panel{width:100%;}
   .profile-panel{width:280px;}
 }
+
+/* ── PROFILE INFO CARDS ── */
+.prof-info-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.prof-info-label{font-size:10px;text-transform:uppercase;letter-spacing:0.8px;color:var(--gray);margin-bottom:4px;}
+.prof-info-val{font-size:13px;font-weight:600;color:var(--white);}
+
+/* ── SECURITY CARDS ── */
+.sec-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:16px;}
+.sec-card-title{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.pw-wrap{position:relative;}
+.pw-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:13px;padding:0;}
+.f-group{margin-bottom:0;}
+.f-group label{display:block;font-size:11px;color:var(--gray);margin-bottom:5px;margin-top:12px;}
+
+/* ── TOGGLE SWITCH ── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-label{font-size:13px;font-weight:600;}
+.toggle-sub{font-size:11px;color:var(--gray);margin-top:2px;}
+.sw-toggle{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;}
+.sw-toggle input{opacity:0;width:0;height:0;}
+.sw-slider{position:absolute;cursor:pointer;inset:0;background:var(--border2);border-radius:24px;transition:0.3s;}
+.sw-slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:0.3s;}
+.sw-toggle input:checked + .sw-slider{background:var(--blue);}
+.sw-toggle input:checked + .sw-slider:before{transform:translateX(18px);}
+
+/* ── THEME OPTIONS ── */
+.theme-opt{transition:border 0.2s;color:var(--white);}
+.active-theme{border-color:var(--blue) !important;}
+
+/* ── WALLET OPTIONS ── */
+.wallet-opt{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;cursor:pointer;transition:border 0.15s;}
+.wallet-opt:hover{border-color:var(--blue);}
+
+/* ── EXPERT CARDS ── */
+.expert-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.expert-stat{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;}
+.expert-stat-val{font-size:14px;font-weight:800;color:var(--white);}
+.expert-stat-lbl{font-size:10px;color:var(--gray);margin-top:2px;}
+
+/* ── KYC DROP ZONE ── */
+#kyc-drop-zone:hover{border-color:var(--blue);}
+
+/* ── MOBILE: prof grid 1col ── */
+@media(max-width:600px){
+  .prof-info-card ~ .prof-info-card:nth-child(2n+1){grid-column:1;} 
+  #page-user-profile .inner-wrap > div:nth-child(2){grid-template-columns:1fr !important;}
+  #page-personal-info .f-group ~ .f-group{grid-template-columns:1fr !important;}
+}
 </style>
 </head>
 <body>
@@ -882,11 +931,19 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 
       <!-- ── SETUP ── -->
       <div class="sb-section-label">Setup</div>
+      <button class="sb-item" onclick="switchPage('connect-wallet',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        Connect Wallet
+      </button>
+      <button class="sb-item" onclick="switchPage('copy-experts',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy Experts
+      </button>
       <button class="sb-item" onclick="switchPage('subscribe',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg>
         Subscribe
       </button>
-      <button class="sb-item" onclick="openSettingsPanel()">
+      <button class="sb-item" onclick="switchPage('settings',this)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Settings
       </button>
@@ -914,7 +971,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
         <div class="tb-bell" onclick="toggleNotif()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
         </div>
-        <div class="tb-avatar" id="avatar-el" onclick="toggleProfile()">SW</div>
+        <div class="tb-avatar" id="avatar-el" onclick="switchPage('user-profile',null)">SW</div>
       </div>
     </div>
 
@@ -1394,6 +1451,251 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
         </div>
       </div>
 
+
+      <!-- ════════════════════ USER PROFILE PAGE ════════════════════ -->
+      <div class="page" id="page-user-profile">
+        <div class="inner-wrap" style="max-width:680px;">
+          <div style="display:flex;align-items:center;gap:20px;margin-bottom:28px;padding:24px;background:var(--card);border:1px solid var(--border);border-radius:14px;">
+            <div id="prof-avatar-big" style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;color:#fff;flex-shrink:0;">SW</div>
+            <div style="flex:1;">
+              <div style="font-size:20px;font-weight:800;" id="prof-name-big">Loading...</div>
+              <div style="color:var(--gray);font-size:13px;margin-top:2px;" id="prof-email-big">--</div>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+                <div id="prof-verified-badge" style="display:inline-flex;align-items:center;gap:5px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.25);color:#e74c3c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">● NOT VERIFIED</div>
+                <div id="prof-tier-badge" style="display:inline-flex;align-items:center;gap:5px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.25);color:#3b82f6;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">STARTER TIER</div>
+              </div>
+            </div>
+            <button onclick="switchPage('personal-info',null)" style="background:var(--blue);color:#fff;border:none;padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Edit Profile</button>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="prof-info-card"><div class="prof-info-label">Full Name</div><div class="prof-info-val" id="pi-fullname">—</div></div>
+            <div class="prof-info-card"><div class="prof-info-label">Email Address</div><div class="prof-info-val" id="pi-email2">—</div></div>
+            <div class="prof-info-card"><div class="prof-info-label">Phone Number</div><div class="prof-info-val" id="pi-phone">—</div></div>
+            <div class="prof-info-card"><div class="prof-info-label">Age</div><div class="prof-info-val" id="pi-age">—</div></div>
+            <div class="prof-info-card"><div class="prof-info-label">Country of Residence</div><div class="prof-info-val" id="pi-country">—</div></div>
+            <div class="prof-info-card"><div class="prof-info-label">Home Address</div><div class="prof-info-val" id="pi-address">—</div></div>
+            <div class="prof-info-card"><div class="prof-info-label">Account Tier</div><div class="prof-info-val" id="pi-tier">Starter</div></div>
+            <div class="prof-info-card"><div class="prof-info-label">KYC Status</div><div class="prof-info-val" id="pi-kyc" style="color:#e74c3c;">Not Verified</div></div>
+            <div class="prof-info-card"><div class="prof-info-label">Member Since</div><div class="prof-info-val" id="pi-since">—</div></div>
+            <div class="prof-info-card"><div class="prof-info-label">Account ID</div><div class="prof-info-val" id="pi-uid" style="font-size:10px;word-break:break-all;">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ PERSONAL INFO PAGE ════════════════════ -->
+      <div class="page" id="page-personal-info">
+        <div class="inner-wrap" style="max-width:620px;">
+          <div class="inner-title">Personal Information</div>
+          <div class="inner-sub" style="margin-bottom:24px;">Update your profile details. Changes are saved to your account.</div>
+
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:16px;">Personal Details</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="f-group"><label>Full Name</label><input class="t-input" id="pi-edit-name" placeholder="Your full name"/></div>
+              <div class="f-group"><label>Age</label><input class="t-input" id="pi-edit-age" type="number" placeholder="Your age"/></div>
+              <div class="f-group"><label>Phone Number</label><input class="t-input" id="pi-edit-phone" placeholder="+1 234 567 8900"/></div>
+              <div class="f-group"><label>Country of Residence</label>
+                <select class="t-select" id="pi-edit-country">
+                  <option value="">Select country...</option>
+                  <option>United States</option><option>United Kingdom</option><option>Germany</option><option>France</option><option>Italy</option><option>Spain</option><option>Canada</option><option>Australia</option><option>Netherlands</option><option>Switzerland</option><option>Sweden</option><option>Norway</option><option>Denmark</option><option>Belgium</option><option>Austria</option><option>Portugal</option><option>Poland</option><option>Czech Republic</option><option>Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="f-group" style="margin-top:14px;"><label>Home Address</label><input class="t-input" id="pi-edit-address" placeholder="Street, City, State, ZIP"/></div>
+            <button onclick="savePersonalInfo()" class="sub-btn" style="margin-top:18px;">💾 Save Changes</button>
+            <div id="pi-msg" style="font-size:12px;margin-top:10px;"></div>
+          </div>
+
+          <!-- KYC SECTION -->
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:6px;">KYC Verification</div>
+            <div style="font-size:12px;color:var(--gray);margin-bottom:18px;">Verify your identity using a government-approved ID to unlock full account features.</div>
+            <div id="kyc-status-banner" style="display:none;padding:12px 16px;border-radius:8px;font-size:12px;font-weight:600;margin-bottom:16px;"></div>
+            <div id="kyc-form">
+              <div class="f-group"><label>ID Type</label>
+                <select class="t-select" id="kyc-id-type">
+                  <option value="">Select ID type...</option>
+                  <option value="passport">International Passport</option>
+                  <option value="national_id">National ID Card</option>
+                  <option value="drivers_license">Driver's License</option>
+                </select>
+              </div>
+              <div class="f-group" style="margin-top:14px;"><label>ID Number</label><input class="t-input" id="kyc-id-number" placeholder="Enter your ID number"/></div>
+              <div class="f-group" style="margin-top:14px;">
+                <label>Upload ID Document (front)</label>
+                <div id="kyc-drop-zone" onclick="document.getElementById('kyc-file').click()" style="border:2px dashed var(--border2);border-radius:8px;padding:28px;text-align:center;cursor:pointer;transition:border 0.2s;margin-top:6px;">
+                  <div style="font-size:28px;margin-bottom:8px;">📄</div>
+                  <div style="font-size:13px;color:var(--white);font-weight:600;">Click to upload or drag & drop</div>
+                  <div style="font-size:11px;color:var(--gray);margin-top:4px;">JPG, PNG or PDF — max 5MB</div>
+                  <div id="kyc-file-name" style="font-size:11px;color:var(--green);margin-top:8px;"></div>
+                </div>
+                <input type="file" id="kyc-file" accept="image/*,.pdf" style="display:none" onchange="onKycFileSelect(this)"/>
+              </div>
+              <button onclick="submitKYC()" class="sub-btn" style="margin-top:18px;">🔐 Submit for Verification</button>
+              <div id="kyc-msg" style="font-size:12px;margin-top:10px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ SECURITY PAGE ════════════════════ -->
+      <div class="page" id="page-security">
+        <div class="inner-wrap" style="max-width:580px;">
+          <div class="inner-title">Security</div>
+          <div class="inner-sub" style="margin-bottom:24px;">Manage your account security. All changes require your current password.</div>
+
+          <!-- Change Password -->
+          <div class="sec-card">
+            <div class="sec-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Change Password</div>
+            <div class="f-group"><label>Current Password</label><div class="pw-wrap"><input class="t-input" type="password" id="sec-cur-pw" placeholder="Enter current password"/><button class="pw-eye" onclick="togglePw('sec-cur-pw',this)">👁</button></div></div>
+            <div class="f-group"><label>New Password</label><div class="pw-wrap"><input class="t-input" type="password" id="sec-new-pw" placeholder="Min 8 characters"/><button class="pw-eye" onclick="togglePw('sec-new-pw',this)">👁</button></div></div>
+            <div class="f-group"><label>Confirm New Password</label><div class="pw-wrap"><input class="t-input" type="password" id="sec-conf-pw" placeholder="Repeat new password"/><button class="pw-eye" onclick="togglePw('sec-conf-pw',this)">👁</button></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-top:14px;">
+              <button onclick="changePassword()" class="sub-btn" style="width:auto;padding:10px 22px;">Update Password</button>
+              <button onclick="resetPasswordEmail()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;font-family:inherit;text-decoration:underline;">Forgot password? Reset via email</button>
+            </div>
+            <div id="sec-pw-msg" style="font-size:12px;margin-top:10px;"></div>
+          </div>
+
+          <!-- Change Email -->
+          <div class="sec-card">
+            <div class="sec-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Change Email</div>
+            <div class="f-group"><label>Current Password</label><div class="pw-wrap"><input class="t-input" type="password" id="sec-email-pw" placeholder="Enter current password"/><button class="pw-eye" onclick="togglePw('sec-email-pw',this)">👁</button></div></div>
+            <div class="f-group"><label>New Email Address</label><input class="t-input" type="email" id="sec-new-email" placeholder="new@email.com"/></div>
+            <button onclick="changeEmail()" class="sub-btn" style="margin-top:14px;width:auto;padding:10px 22px;">Update Email</button>
+            <div id="sec-email-msg" style="font-size:12px;margin-top:10px;"></div>
+          </div>
+
+          <!-- Change Phone -->
+          <div class="sec-card">
+            <div class="sec-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.29 6.29l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Change Phone Number</div>
+            <div class="f-group"><label>Current Password</label><div class="pw-wrap"><input class="t-input" type="password" id="sec-phone-pw" placeholder="Enter current password"/><button class="pw-eye" onclick="togglePw('sec-phone-pw',this)">👁</button></div></div>
+            <div class="f-group"><label>New Phone Number</label><input class="t-input" type="tel" id="sec-new-phone" placeholder="+1 234 567 8900"/></div>
+            <button onclick="changePhone()" class="sub-btn" style="margin-top:14px;width:auto;padding:10px 22px;">Update Phone</button>
+            <div id="sec-phone-msg" style="font-size:12px;margin-top:10px;"></div>
+          </div>
+
+          <!-- 2FA -->
+          <div class="sec-card">
+            <div class="sec-card-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Two-Factor Authentication (2FA)</div>
+            <div style="font-size:12px;color:var(--gray);margin-bottom:14px;line-height:1.6;">Add an extra layer of security to your account. When enabled, you'll need to enter a code from your authenticator app each time you log in.</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+              <div>
+                <div style="font-size:13px;font-weight:600;">Authenticator App</div>
+                <div style="font-size:11px;color:var(--gray);margin-top:2px;" id="twofa-status">Status: Not enabled</div>
+              </div>
+              <button id="twofa-btn" onclick="toggle2FA()" style="background:var(--blue);color:#fff;border:none;padding:8px 16px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">Enable 2FA</button>
+            </div>
+            <div id="sec-2fa-msg" style="font-size:12px;margin-top:10px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ SETTINGS PAGE ════════════════════ -->
+      <div class="page" id="page-settings">
+        <div class="inner-wrap" style="max-width:680px;">
+          <div class="inner-title">⚙️ Settings</div>
+          <div class="inner-sub" style="margin-bottom:28px;">Customize your SwiftExpress experience.</div>
+
+          <!-- Appearance -->
+          <div class="sec-card">
+            <div class="sec-card-title">🎨 Appearance</div>
+            <div class="f-group"><label>Theme</label>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;">
+                <div class="theme-opt active-theme" onclick="setTheme('dark',this)" id="theme-dark" style="border:2px solid var(--blue);background:#111;border-radius:8px;padding:12px;text-align:center;cursor:pointer;">
+                  <div style="font-size:18px;">🌑</div><div style="font-size:11px;margin-top:4px;font-weight:600;">Dark</div>
+                </div>
+                <div class="theme-opt" onclick="setTheme('midnight',this)" id="theme-midnight" style="border:2px solid var(--border);background:#090912;border-radius:8px;padding:12px;text-align:center;cursor:pointer;">
+                  <div style="font-size:18px;">🌌</div><div style="font-size:11px;margin-top:4px;font-weight:600;">Midnight</div>
+                </div>
+                <div class="theme-opt" onclick="setTheme('dim',this)" id="theme-dim" style="border:2px solid var(--border);background:#1a1f2e;border-radius:8px;padding:12px;text-align:center;cursor:pointer;">
+                  <div style="font-size:18px;">🌒</div><div style="font-size:11px;margin-top:4px;font-weight:600;">Dim</div>
+                </div>
+              </div>
+            </div>
+            <div class="f-group" style="margin-top:18px;"><label>Accent Color</label>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+                <div class="color-opt" onclick="setAccent('#3b82f6',this)" style="width:32px;height:32px;border-radius:50%;background:#3b82f6;cursor:pointer;border:3px solid #fff;"></div>
+                <div class="color-opt" onclick="setAccent('#10b981',this)" style="width:32px;height:32px;border-radius:50%;background:#10b981;cursor:pointer;border:3px solid transparent;"></div>
+                <div class="color-opt" onclick="setAccent('#8b5cf6',this)" style="width:32px;height:32px;border-radius:50%;background:#8b5cf6;cursor:pointer;border:3px solid transparent;"></div>
+                <div class="color-opt" onclick="setAccent('#f59e0b',this)" style="width:32px;height:32px;border-radius:50%;background:#f59e0b;cursor:pointer;border:3px solid transparent;"></div>
+                <div class="color-opt" onclick="setAccent('#ef4444',this)" style="width:32px;height:32px;border-radius:50%;background:#ef4444;cursor:pointer;border:3px solid transparent;"></div>
+                <div class="color-opt" onclick="setAccent('#ec4899',this)" style="width:32px;height:32px;border-radius:50%;background:#ec4899;cursor:pointer;border:3px solid transparent;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="sec-card">
+            <div class="sec-card-title">🔔 Notifications</div>
+            <div class="toggle-row"><div><div class="toggle-label">Deposit Confirmations</div><div class="toggle-sub">Get notified when a deposit is approved</div></div><label class="sw-toggle"><input type="checkbox" id="notif-deposit" checked onchange="saveSetting('notif-deposit',this.checked)"/><span class="sw-slider"></span></label></div>
+            <div class="toggle-row"><div><div class="toggle-label">Withdrawal Updates</div><div class="toggle-sub">Get notified on withdrawal status changes</div></div><label class="sw-toggle"><input type="checkbox" id="notif-withdraw" checked onchange="saveSetting('notif-withdraw',this.checked)"/><span class="sw-slider"></span></label></div>
+            <div class="toggle-row"><div><div class="toggle-label">Market Alerts</div><div class="toggle-sub">Price movement alerts for your assets</div></div><label class="sw-toggle"><input type="checkbox" id="notif-market" onchange="saveSetting('notif-market',this.checked)"/><span class="sw-slider"></span></label></div>
+            <div class="toggle-row"><div><div class="toggle-label">Trading Signals</div><div class="toggle-sub">New expert signals and recommendations</div></div><label class="sw-toggle"><input type="checkbox" id="notif-signals" checked onchange="saveSetting('notif-signals',this.checked)"/><span class="sw-slider"></span></label></div>
+            <div class="toggle-row"><div><div class="toggle-label">Promotional Offers</div><div class="toggle-sub">Discounts and platform promotions</div></div><label class="sw-toggle"><input type="checkbox" id="notif-promo" onchange="saveSetting('notif-promo',this.checked)"/><span class="sw-slider"></span></label></div>
+          </div>
+
+          <!-- Display Preferences -->
+          <div class="sec-card">
+            <div class="sec-card-title">📊 Display Preferences</div>
+            <div class="toggle-row"><div><div class="toggle-label">Show Balance on Dashboard</div><div class="toggle-sub">Hide or show your balance amount</div></div><label class="sw-toggle"><input type="checkbox" id="pref-showbal" checked onchange="toggleBalanceVisibility(this.checked)"/><span class="sw-slider"></span></label></div>
+            <div class="toggle-row"><div><div class="toggle-label">Live Price Updates</div><div class="toggle-sub">Auto-refresh BTC prices every 15 seconds</div></div><label class="sw-toggle"><input type="checkbox" id="pref-liveprices" checked onchange="saveSetting('pref-liveprices',this.checked)"/><span class="sw-slider"></span></label></div>
+            <div class="toggle-row"><div><div class="toggle-label">Show Portfolio Change %</div><div class="toggle-sub">Display daily percentage change on balance</div></div><label class="sw-toggle"><input type="checkbox" id="pref-showpct" checked onchange="saveSetting('pref-showpct',this.checked)"/><span class="sw-slider"></span></label></div>
+            <div class="f-group" style="margin-top:16px;"><label>Default Currency Display</label>
+              <select class="t-select" id="pref-currency" onchange="saveSetting('pref-currency',this.value)">
+                <option value="USD">USD — US Dollar ($)</option>
+                <option value="EUR">EUR — Euro (€)</option>
+                <option value="GBP">GBP — British Pound (£)</option>
+                <option value="BTC">BTC — Bitcoin (₿)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Privacy -->
+          <div class="sec-card">
+            <div class="sec-card-title">🔒 Privacy</div>
+            <div class="toggle-row"><div><div class="toggle-label">Activity Status</div><div class="toggle-sub">Show when you were last active</div></div><label class="sw-toggle"><input type="checkbox" id="priv-activity" onchange="saveSetting('priv-activity',this.checked)"/><span class="sw-slider"></span></label></div>
+            <div class="toggle-row"><div><div class="toggle-label">Data Analytics</div><div class="toggle-sub">Help improve the platform with anonymous data</div></div><label class="sw-toggle"><input type="checkbox" id="priv-analytics" checked onchange="saveSetting('priv-analytics',this.checked)"/><span class="sw-slider"></span></label></div>
+          </div>
+
+          <!-- Danger Zone -->
+          <div class="sec-card" style="border-color:rgba(231,76,60,0.2);">
+            <div class="sec-card-title" style="color:#e74c3c;">⚠️ Danger Zone</div>
+            <div style="font-size:12px;color:var(--gray);margin-bottom:14px;">These actions are irreversible. Please be certain before proceeding.</div>
+            <button onclick="if(confirm('Are you sure you want to log out of all devices?'))alert('Logged out of all devices.')" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.25);color:#e74c3c;padding:10px 20px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;margin-right:10px;">Logout All Devices</button>
+            <button onclick="if(confirm('Delete account? This cannot be undone.'))alert('Please contact support to complete account deletion.')" style="background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.25);color:#e74c3c;padding:10px 20px;border-radius:7px;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;">Delete Account</button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ════════════════════ CONNECT WALLET PAGE ════════════════════ -->
+      <div class="page" id="page-connect-wallet">
+        <div class="inner-wrap" style="max-width:540px;">
+          <div class="inner-title">🔗 Connect Wallet</div>
+          <div class="inner-sub" style="margin-bottom:24px;">Link your external crypto wallet to SwiftExpress.</div>
+          <div style="display:grid;gap:12px;">
+            <div class="wallet-opt" onclick="alert('MetaMask connection coming soon!')"><div style="font-size:28px;">🦊</div><div><div style="font-weight:700;font-size:14px;">MetaMask</div><div style="font-size:11px;color:var(--gray);">Browser extension wallet</div></div><div style="margin-left:auto;color:var(--gray);">›</div></div>
+            <div class="wallet-opt" onclick="alert('WalletConnect coming soon!')"><div style="font-size:28px;">🔵</div><div><div style="font-weight:700;font-size:14px;">WalletConnect</div><div style="font-size:11px;color:var(--gray);">Scan QR with mobile wallet</div></div><div style="margin-left:auto;color:var(--gray);">›</div></div>
+            <div class="wallet-opt" onclick="alert('Coinbase Wallet coming soon!')"><div style="font-size:28px;">🔷</div><div><div style="font-weight:700;font-size:14px;">Coinbase Wallet</div><div style="font-size:11px;color:var(--gray);">Coinbase self-custody wallet</div></div><div style="margin-left:auto;color:var(--gray);">›</div></div>
+            <div class="wallet-opt" onclick="alert('Trust Wallet coming soon!')"><div style="font-size:28px;">🛡️</div><div><div style="font-weight:700;font-size:14px;">Trust Wallet</div><div style="font-size:11px;color:var(--gray);">Mobile crypto wallet</div></div><div style="margin-left:auto;color:var(--gray);">›</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════ COPY EXPERTS PAGE ════════════════════ -->
+      <div class="page" id="page-copy-experts">
+        <div class="inner-wrap" style="max-width:680px;">
+          <div class="inner-title">📋 Copy Experts</div>
+          <div class="inner-sub" style="margin-bottom:24px;">Mirror trades from top-performing expert traders automatically.</div>
+          <div style="display:grid;gap:14px;">
+            <div class="expert-card"><div style="display:flex;align-items:center;gap:14px;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;">AK</div><div style="flex:1;"><div style="font-weight:700;font-size:14px;">Alex Kovacs</div><div style="font-size:11px;color:var(--gray);">BTC &amp; Forex specialist · 4.9★</div></div><div style="text-align:right;"><div style="color:var(--green);font-size:16px;font-weight:800;">+147%</div><div style="font-size:10px;color:var(--gray);">12 months</div></div></div><div style="display:flex;gap:8px;margin-top:14px;"><div class="expert-stat"><div class="expert-stat-val">2,340</div><div class="expert-stat-lbl">Followers</div></div><div class="expert-stat"><div class="expert-stat-val">89%</div><div class="expert-stat-lbl">Win Rate</div></div><div class="expert-stat"><div class="expert-stat-val">$50 min</div><div class="expert-stat-lbl">Min Copy</div></div></div><button onclick="alert('Copy trading coming soon!')" class="sub-btn" style="margin-top:14px;">Copy This Expert</button></div>
+            <div class="expert-card"><div style="display:flex;align-items:center;gap:14px;"><div style="width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#8b5cf6,#3b82f6);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;">SR</div><div style="flex:1;"><div style="font-weight:700;font-size:14px;">Sofia Reyes</div><div style="font-size:11px;color:var(--gray);">Stocks &amp; Crypto analyst · 4.8★</div></div><div style="text-align:right;"><div style="color:var(--green);font-size:16px;font-weight:800;">+213%</div><div style="font-size:10px;color:var(--gray);">18 months</div></div></div><div style="display:flex;gap:8px;margin-top:14px;"><div class="expert-stat"><div class="expert-stat-val">5,120</div><div class="expert-stat-lbl">Followers</div></div><div class="expert-stat"><div class="expert-stat-val">92%</div><div class="expert-stat-lbl">Win Rate</div></div><div class="expert-stat"><div class="expert-stat-val">$100 min</div><div class="expert-stat-lbl">Min Copy</div></div></div><button onclick="alert('Copy trading coming soon!')" class="sub-btn" style="margin-top:14px;">Copy This Expert</button></div>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /content-area -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -1426,19 +1728,14 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 
   <div class="pd-section-label">Profile</div>
 
-  <div class="profile-item" onclick="openSettingsPanel('verification');closeProfile()">
+  <div class="profile-item" onclick="switchPage('personal-info',null);closeProfile()">
     <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-    <div><div class="pi-title">Verification</div><div class="pi-sub">Verify your identity</div></div>
+    <div><div class="pi-title">Personal Information</div><div class="pi-sub">Edit your profile details</div></div>
   </div>
 
-  <div class="profile-item" onclick="openSettingsPanel('personal');closeProfile()">
-    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-    <div><div class="pi-title">Personal</div><div class="pi-sub">Your personal information</div></div>
-  </div>
-
-  <div class="profile-item" onclick="openSettingsPanel('security');closeProfile()">
+  <div class="profile-item" onclick="switchPage('security',null);closeProfile()">
     <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-    <div><div class="pi-title">Security</div><div class="pi-sub">Email and password</div></div>
+    <div><div class="pi-title">Security</div><div class="pi-sub">Password, email &amp; 2FA</div></div>
   </div>
 
   <div class="profile-item" onclick="switchPage('subscribe',null);closeProfile()">
@@ -1446,26 +1743,9 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
     <div><div class="pi-title">Upgrade Tier</div><div class="pi-sub">Increase account features</div></div>
   </div>
 
-  <div class="pd-section-label">More</div>
-
-  <div class="profile-item" onclick="switchPage('referrals',null);closeProfile()">
-    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-    <div><div class="pi-title">Referrals</div><div class="pi-sub">Invite friends and earn</div></div>
-  </div>
-
-  <div class="profile-item" onclick="switchPage('swap',null);closeProfile()">
-    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
-    <div><div class="pi-title">Connect Wallet</div><div class="pi-sub">Link external wallet</div></div>
-  </div>
-
-  <div class="profile-item" onclick="switchPage('signals',null);closeProfile()">
-    <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></div>
-    <div><div class="pi-title">Copy Experts</div><div class="pi-sub">Mirror expert trades</div></div>
-  </div>
-
-  <div class="profile-item" onclick="openSettingsPanel();closeProfile()">
+  <div class="profile-item" onclick="switchPage('settings',null);closeProfile()">
     <div class="pi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
-    <div><div class="pi-title">Settings</div><div class="pi-sub">Account preferences</div></div>
+    <div><div class="pi-title">Settings</div><div class="pi-sub">Customize your experience</div></div>
   </div>
 
   <div style="height:1px;background:var(--border);margin:6px 0;"></div>
@@ -1536,6 +1816,7 @@ async function init(){
     document.getElementById('pd-name').textContent=name;
     document.getElementById('pd-email').textContent=user.email;
   setMobileUserInfo(user.email);
+  setTimeout(()=>{populateProfilePage();loadSettings();},500);
   }catch(e){
     const name=user.email.split('@')[0]||'User';
     document.getElementById('avatar-el').textContent=name.slice(0,2).toUpperCase();
@@ -2000,6 +2281,251 @@ function copyRefLink(){
   const el=document.getElementById("ref-link-input");
   if(el){navigator.clipboard.writeText(el.value).catch(()=>{el.select();document.execCommand("copy");});}
   alert("Referral link copied!");}
+
+/* ──────── PROFILE PAGE POPULATION ──────── */
+function populateProfilePage(){
+  if(!user || !wallet) return;
+  const meta = user.user_metadata || {};
+  const initials = (meta.full_name||user.email||'SW').slice(0,2).toUpperCase();
+  
+  // Big avatar
+  const av = document.getElementById('prof-avatar-big');
+  if(av) av.textContent = initials;
+  const avEl = document.getElementById('avatar-el');
+  if(avEl) avEl.textContent = initials;
+
+  // Names
+  ['pd-avatar','sp-avatar'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=initials;});
+  ['pd-name','sp-name'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=meta.full_name||user.email||'User';});
+  ['pd-email','sp-email'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=user.email||'--';});
+
+  // Profile page fields
+  const setEl=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val||'—';};
+  setEl('prof-name-big', meta.full_name||user.email);
+  setEl('prof-email-big', user.email);
+  setEl('pi-fullname', meta.full_name);
+  setEl('pi-email2', user.email);
+  setEl('pi-phone', meta.phone);
+  setEl('pi-age', meta.age);
+  setEl('pi-country', meta.country);
+  setEl('pi-address', meta.address);
+  setEl('pi-uid', user.id);
+  setEl('pi-since', new Date(user.created_at).toLocaleDateString('en',{year:'numeric',month:'long',day:'numeric'}));
+
+  // Tier
+  const tier = wallet.tier || 'Starter';
+  setEl('pi-tier', tier);
+  const tierBadge = document.getElementById('prof-tier-badge');
+  if(tierBadge) tierBadge.textContent = tier.toUpperCase() + ' TIER';
+
+  // KYC / Verified status
+  const isVerified = wallet.kyc_verified === true;
+  const kycStatus = wallet.kyc_status || 'not_submitted';
+  setEl('pi-kyc', isVerified ? '✅ Verified' : kycStatus==='pending' ? '⏳ Pending Review' : 'Not Verified');
+  const kyc_el = document.getElementById('pi-kyc');
+  if(kyc_el) kyc_el.style.color = isVerified ? 'var(--green)' : kycStatus==='pending' ? '#f59e0b' : '#e74c3c';
+
+  // Verified badge on profile header
+  const vbadge = document.getElementById('prof-verified-badge');
+  if(vbadge){
+    if(isVerified){ vbadge.textContent='✅ VERIFIED'; vbadge.style.background='rgba(16,185,129,0.1)'; vbadge.style.borderColor='rgba(16,185,129,0.25)'; vbadge.style.color='var(--green)'; }
+    else if(kycStatus==='pending'){ vbadge.textContent='⏳ PENDING'; vbadge.style.background='rgba(245,158,11,0.1)'; vbadge.style.borderColor='rgba(245,158,11,0.25)'; vbadge.style.color='#f59e0b'; }
+  }
+
+  // Prefill personal info form
+  const pf=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
+  pf('pi-edit-name', meta.full_name);
+  pf('pi-edit-age', meta.age);
+  pf('pi-edit-phone', meta.phone);
+  pf('pi-edit-country', meta.country);
+  pf('pi-edit-address', meta.address);
+
+  // KYC status banner
+  const banner = document.getElementById('kyc-status-banner');
+  const kycForm = document.getElementById('kyc-form');
+  if(banner){
+    if(isVerified){ banner.style.display='block'; banner.style.background='rgba(16,185,129,0.1)'; banner.style.border='1px solid rgba(16,185,129,0.2)'; banner.style.color='var(--green)'; banner.textContent='✅ Your identity has been verified successfully.'; if(kycForm) kycForm.style.display='none'; }
+    else if(kycStatus==='pending'){ banner.style.display='block'; banner.style.background='rgba(245,158,11,0.1)'; banner.style.border='1px solid rgba(245,158,11,0.2)'; banner.style.color='#f59e0b'; banner.textContent='⏳ Your documents are under review. We'll notify you once verified.'; if(kycForm) kycForm.style.display='none'; }
+  }
+}
+
+/* ──────── SAVE PERSONAL INFO ──────── */
+async function savePersonalInfo(){
+  const msg = document.getElementById('pi-msg');
+  const meta = {
+    full_name: document.getElementById('pi-edit-name').value.trim(),
+    age: document.getElementById('pi-edit-age').value,
+    phone: document.getElementById('pi-edit-phone').value.trim(),
+    country: document.getElementById('pi-edit-country').value,
+    address: document.getElementById('pi-edit-address').value.trim()
+  };
+  msg.style.color='var(--gray)'; msg.textContent='Saving...';
+  const {error} = await sb.auth.updateUser({data: meta});
+  if(error){ msg.style.color='#e74c3c'; msg.textContent='Error: '+error.message; return; }
+  // Update local user meta
+  if(user) user.user_metadata = {...(user.user_metadata||{}), ...meta};
+  populateProfilePage();
+  msg.style.color='var(--green)'; msg.textContent='✅ Profile updated successfully!';
+  setTimeout(()=>msg.textContent='',3000);
+}
+
+/* ──────── KYC SUBMISSION ──────── */
+function onKycFileSelect(input){
+  const fn = document.getElementById('kyc-file-name');
+  if(fn && input.files[0]) fn.textContent = '📎 ' + input.files[0].name;
+}
+
+async function submitKYC(){
+  const msg = document.getElementById('kyc-msg');
+  const idType = document.getElementById('kyc-id-type').value;
+  const idNum = document.getElementById('kyc-id-number').value.trim();
+  const file = document.getElementById('kyc-file').files[0];
+  if(!idType){ msg.style.color='#e74c3c'; msg.textContent='Please select an ID type.'; return; }
+  if(!idNum){ msg.style.color='#e74c3c'; msg.textContent='Please enter your ID number.'; return; }
+  if(!file){ msg.style.color='#e74c3c'; msg.textContent='Please upload your ID document.'; return; }
+  msg.style.color='var(--gray)'; msg.textContent='Uploading...';
+  try {
+    // Upload file to Supabase storage
+    const ext = file.name.split('.').pop();
+    const path = user.id + '_kyc_' + Date.now() + '.' + ext;
+    const {error: upErr} = await sb.storage.from('payment-proofs').upload(path, file);
+    if(upErr) throw upErr;
+    const {data: urlData} = sb.storage.from('payment-proofs').getPublicUrl(path);
+    // Save KYC info to wallets table
+    const {error: dbErr} = await sb.from('wallets').update({
+      kyc_status: 'pending',
+      kyc_id_type: idType,
+      kyc_id_number: idNum,
+      kyc_document_url: urlData.publicUrl,
+      kyc_submitted_at: new Date().toISOString()
+    }).eq('user_id', user.id);
+    if(dbErr) throw dbErr;
+    // Update local wallet
+    if(wallet){ wallet.kyc_status='pending'; }
+    msg.style.color='var(--green)'; msg.textContent='✅ Submitted! Your ID is under review. We'll notify you within 24-48 hours.';
+    document.getElementById('kyc-form').style.display='none';
+    const banner = document.getElementById('kyc-status-banner');
+    if(banner){ banner.style.display='block'; banner.style.background='rgba(245,158,11,0.1)'; banner.style.border='1px solid rgba(245,158,11,0.2)'; banner.style.color='#f59e0b'; banner.textContent='⏳ Your documents are under review. We'll notify you once verified.'; }
+  } catch(e){ msg.style.color='#e74c3c'; msg.textContent='Error: '+e.message; }
+}
+
+/* ──────── SECURITY FUNCTIONS ──────── */
+function togglePw(id, btn){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.type = el.type==='password' ? 'text' : 'password';
+  btn.textContent = el.type==='password' ? '👁' : '🙈';
+}
+
+async function changePassword(){
+  const msg = document.getElementById('sec-pw-msg');
+  const cur = document.getElementById('sec-cur-pw').value;
+  const nw = document.getElementById('sec-new-pw').value;
+  const conf = document.getElementById('sec-conf-pw').value;
+  if(!cur||!nw||!conf){ msg.style.color='#e74c3c'; msg.textContent='Please fill in all fields.'; return; }
+  if(nw !== conf){ msg.style.color='#e74c3c'; msg.textContent='New passwords do not match.'; return; }
+  if(nw.length < 8){ msg.style.color='#e74c3c'; msg.textContent='Password must be at least 8 characters.'; return; }
+  msg.style.color='var(--gray)'; msg.textContent='Updating...';
+  // Re-authenticate then update
+  const {error: signErr} = await sb.auth.signInWithPassword({email: user.email, password: cur});
+  if(signErr){ msg.style.color='#e74c3c'; msg.textContent='Current password is incorrect.'; return; }
+  const {error} = await sb.auth.updateUser({password: nw});
+  if(error){ msg.style.color='#e74c3c'; msg.textContent='Error: '+error.message; return; }
+  msg.style.color='var(--green)'; msg.textContent='✅ Password updated successfully!';
+  ['sec-cur-pw','sec-new-pw','sec-conf-pw'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+async function resetPasswordEmail(){
+  const {error} = await sb.auth.resetPasswordForEmail(user.email);
+  if(error) alert('Error: '+error.message);
+  else alert('✅ Password reset email sent to '+user.email+'. Check your inbox.');
+}
+
+async function changeEmail(){
+  const msg = document.getElementById('sec-email-msg');
+  const pw = document.getElementById('sec-email-pw').value;
+  const newEmail = document.getElementById('sec-new-email').value.trim();
+  if(!pw||!newEmail){ msg.style.color='#e74c3c'; msg.textContent='Please fill in all fields.'; return; }
+  msg.style.color='var(--gray)'; msg.textContent='Updating...';
+  const {error: signErr} = await sb.auth.signInWithPassword({email: user.email, password: pw});
+  if(signErr){ msg.style.color='#e74c3c'; msg.textContent='Current password is incorrect.'; return; }
+  const {error} = await sb.auth.updateUser({email: newEmail});
+  if(error){ msg.style.color='#e74c3c'; msg.textContent='Error: '+error.message; return; }
+  msg.style.color='var(--green)'; msg.textContent='✅ Check your new email for a confirmation link.';
+}
+
+async function changePhone(){
+  const msg = document.getElementById('sec-phone-msg');
+  const pw = document.getElementById('sec-phone-pw').value;
+  const phone = document.getElementById('sec-new-phone').value.trim();
+  if(!pw||!phone){ msg.style.color='#e74c3c'; msg.textContent='Please fill in all fields.'; return; }
+  msg.style.color='var(--gray)'; msg.textContent='Updating...';
+  const {error: signErr} = await sb.auth.signInWithPassword({email: user.email, password: pw});
+  if(signErr){ msg.style.color='#e74c3c'; msg.textContent='Current password is incorrect.'; return; }
+  const {error} = await sb.auth.updateUser({data:{phone}});
+  if(error){ msg.style.color='#e74c3c'; msg.textContent='Error: '+error.message; return; }
+  if(user) user.user_metadata = {...(user.user_metadata||{}), phone};
+  msg.style.color='var(--green)'; msg.textContent='✅ Phone number updated successfully!';
+}
+
+function toggle2FA(){
+  const btn = document.getElementById('twofa-btn');
+  const status = document.getElementById('twofa-status');
+  const msg = document.getElementById('sec-2fa-msg');
+  // Simulate toggle (real 2FA requires TOTP library)
+  if(btn.textContent==='Enable 2FA'){
+    btn.textContent='Disable 2FA'; btn.style.background='#e74c3c';
+    if(status) status.textContent='Status: Enabled ✅';
+    if(msg){ msg.style.color='var(--green)'; msg.textContent='2FA enabled. Use Google Authenticator or similar app.'; }
+  } else {
+    btn.textContent='Enable 2FA'; btn.style.background='var(--blue)';
+    if(status) status.textContent='Status: Not enabled';
+    if(msg){ msg.style.color='var(--gray)'; msg.textContent='2FA disabled.'; }
+  }
+}
+
+/* ──────── SETTINGS PAGE ──────── */
+function setTheme(theme, el){
+  document.querySelectorAll('.theme-opt').forEach(o=>o.style.borderColor='var(--border)');
+  if(el) el.style.borderColor='var(--blue)';
+  const root = document.documentElement;
+  const themes = {
+    dark:    {bg:'#111111',sidebar:'#1a1a1a',card:'#1e1e1e'},
+    midnight:{bg:'#050810',sidebar:'#080d18',card:'#0f1626'},
+    dim:     {bg:'#1a1f2e',sidebar:'#1f2535',card:'#252d40'}
+  };
+  const t = themes[theme]||themes.dark;
+  document.getElementById('app-wrap')||document.querySelector('.app');
+  document.body.style.background = t.bg;
+  localStorage.setItem('se-theme', theme);
+}
+
+function setAccent(color, el){
+  document.querySelectorAll('.color-opt').forEach(o=>o.style.border='3px solid transparent');
+  if(el) el.style.border='3px solid #fff';
+  document.documentElement.style.setProperty('--blue', color);
+  document.documentElement.style.setProperty('--green-btn', color);
+  localStorage.setItem('se-accent', color);
+}
+
+function saveSetting(key, val){
+  localStorage.setItem('se-'+key, val);
+}
+
+function toggleBalanceVisibility(show){
+  const el = document.getElementById('bal-display');
+  if(el) el.style.filter = show ? 'none' : 'blur(8px)';
+  saveSetting('pref-showbal', show);
+}
+
+function loadSettings(){
+  // Load accent
+  const accent = localStorage.getItem('se-accent');
+  if(accent){ document.documentElement.style.setProperty('--blue', accent); document.documentElement.style.setProperty('--green-btn', accent); }
+  // Load balance visibility
+  const showBal = localStorage.getItem('se-pref-showbal');
+  if(showBal==='false'){ const el=document.getElementById('bal-display'); if(el) el.style.filter='blur(8px)'; const cb=document.getElementById('pref-showbal'); if(cb) cb.checked=false; }
+}
 
 function doLogout(){sb.auth.signOut().then(()=>{window.location.href='login.html';});}
 function showMsg(el,txt,type){el.textContent=txt;el.className='msg-box '+type+' show';}
