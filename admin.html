@@ -150,6 +150,7 @@
   <div class="nav-sep"></div>
   <div class="nav-label">Tools</div>
   <div class="nav-item" onclick="showPage('kyc',this)">🪪 KYC Verification</div>
+  <div class="nav-item" onclick="showPage('broadcast',this)">📣 Broadcast Message</div>
   <div class="nav-item" onclick="showPage('notify',this)">📢 Send Notification</div>
   <div class="sidebar-bottom">
     <button class="logout-btn" onclick="doLogout()">🚪 Logout</button>
@@ -176,13 +177,85 @@
       <table><thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Wallet/Account</th><th>Date</th><th>Actions</th></tr></thead>
       <tbody id="pending-wds"><tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table>
     </div>
+
+    <!-- ANALYTICS ROW -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:0 24px 16px;">
+      <div class="stat-card"><div class="stat-label">Total Deposited</div><div class="stat-value" style="color:var(--green)" id="stat-total-dep">--</div><div class="stat-sub">All approved deposits</div></div>
+      <div class="stat-card"><div class="stat-label">Total Withdrawn</div><div class="stat-value" style="color:#ef4444" id="stat-total-wd">--</div><div class="stat-sub">All approved withdrawals</div></div>
+      <div class="stat-card"><div class="stat-label">KYC Pending</div><div class="stat-value" style="color:#f59e0b" id="stat-kyc">--</div><div class="stat-sub">Awaiting review</div></div>
+      <div class="stat-card"><div class="stat-label">Verified Users</div><div class="stat-value" style="color:var(--green)" id="stat-verified">--</div><div class="stat-sub">KYC approved</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:0 24px 24px;">
+      <!-- Tier distribution -->
+      <div class="card" style="margin:0;">
+        <div class="card-title">👥 User Tier Distribution</div>
+        <div id="tier-chart" style="display:flex;flex-direction:column;gap:10px;margin-top:8px;"></div>
+      </div>
+      <!-- Recent transactions -->
+      <div class="card" style="margin:0;">
+        <div class="card-title">🕐 Recent Transactions</div>
+        <div id="recent-tx-list" style="margin-top:8px;"></div>
+      </div>
+    </div>
   </div>
 
   <!-- USERS -->
   <div class="page" id="page-users">
     <div class="topbar"><div class="page-title">👥 All Users</div><input class="search-bar" placeholder="Search name or email..." oninput="filterUsers(this.value)"/></div>
-    <div class="card"><table><thead><tr><th>Name</th><th>Email</th><th>Country</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
-    <tbody id="users-table"><tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table></div>
+    <div class="card"><table><thead><tr><th>Name</th><th>Email</th><th>Country</th><th>Tier</th><th>KYC</th><th>Joined</th><th>Actions</th></tr></thead>
+    <tbody id="users-table"><tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">Loading...</td></tr></tbody></table></div>
+  </div>
+
+  <!-- USER DETAIL PAGE -->
+  <div class="page" id="page-user-detail">
+    <div class="topbar">
+      <button onclick="showPage('users',document.querySelector('[onclick*=users]'))" style="background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:7px 14px;border-radius:7px;cursor:pointer;font-size:12px;font-family:inherit;display:flex;align-items:center;gap:6px;">← Back to Users</button>
+      <div class="page-title" id="ud-page-title">User Detail</div>
+    </div>
+    <div style="padding:20px;max-width:900px;">
+
+      <!-- Profile header -->
+      <div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:16px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+        <div id="ud-avatar" style="width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,#f5a623,#e8932a);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:#fff;flex-shrink:0;">?</div>
+        <div style="flex:1;">
+          <div style="font-size:18px;font-weight:800;" id="ud-name">--</div>
+          <div style="color:var(--gray);font-size:13px;" id="ud-email">--</div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <span id="ud-tier-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:rgba(59,130,246,0.1);color:#3b82f6;">STARTER</span>
+            <span id="ud-kyc-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:rgba(231,76,60,0.1);color:#e74c3c;">NOT VERIFIED</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="openEditBalFromDetail()" class="btn btn-gold">✏️ Edit Balance</button>
+          <button onclick="openNotifForUser()" class="btn" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.3);">📢 Send Notification</button>
+        </div>
+      </div>
+
+      <!-- Info grid -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="ud-info-grid">
+        <div class="ud-info-card"><div class="ud-label">Phone</div><div class="ud-val" id="ud-phone">--</div></div>
+        <div class="ud-info-card"><div class="ud-label">Age</div><div class="ud-val" id="ud-age">--</div></div>
+        <div class="ud-info-card"><div class="ud-label">Country</div><div class="ud-val" id="ud-country">--</div></div>
+        <div class="ud-info-card"><div class="ud-label">Member Since</div><div class="ud-val" id="ud-since">--</div></div>
+        <div class="ud-info-card" style="grid-column:1/-1"><div class="ud-label">Home Address</div><div class="ud-val" id="ud-address">--</div></div>
+      </div>
+
+      <!-- Wallet balances -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;" id="ud-wallet-grid">
+        <div class="ud-info-card" style="background:rgba(59,130,246,0.05);border-color:rgba(59,130,246,0.15);"><div class="ud-label">BTC Balance</div><div class="ud-val" id="ud-btc" style="color:#3b82f6;">$0.00</div></div>
+        <div class="ud-info-card" style="background:rgba(16,185,129,0.05);border-color:rgba(16,185,129,0.15);"><div class="ud-label">Stocks</div><div class="ud-val" id="ud-stocks" style="color:var(--green);">$0.00</div></div>
+        <div class="ud-info-card" style="background:rgba(139,92,246,0.05);border-color:rgba(139,92,246,0.15);"><div class="ud-label">Forex</div><div class="ud-val" id="ud-forex" style="color:#8b5cf6;">$0.00</div></div>
+        <div class="ud-info-card" style="background:rgba(245,158,11,0.05);border-color:rgba(245,158,11,0.15);"><div class="ud-label">Total Profit</div><div class="ud-val" id="ud-profit">$0.00</div></div>
+      </div>
+
+      <!-- Transaction history -->
+      <div class="card" style="margin-bottom:0;">
+        <div class="card-title">Transaction History</div>
+        <table><thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+        <tbody id="ud-tx-table"><tr><td colspan="5" style="text-align:center;color:var(--gray);padding:24px;">Loading...</td></tr></tbody></table>
+      </div>
+    </div>
   </div>
 
   <!-- DEPOSITS -->
@@ -231,6 +304,73 @@
         💡 The system automatically gives each user the <strong>least-used address</strong> when they deposit.
       </div>
       <div id="wallet-save-msg" style="margin-top:14px;font-size:0.85rem;padding:11px 14px;border-radius:8px;display:none"></div>
+    </div>
+  </div>
+
+  <!-- BROADCAST PAGE -->
+  <div class="page" id="page-broadcast" style="display:none">
+    <div class="topbar"><div class="page-title">📣 Broadcast Message</div></div>
+    <div style="padding:24px;max-width:700px;">
+      <div style="font-size:13px;color:var(--gray);margin-bottom:24px;">Send a notification to all users or a filtered group at once.</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;">
+        <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--white);" id="bc-total-users">--</div>
+          <div style="font-size:11px;color:var(--gray);margin-top:2px;">Total Users</div>
+        </div>
+        <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--green);" id="bc-verified-users">--</div>
+          <div style="font-size:11px;color:var(--gray);margin-top:2px;">Verified Users</div>
+        </div>
+        <div style="background:var(--dark3);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center;">
+          <div style="font-size:22px;font-weight:800;color:var(--blue);" id="bc-recipient-count">--</div>
+          <div style="font-size:11px;color:var(--gray);margin-top:2px;">Will Receive</div>
+        </div>
+      </div>
+      <div style="background:var(--dark3);border:1px solid var(--border);border-radius:12px;padding:24px;">
+        <div class="field" style="margin-bottom:16px;">
+          <label>📋 Recipient Group</label>
+          <select id="bc-group" onchange="updateBCCount()" style="margin-top:8px;width:100%;background:var(--dark2);border:1px solid var(--border);color:var(--white);padding:10px 12px;border-radius:7px;font-size:13px;font-family:inherit;cursor:pointer;">
+            <option value="all">All Users</option>
+            <option value="verified">Verified Users Only</option>
+            <option value="unverified">Unverified Users Only</option>
+            <option value="starter">Starter Tier</option>
+            <option value="growth">Growth Tier</option>
+            <option value="elite">Elite Tier</option>
+            <option value="pending_kyc">Pending KYC</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>📌 Notification Type</label>
+          <select id="bc-type" style="margin-top:8px;width:100%;background:var(--dark2);border:1px solid var(--border);color:var(--white);padding:10px 12px;border-radius:7px;font-size:13px;font-family:inherit;">
+            <option value="info">ℹ️ Info</option>
+            <option value="success">✅ Success / Good News</option>
+            <option value="warning">⚠️ Warning</option>
+            <option value="promo">🎉 Promotion</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:16px;">
+          <label>✏️ Title</label>
+          <input type="text" id="bc-title" placeholder="e.g. Important Platform Update" style="margin-top:8px;width:100%;background:var(--dark2);border:1px solid var(--border);color:var(--white);padding:10px 12px;border-radius:7px;font-size:13px;font-family:inherit;box-sizing:border-box;"/>
+        </div>
+        <div class="field" style="margin-bottom:20px;">
+          <label>💬 Message</label>
+          <textarea id="bc-message" rows="4" placeholder="Write your message to users here..." style="margin-top:8px;width:100%;background:var(--dark2);border:1px solid var(--border);color:var(--white);padding:10px 12px;border-radius:7px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+        </div>
+        <div id="bc-preview" style="display:none;background:var(--dark2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:16px;">
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:8px;">Preview</div>
+          <div style="font-size:13px;font-weight:700;" id="bc-prev-title"></div>
+          <div style="font-size:12px;color:var(--gray);margin-top:4px;" id="bc-prev-msg"></div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button onclick="previewBroadcast()" class="btn" style="background:var(--dark2);border:1px solid var(--border);color:var(--white);">👁 Preview</button>
+          <button onclick="sendBroadcast()" class="btn btn-green" style="flex:1;">📣 Send to <span id="bc-send-count">All</span> Users</button>
+        </div>
+        <div class="msg" id="bc-msg" style="margin-top:12px;"></div>
+      </div>
+      <div style="margin-top:24px;">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px;">Recent Broadcasts</div>
+        <div id="bc-history"><div style="color:var(--gray);font-size:12px;">Loading history...</div></div>
+      </div>
     </div>
   </div>
 
@@ -372,26 +512,39 @@ async function loadAll(){
   loadAllWithdrawals();
   // KYC badge count on nav
   updateKYCBadge();
+  loadAnalytics();
   loadBalancesTable();
   populateNotifUsers();
 }
 
 async function loadUsers(){
-  const {data}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
-  allUsers=data||[];
+  const {data:profiles}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
+  const {data:wallets}=await sb.from('wallets').select('user_id,tier,kyc_verified,kyc_status');
+  const walletMap={};
+  (wallets||[]).forEach(w=>walletMap[w.user_id]=w);
+  allUsers=(profiles||[]).map(u=>({...u,...(walletMap[u.id]||{})}));
   renderUsers(allUsers);
 }
 
 function renderUsers(users){
-  if(!users.length){document.getElementById('users-table').innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">No users found</td></tr>';return;}
-  document.getElementById('users-table').innerHTML=users.map(u=>`<tr>
+  if(!users.length){document.getElementById('users-table').innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--gray);padding:24px">No users found</td></tr>';return;}
+  document.getElementById('users-table').innerHTML=users.map(u=>{
+    const tierColor={Starter:'#3b82f6',Growth:'#10b981',Elite:'#f59e0b'};
+    const kycColor = u.kyc_verified?'var(--green)':u.kyc_status==='pending'?'#f59e0b':'var(--gray)';
+    const kycText  = u.kyc_verified?'Verified':u.kyc_status==='pending'?'Pending':'Not Verified';
+    return `<tr>
     <td><strong>${u.full_name||'--'}</strong></td>
-    <td style="color:var(--gray)">${u.email||'--'}</td>
-    <td>${u.country||'--'}</td>
-    <td>${u.is_admin?'<span class="badge badge-admin">Admin</span>':u.is_suspended?'<span class="badge badge-suspended">Suspended</span>':'<span class="badge badge-active">Active</span>'}</td>
+    <td style="color:var(--gray);font-size:0.8rem">${u.email||'--'}</td>
+    <td style="font-size:0.8rem">${u.country||'--'}</td>
+    <td><span style="background:${tierColor[u.tier||'Starter']}22;color:${tierColor[u.tier||'Starter']};border:1px solid ${tierColor[u.tier||'Starter']}44;padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;">${u.tier||'Starter'}</span></td>
+    <td><span style="color:${kycColor};font-size:11px;font-weight:600;">${kycText}</span></td>
     <td style="color:var(--gray);font-size:0.8rem">${new Date(u.created_at).toLocaleDateString()}</td>
-    <td>${u.is_suspended?`<button class="btn btn-green" onclick="toggleSuspend('${u.id}',false)">Unsuspend</button>`:`<button class="btn btn-red" onclick="toggleSuspend('${u.id}',true)">Suspend</button>`}
-    ${!u.is_admin?`<button class="btn btn-gold" onclick="makeAdmin('${u.id}')">Make Admin</button>`:''}</td></tr>`).join('');
+    <td>
+      <button class="btn" style="background:rgba(59,130,246,0.1);color:#3b82f6;border-color:rgba(59,130,246,0.2);" onclick="viewUserDetail('${u.id}')">👁 View</button>
+      ${u.is_suspended?`<button class="btn btn-green" onclick="toggleSuspend('${u.id}',false)">Unsuspend</button>`:`<button class="btn btn-red" onclick="toggleSuspend('${u.id}',true)">Suspend</button>`}
+      ${!u.is_admin?`<button class="btn btn-gold" onclick="makeAdmin('${u.id}')">Admin</button>`:''}
+    </td></tr>`;
+  }).join('');
 }
 
 function filterUsers(q){
@@ -679,12 +832,16 @@ function renderKYCCards(){
 
     // Document preview — show image inline if it's an image
     const docUrl = w.kyc_document_url || '';
-    const isImage = docUrl && /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(docUrl);
-    const docHtml = docUrl
-      ? isImage
-        ? `<img src="${docUrl}" class="kyc-doc-preview" onclick="window.open('${docUrl}','_blank')" title="Click to open full size"/>`
-        : `<a href="${docUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);color:var(--blue);padding:8px 14px;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;margin-top:8px;">📄 View Document</a>`
-      : '<span style="color:var(--gray);font-size:12px;">No document uploaded</span>';
+    // Support both base64 data URIs and regular URLs
+    const isBase64  = docUrl.startsWith('data:');
+    const isImgUrl  = !isBase64 && /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(docUrl);
+    const isPdfUrl  = !isBase64 && /\.pdf(\?|$)/i.test(docUrl);
+    const isImgB64  = isBase64 && docUrl.startsWith('data:image');
+    const docHtml = !docUrl
+      ? '<span style="color:var(--gray);font-size:12px;">No document uploaded</span>'
+      : (isImgUrl || isImgB64)
+        ? `<img src="${docUrl}" class="kyc-doc-preview" onclick="openDocFull('${isImgB64 ? 'base64img' : docUrl}')" title="Click to view full size" style="cursor:zoom-in;"/>`
+        : `<a href="${docUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);color:var(--blue);padding:8px 14px;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;margin-top:8px;">📄 View Document</a>`;
 
     return `<div class="kyc-card ${cardClass}">
       <!-- Header row -->
@@ -729,6 +886,12 @@ function renderKYCCards(){
   }).join('');
 }
 
+function openDocFull(src){
+  // open base64 image in new tab
+  if(src === 'base64img') return; // img is already shown inline
+  window.open(src, '_blank');
+}
+
 function closeKYCModal(){
   document.getElementById('kyc-modal-overlay').style.display = 'none';
   document.getElementById('kyc-detail-modal').style.display  = 'none';
@@ -757,6 +920,267 @@ async function verifyKYC(userId, approve){
   toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'+(approve?'var(--green)':'#e74c3c')+';color:#fff;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
   document.body.appendChild(toast);
   setTimeout(()=>toast.remove(), 3000);
+}
+
+/* ──────── ENHANCED OVERVIEW ANALYTICS ──────── */
+async function loadAnalytics(){
+  const {data:txAll} = await sb.from('transactions').select('type,amount,status,created_at');
+  const {data:wallets} = await sb.from('wallets').select('tier,kyc_verified,kyc_status');
+
+  if(txAll){
+    const approved = txAll.filter(t=>t.status==='approved');
+    const totalDep = approved.filter(t=>t.type==='deposit').reduce((s,t)=>s+parseFloat(t.amount||0),0);
+    const totalWd  = approved.filter(t=>t.type==='withdrawal').reduce((s,t)=>s+parseFloat(t.amount||0),0);
+    const el1 = document.getElementById('stat-total-dep');
+    const el2 = document.getElementById('stat-total-wd');
+    if(el1) el1.textContent = '$'+totalDep.toLocaleString('en',{minimumFractionDigits:2});
+    if(el2) el2.textContent = '$'+totalWd.toLocaleString('en',{minimumFractionDigits:2});
+
+    // Recent 5 transactions
+    const recent = txAll.slice(0,5);
+    const rtl = document.getElementById('recent-tx-list');
+    if(rtl){
+      rtl.innerHTML = recent.length ? recent.map(t=>`
+        <div class="recent-tx-item">
+          <div style="font-size:18px;">${t.type==='deposit'?'💰':'💸'}</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;">${cap(t.type)} — $${parseFloat(t.amount||0).toLocaleString()}</div>
+            <div style="font-size:10px;color:var(--gray);">${new Date(t.created_at).toLocaleDateString()}</div>
+          </div>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:${t.status==='approved'?'rgba(16,185,129,0.1)':t.status==='pending'?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.1)'};color:${t.status==='approved'?'var(--green)':t.status==='pending'?'#f59e0b':'#ef4444'};">${cap(t.status)}</span>
+        </div>`).join('') : '<div style="color:var(--gray);font-size:12px;padding:10px 0;">No transactions yet.</div>';
+    }
+  }
+
+  if(wallets){
+    // KYC stats
+    const kycPending  = wallets.filter(w=>w.kyc_status==='pending'&&!w.kyc_verified).length;
+    const kycVerified = wallets.filter(w=>w.kyc_verified).length;
+    const kp = document.getElementById('stat-kyc');
+    const kv = document.getElementById('stat-verified');
+    if(kp) kp.textContent = kycPending;
+    if(kv) kv.textContent = kycVerified;
+
+    // Tier distribution bars
+    const counts = {Starter:0, Growth:0, Elite:0};
+    wallets.forEach(w => { const t=w.tier||'Starter'; if(counts[t]!==undefined) counts[t]++; });
+    const total = wallets.length || 1;
+    const tc = document.getElementById('tier-chart');
+    if(tc){
+      const colors = {Starter:'#3b82f6', Growth:'#10b981', Elite:'#f59e0b'};
+      tc.innerHTML = Object.entries(counts).map(([tier,cnt])=>`
+        <div class="tier-bar-row">
+          <div class="tier-bar-label">${tier}</div>
+          <div class="tier-bar-track"><div class="tier-bar-fill" style="width:${Math.round(cnt/total*100)}%;background:${colors[tier]};"></div></div>
+          <div class="tier-bar-count">${cnt}</div>
+        </div>`).join('');
+    }
+  }
+}
+
+/* ──────── USER DETAIL VIEW ──────── */
+let currentDetailUserId = null;
+
+async function viewUserDetail(userId){
+  currentDetailUserId = userId;
+  showPage('user-detail', null);
+  document.getElementById('ud-page-title').textContent = 'Loading...';
+
+  const [{data:profile},{data:wallet},{data:txs}] = await Promise.all([
+    sb.from('profiles').select('*').eq('id',userId).single(),
+    sb.from('wallets').select('*').eq('user_id',userId).single(),
+    sb.from('transactions').select('*').eq('user_id',userId).order('created_at',{ascending:false}).limit(20)
+  ]);
+
+  const name = profile?.full_name || profile?.email || 'Unknown User';
+  document.getElementById('ud-page-title').textContent = name;
+  document.getElementById('ud-avatar').textContent = name.slice(0,2).toUpperCase();
+  document.getElementById('ud-name').textContent = name;
+  document.getElementById('ud-email').textContent = profile?.email || '--';
+  document.getElementById('ud-phone').textContent = profile?.phone || '--';
+  document.getElementById('ud-age').textContent = profile?.age || '--';
+  document.getElementById('ud-country').textContent = profile?.country || '--';
+  document.getElementById('ud-address').textContent = profile?.address || '--';
+  document.getElementById('ud-since').textContent = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en',{year:'numeric',month:'long',day:'2-digit'}) : '--';
+
+  // Tier badge
+  const tier = wallet?.tier || 'Starter';
+  const tierColors = {Starter:'#3b82f6',Growth:'#10b981',Elite:'#f59e0b'};
+  const tc = tierColors[tier]||tierColors.Starter;
+  const tb = document.getElementById('ud-tier-badge');
+  if(tb){ tb.textContent=tier.toUpperCase()+' TIER'; tb.style.background=tc+'22'; tb.style.color=tc; }
+
+  // KYC badge
+  const kb = document.getElementById('ud-kyc-badge');
+  if(kb){
+    if(wallet?.kyc_verified){ kb.textContent='✅ VERIFIED'; kb.style.background='rgba(16,185,129,0.1)'; kb.style.color='var(--green)'; }
+    else if(wallet?.kyc_status==='pending'){ kb.textContent='⏳ KYC PENDING'; kb.style.background='rgba(245,158,11,0.1)'; kb.style.color='#f59e0b'; }
+    else { kb.textContent='NOT VERIFIED'; kb.style.background='rgba(231,76,60,0.1)'; kb.style.color='#e74c3c'; }
+  }
+
+  // Wallet balances
+  const fmt = v => '$'+parseFloat(v||0).toLocaleString('en',{minimumFractionDigits:2});
+  document.getElementById('ud-btc').textContent = fmt(wallet?.btc_balance);
+  document.getElementById('ud-stocks').textContent = fmt(wallet?.stocks_balance);
+  document.getElementById('ud-forex').textContent = fmt(wallet?.forex_balance);
+  const profit = parseFloat(wallet?.total_profit||0);
+  const pe = document.getElementById('ud-profit');
+  if(pe){ pe.textContent=(profit>=0?'+':'')+fmt(Math.abs(profit)); pe.style.color=profit>=0?'var(--green)':'#e74c3c'; }
+
+  // Transactions
+  const tbody = document.getElementById('ud-tx-table');
+  if(txs && txs.length){
+    tbody.innerHTML = txs.map(t=>`<tr>
+      <td style="color:var(--gray);font-size:0.8rem">${new Date(t.created_at).toLocaleDateString()}</td>
+      <td>${cap(t.type)}</td>
+      <td style="font-weight:600;">$${parseFloat(t.amount||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
+      <td style="color:var(--gray);font-size:0.8rem">${t.payment_method||'--'}</td>
+      <td><span class="badge badge-${t.status}">${cap(t.status)}</span></td>
+    </tr>`).join('');
+  } else {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--gray);padding:20px;">No transactions yet.</td></tr>';
+  }
+}
+
+function openEditBalFromDetail(){
+  if(!currentDetailUserId) return;
+  const name = document.getElementById('ud-name').textContent;
+  const btc  = parseFloat(document.getElementById('ud-btc').textContent.replace(/[^0-9.]/g,''))||0;
+  const st   = parseFloat(document.getElementById('ud-stocks').textContent.replace(/[^0-9.]/g,''))||0;
+  const fx   = parseFloat(document.getElementById('ud-forex').textContent.replace(/[^0-9.]/g,''))||0;
+  const pr   = parseFloat(document.getElementById('ud-profit').textContent.replace(/[^0-9.-]/g,''))||0;
+  openEditBal(currentDetailUserId, name, btc, st, fx, pr);
+}
+
+function openNotifForUser(){
+  if(!currentDetailUserId) return;
+  showPage('notify', document.querySelector('[onclick*=notify]'));
+  setTimeout(()=>{
+    const sel = document.getElementById('notif-user');
+    if(sel) sel.value = currentDetailUserId;
+  }, 200);
+}
+
+/* ──────── BROADCAST ──────── */
+let bcAllUsers = [];
+
+async function loadBroadcast(){
+  // Load user stats
+  const {data: users} = await sb.from('wallets').select('user_id,kyc_verified,tier,kyc_status');
+  bcAllUsers = users || [];
+  const el1 = document.getElementById('bc-total-users');
+  const el2 = document.getElementById('bc-verified-users');
+  if(el1) el1.textContent = bcAllUsers.length;
+  if(el2) el2.textContent = bcAllUsers.filter(u=>u.kyc_verified).length;
+  updateBCCount();
+
+  // Load recent broadcasts
+  const {data: hist} = await sb.from('notifications')
+    .select('title,message,created_at')
+    .eq('user_id','broadcast')
+    .order('created_at',{ascending:false})
+    .limit(5);
+
+  // Alternatively load from a broadcasts table if it exists
+  const {data: bcast} = await sb.from('broadcasts').select('*').order('created_at',{ascending:false}).limit(5);
+  const bcHist = document.getElementById('bc-history');
+  if(bcHist){
+    const items = bcast || [];
+    if(!items.length){ bcHist.innerHTML='<div style="color:var(--gray);font-size:12px;">No broadcasts sent yet.</div>'; }
+    else{
+      bcHist.innerHTML = items.map(b=>`
+        <div style="background:var(--dark3);border:1px solid var(--border);border-radius:8px;padding:12px 14px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">
+            <div><div style="font-size:13px;font-weight:600;">${b.title||'--'}</div><div style="font-size:11px;color:var(--gray);margin-top:2px;">${b.message||''}</div></div>
+            <div style="text-align:right;flex-shrink:0;"><div style="font-size:10px;color:var(--gray);">${new Date(b.created_at).toLocaleDateString()}</div><div style="font-size:10px;color:var(--blue);margin-top:2px;">${b.recipient_group||'All'}</div></div>
+          </div>
+        </div>`).join('');
+    }
+  }
+}
+
+function updateBCCount(){
+  const group = document.getElementById('bc-group')?.value || 'all';
+  const filters = {
+    all: ()=>true,
+    verified: u=>u.kyc_verified,
+    unverified: u=>!u.kyc_verified,
+    starter: u=>(u.tier||'Starter')==='Starter',
+    growth: u=>u.tier==='Growth',
+    elite: u=>u.tier==='Elite',
+    pending_kyc: u=>u.kyc_status==='pending'&&!u.kyc_verified
+  };
+  const fn = filters[group] || filters.all;
+  const count = bcAllUsers.filter(fn).length;
+  const el = document.getElementById('bc-recipient-count');
+  const sendEl = document.getElementById('bc-send-count');
+  if(el) el.textContent = count;
+  if(sendEl) sendEl.textContent = count;
+}
+
+function previewBroadcast(){
+  const title = document.getElementById('bc-title')?.value?.trim();
+  const msg   = document.getElementById('bc-message')?.value?.trim();
+  const prev  = document.getElementById('bc-preview');
+  if(!title||!msg){ showMsg(document.getElementById('bc-msg'),'Please fill in title and message first.','error'); return; }
+  if(prev){
+    prev.style.display = 'block';
+    document.getElementById('bc-prev-title').textContent = title;
+    document.getElementById('bc-prev-msg').textContent = msg;
+  }
+}
+
+async function sendBroadcast(){
+  const title   = document.getElementById('bc-title')?.value?.trim();
+  const message = document.getElementById('bc-message')?.value?.trim();
+  const group   = document.getElementById('bc-group')?.value || 'all';
+  const type    = document.getElementById('bc-type')?.value  || 'info';
+  const msg     = document.getElementById('bc-msg');
+
+  if(!title)   return showMsg(msg,'Please enter a title.','error');
+  if(!message) return showMsg(msg,'Please enter a message.','error');
+
+  const filters = {
+    all: ()=>true,
+    verified: u=>u.kyc_verified,
+    unverified: u=>!u.kyc_verified,
+    starter: u=>(u.tier||'Starter')==='Starter',
+    growth: u=>u.tier==='Growth',
+    elite: u=>u.tier==='Elite',
+    pending_kyc: u=>u.kyc_status==='pending'&&!u.kyc_verified
+  };
+  const fn = filters[group] || filters.all;
+  const recipients = bcAllUsers.filter(fn);
+
+  if(!recipients.length) return showMsg(msg,'No users match this filter.','error');
+  if(!confirm('Send "'+title+'" to '+recipients.length+' users?')) return;
+
+  showMsg(msg,'Sending to '+recipients.length+' users...','success');
+
+  // Insert notification rows for each recipient
+  const rows = recipients.map(u=>({
+    user_id: u.user_id,
+    title,
+    message,
+    type,
+    read: false,
+    created_at: new Date().toISOString()
+  }));
+
+  // Batch insert in chunks of 100
+  for(let i=0;i<rows.length;i+=100){
+    const {error} = await sb.from('notifications').insert(rows.slice(i,i+100));
+    if(error){ showMsg(msg,'Error: '+error.message,'error'); return; }
+  }
+
+  // Log broadcast to broadcasts table
+  await sb.from('broadcasts').insert({title, message, type, recipient_group:group, recipient_count:recipients.length});
+
+  showMsg(msg,'✅ Broadcast sent to '+recipients.length+' users!','success');
+  document.getElementById('bc-title').value = '';
+  document.getElementById('bc-message').value = '';
+  document.getElementById('bc-preview').style.display = 'none';
+  setTimeout(loadBroadcast, 1000);
 }
 
 function showPage(name,el){
