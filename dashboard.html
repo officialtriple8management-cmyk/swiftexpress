@@ -2041,11 +2041,25 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
           </div>
 
           <!-- Transactions list -->
-          <div id="hist-list" style="display:flex;flex-direction:column;gap:8px;">
-            <div style="text-align:center;color:var(--gray);padding:32px;">Loading transactions...</div>
+          <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border);">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--card);border-bottom:1px solid var(--border);">
+                  <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--gray);font-weight:600;">Date</th>
+                  <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--gray);font-weight:600;">Type</th>
+                  <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--gray);font-weight:600;">Method</th>
+                  <th style="text-align:right;padding:10px 14px;font-size:11px;color:var(--gray);font-weight:600;">Amount</th>
+                  <th style="text-align:center;padding:10px 14px;font-size:11px;color:var(--gray);font-weight:600;">Status</th>
+                  <th style="text-align:left;padding:10px 14px;font-size:11px;color:var(--gray);font-weight:600;">ID</th>
+                </tr>
+              </thead>
+              <tbody id="hist-tbody"></tbody>
+            </table>
           </div>
-          <div id="hist-load-more" style="text-align:center;margin-top:16px;display:none;">
-            <button onclick="loadMoreHistory()" style="background:var(--card);border:1px solid var(--border);color:var(--gray);padding:10px 28px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">Load More</button>
+          <div id="hist-empty" style="display:none;text-align:center;padding:48px;color:var(--gray);">
+            <div style="font-size:32px;margin-bottom:10px;">📭</div>
+            <div style="font-size:14px;font-weight:600;color:var(--white);">No transactions yet</div>
+            <div style="font-size:12px;margin-top:4px;">Your deposits and withdrawals will appear here.</div>
           </div>
         </div>
       </div>
@@ -3318,8 +3332,8 @@ function updateHistStats(){
   const wds  = allHistory.filter(t=>t.type==='withdrawal'&&t.status==='approved');
   const pend = allHistory.filter(t=>t.status==='pending');
   const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  setEl('hs-total-dep','$'+deps.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
-  setEl('hs-total-wd','$'+wds.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
+  setEl('hist-total-dep','$'+deps.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
+  setEl('hist-total-wd','$'+wds.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
   setEl('hs-total-txns', allHistory.length);
   setEl('hs-pending-cnt', pend.length);
 }
