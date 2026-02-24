@@ -616,53 +616,147 @@ async function updateKYCBadge(){
   }
 }
 
+let allKYCData = [];
+let kycFilter = 'all';
+
 async function loadKYC(){
+  const container = document.getElementById('kyc-cards-container');
+  if(container) container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;">Loading...</div>';
+
   const {data, error} = await sb.from('wallets')
-    .select('*,profiles(full_name,email)')
-    .not('kyc_status', 'is', null)
+    .select('*,profiles(full_name,email,phone,country,address,age)')
+    .not('kyc_status','is',null)
     .neq('kyc_status','')
     .order('kyc_submitted_at',{ascending:false});
-  
-  const tbody = document.getElementById('kyc-table-body');
-  if(!tbody) return;
+
   if(error || !data || data.length===0){
-    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--gray);padding:32px;">No KYC submissions yet.</td></tr>';
+    if(container) container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;font-size:14px;">No KYC submissions yet.</div>';
     return;
   }
-  tbody.innerHTML = data.map(w => {
-    const statusColor = w.kyc_verified ? 'var(--green)' : w.kyc_status==='pending' ? '#f59e0b' : 'var(--gray)';
-    const statusText = w.kyc_verified ? '✅ Verified' : w.kyc_status==='pending' ? '⏳ Pending' : w.kyc_status||'--';
-    const docLink = w.kyc_document_url ? `<a href="${w.kyc_document_url}" target="_blank" style="color:var(--blue);font-size:11px;">View Doc 🔗</a>` : '--';
-    const actionBtn = !w.kyc_verified && w.kyc_status==='pending'
-      ? `<div style="display:flex;gap:6px;">
-           <button class="btn btn-green" onclick="verifyKYC('${w.user_id}',true)">✅ Verify</button>
-           <button class="btn" style="background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.2);" onclick="verifyKYC('${w.user_id}',false)">❌ Reject</button>
-         </div>`
-      : w.kyc_verified ? '<span style="color:var(--green);font-size:12px;">Verified ✓</span>'
-      : '--';
-    return `<tr>
-      <td><strong>${w.profiles?.full_name||'--'}</strong></td>
-      <td style="color:var(--gray);font-size:0.8rem">${w.profiles?.email||'--'}</td>
-      <td>${w.kyc_id_type||'--'}</td>
-      <td style="font-size:0.8rem;color:var(--gray)">${w.kyc_id_number||'--'}</td>
-      <td>${docLink}</td>
-      <td style="color:var(--gray);font-size:0.8rem">${w.kyc_submitted_at ? new Date(w.kyc_submitted_at).toLocaleDateString() : '--'}</td>
-      <td><span style="color:${statusColor};font-weight:600;font-size:12px;">${statusText}</span></td>
-      <td>${actionBtn}</td>
-    </tr>`;
+  allKYCData = data;
+  renderKYCCards();
+}
+
+function filterKYC(filter, btn){
+  kycFilter = filter;
+  document.querySelectorAll('.kyc-filter').forEach(b=>b.classList.remove('active-filter'));
+  if(btn) btn.classList.add('active-filter');
+  renderKYCCards();
+}
+
+function renderKYCCards(){
+  const container = document.getElementById('kyc-cards-container');
+  if(!container) return;
+
+  let data = allKYCData;
+  if(kycFilter === 'pending')  data = data.filter(w => w.kyc_status==='pending' && !w.kyc_verified);
+  if(kycFilter === 'verified') data = data.filter(w => w.kyc_verified);
+  if(kycFilter === 'rejected') data = data.filter(w => w.kyc_status==='rejected');
+
+  if(!data.length){
+    container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;font-size:14px;">No submissions in this category.</div>';
+    return;
+  }
+
+  container.innerHTML = data.map(w => {
+    const isVerified  = w.kyc_verified;
+    const isPending   = w.kyc_status === 'pending' && !isVerified;
+    const isRejected  = w.kyc_status === 'rejected';
+    const statusColor = isVerified ? 'var(--green)' : isPending ? '#f59e0b' : '#e74c3c';
+    const statusText  = isVerified ? '✅ Verified' : isPending ? '⏳ Pending Review' : '❌ Rejected';
+    const cardClass   = isVerified ? 'verified-card' : isPending ? 'pending-card' : 'rejected-card';
+
+    // Use kyc_* snapshot fields first, fall back to profiles join
+    const fullName = w.kyc_full_name || w.profiles?.full_name || '--';
+    const email    = w.kyc_email    || w.profiles?.email    || '--';
+    const phone    = w.kyc_phone    || w.profiles?.phone    || '--';
+    const age      = w.kyc_age      || w.profiles?.age      || '--';
+    const country  = w.kyc_country  || w.profiles?.country  || '--';
+    const address  = w.kyc_address  || w.profiles?.address  || '--';
+    const submittedDate = w.kyc_submitted_at ? new Date(w.kyc_submitted_at).toLocaleString() : '--';
+
+    const idTypeLabel = {passport:'International Passport', national_id:'National ID Card', drivers_license:"Driver's License"}[w.kyc_id_type] || w.kyc_id_type || '--';
+
+    // Document preview — show image inline if it's an image
+    const docUrl = w.kyc_document_url || '';
+    const isImage = docUrl && /\.(jpg|jpeg|png|webp|gif)(\?|$)/i.test(docUrl);
+    const docHtml = docUrl
+      ? isImage
+        ? `<img src="${docUrl}" class="kyc-doc-preview" onclick="window.open('${docUrl}','_blank')" title="Click to open full size"/>`
+        : `<a href="${docUrl}" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);color:var(--blue);padding:8px 14px;border-radius:7px;font-size:12px;font-weight:600;text-decoration:none;margin-top:8px;">📄 View Document</a>`
+      : '<span style="color:var(--gray);font-size:12px;">No document uploaded</span>';
+
+    return `<div class="kyc-card ${cardClass}">
+      <!-- Header row -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">${(fullName||'?').slice(0,2).toUpperCase()}</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;">${fullName}</div>
+            <div style="font-size:11px;color:var(--gray);">${email}</div>
+            <div style="font-size:10px;color:var(--gray);margin-top:2px;">Submitted: ${submittedDate}</div>
+          </div>
+        </div>
+        <span style="background:${statusColor}22;color:${statusColor};border:1px solid ${statusColor}44;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:800;">${statusText}</span>
+      </div>
+
+      <!-- Personal info grid -->
+      <div class="kyc-info-grid">
+        <div class="kyc-info-item"><div class="kyc-info-label">Phone</div><div class="kyc-info-val">${phone}</div></div>
+        <div class="kyc-info-item"><div class="kyc-info-label">Age</div><div class="kyc-info-val">${age}</div></div>
+        <div class="kyc-info-item"><div class="kyc-info-label">Country</div><div class="kyc-info-val">${country}</div></div>
+        <div class="kyc-info-item"><div class="kyc-info-label">ID Type</div><div class="kyc-info-val">${idTypeLabel}</div></div>
+        <div class="kyc-info-item"><div class="kyc-info-label">ID Number</div><div class="kyc-info-val">${w.kyc_id_number||'--'}</div></div>
+        <div class="kyc-info-item" style="grid-column:1/-1"><div class="kyc-info-label">Home Address</div><div class="kyc-info-val">${address}</div></div>
+      </div>
+
+      <!-- Document -->
+      <div style="font-size:11px;color:var(--gray);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;">ID Document</div>
+      ${docHtml}
+
+      <!-- Action buttons — only for pending -->
+      ${isPending ? `
+      <div style="display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+        <button class="btn btn-green" onclick="verifyKYC('${w.user_id}',true)" style="flex:1;padding:10px;">✅ Approve &amp; Verify</button>
+        <button class="btn" onclick="verifyKYC('${w.user_id}',false)" style="flex:1;padding:10px;background:rgba(231,76,60,0.1);color:#e74c3c;border:1px solid rgba(231,76,60,0.2);">❌ Reject</button>
+      </div>` : isVerified ? `
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--green);">✅ This user has been verified.</div>` : `
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:center;">
+        <span style="font-size:12px;color:#e74c3c;flex:1;">❌ This submission was rejected.</span>
+        <button class="btn btn-green" onclick="verifyKYC('${w.user_id}',true)" style="padding:8px 16px;font-size:12px;">Approve Anyway</button>
+      </div>`}
+    </div>`;
   }).join('');
 }
 
+function closeKYCModal(){
+  document.getElementById('kyc-modal-overlay').style.display = 'none';
+  document.getElementById('kyc-detail-modal').style.display  = 'none';
+}
+
 async function verifyKYC(userId, approve){
-  const action = approve ? 'verify' : 'reject';
-  if(!confirm(`Are you sure you want to ${action} this user's KYC?`)) return;
+  const label = approve ? 'approve and verify' : 'reject';
+  if(!confirm('Are you sure you want to ' + label + ' this KYC submission?')) return;
+
   const {error} = await sb.from('wallets').update({
     kyc_verified: approve,
-    kyc_status: approve ? 'verified' : 'rejected'
+    kyc_status:   approve ? 'verified' : 'rejected'
   }).eq('user_id', userId);
-  if(error){ alert('Error: '+error.message); return; }
-  alert(approve ? '✅ User has been verified!' : '❌ KYC rejected.');
-  loadKYC();
+
+  if(error){ alert('Error: ' + error.message); return; }
+
+  // Also update the local cache so re-render is instant
+  const entry = allKYCData.find(w => w.user_id === userId);
+  if(entry){ entry.kyc_verified = approve; entry.kyc_status = approve ? 'verified' : 'rejected'; }
+
+  renderKYCCards();
+
+  // Show inline toast
+  const toast = document.createElement('div');
+  toast.textContent = approve ? '✅ User successfully verified!' : '❌ KYC submission rejected.';
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'+(approve?'var(--green)':'#e74c3c')+';color:#fff;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+  document.body.appendChild(toast);
+  setTimeout(()=>toast.remove(), 3000);
 }
 
 function showPage(name,el){

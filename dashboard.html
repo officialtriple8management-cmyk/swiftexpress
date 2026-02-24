@@ -2543,35 +2543,84 @@ function onKycFileSelect(input){
 async function submitKYC(){
   const msg = document.getElementById('kyc-msg');
   const idType = document.getElementById('kyc-id-type').value;
-  const idNum = document.getElementById('kyc-id-number').value.trim();
-  const file = document.getElementById('kyc-file').files[0];
+  const idNum  = document.getElementById('kyc-id-number').value.trim();
+  const file   = document.getElementById('kyc-file').files[0];
+
   if(!idType){ msg.style.color='#e74c3c'; msg.textContent='Please select an ID type.'; return; }
-  if(!idNum){ msg.style.color='#e74c3c'; msg.textContent='Please enter your ID number.'; return; }
-  if(!file){ msg.style.color='#e74c3c'; msg.textContent='Please upload your ID document.'; return; }
-  msg.style.color='var(--gray)'; msg.textContent='Uploading...';
+  if(!idNum){  msg.style.color='#e74c3c'; msg.textContent='Please enter your ID number.'; return; }
+  if(!file){   msg.style.color='#e74c3c'; msg.textContent='Please upload your ID document.'; return; }
+
+  // Also require personal info to be filled before KYC
+  const meta = user.user_metadata || {};
+  if(!meta.full_name){ msg.style.color='#e74c3c'; msg.textContent='Please fill in your Full Name in Personal Information before submitting KYC.'; return; }
+
+  msg.style.color='var(--gray)'; msg.textContent='Uploading document...';
+
   try {
-    // Upload file to Supabase storage
-    const ext = file.name.split('.').pop();
-    const path = user.id + '_kyc_' + Date.now() + '.' + ext;
-    const {error: upErr} = await sb.storage.from('payment-proofs').upload(path, file);
-    if(upErr) throw upErr;
-    const {data: urlData} = sb.storage.from('payment-proofs').getPublicUrl(path);
-    // Save KYC info to wallets table
+    // 1. Upload ID document to storage bucket
+    const ext  = file.name.split('.').pop().toLowerCase();
+    const path = 'kyc/' + user.id + '_' + Date.now() + '.' + ext;
+
+    // Try kyc bucket first, fall back to payment-proofs
+    let proofUrl = '';
+    let uploadErr = null;
+
+    const {data: kycUp, error: kycErr} = await sb.storage.from('kyc-documents').upload(path, file, {upsert:true});
+    if(kycErr){
+      // fallback bucket
+      const {data: ppUp, error: ppErr} = await sb.storage.from('payment-proofs').upload(path, file, {upsert:true});
+      if(ppErr) throw new Error('Upload failed: ' + ppErr.message);
+      proofUrl = sb.storage.from('payment-proofs').getPublicUrl(path).data.publicUrl;
+    } else {
+      proofUrl = sb.storage.from('kyc-documents').getPublicUrl(path).data.publicUrl;
+    }
+
+    msg.textContent = 'Saving your details...';
+
+    // 2. Save personal info snapshot to profiles table so admin can see it
+    const profileUpdate = {
+      full_name:   meta.full_name  || '',
+      phone:       meta.phone      || '',
+      age:         meta.age        || '',
+      country:     meta.country    || '',
+      address:     meta.address    || '',
+    };
+    await sb.from('profiles').update(profileUpdate).eq('id', user.id);
+
+    // 3. Save all KYC data to wallets table
     const {error: dbErr} = await sb.from('wallets').update({
-      kyc_status: 'pending',
-      kyc_id_type: idType,
-      kyc_id_number: idNum,
-      kyc_document_url: urlData.publicUrl,
-      kyc_submitted_at: new Date().toISOString()
+      kyc_status:        'pending',
+      kyc_id_type:       idType,
+      kyc_id_number:     idNum,
+      kyc_document_url:  proofUrl,
+      kyc_submitted_at:  new Date().toISOString(),
+      // Snapshot personal details for admin review
+      kyc_full_name:     meta.full_name  || '',
+      kyc_phone:         meta.phone      || '',
+      kyc_age:           meta.age        || '',
+      kyc_country:       meta.country    || '',
+      kyc_address:       meta.address    || '',
+      kyc_email:         user.email      || '',
     }).eq('user_id', user.id);
     if(dbErr) throw dbErr;
-    // Update local wallet
-    if(wallet){ wallet.kyc_status='pending'; }
-    msg.style.color='var(--green)'; msg.textContent='✅ Submitted! Your ID is under review. We will notify you within 24-48 hours.';
-    document.getElementById('kyc-form').style.display='none';
+
+    if(wallet) wallet.kyc_status = 'pending';
+
+    msg.style.color = 'var(--green)';
+    msg.textContent = '✅ Submitted! Your ID is under review. We will notify you within 24-48 hours.';
+    document.getElementById('kyc-form').style.display = 'none';
     const banner = document.getElementById('kyc-status-banner');
-    if(banner){ banner.style.display='block'; banner.style.background='rgba(245,158,11,0.1)'; banner.style.border='1px solid rgba(245,158,11,0.2)'; banner.style.color='#f59e0b'; banner.textContent='⏳ Your documents are under review. We will notify you once verified.'; }
-  } catch(e){ msg.style.color='#e74c3c'; msg.textContent='Error: '+e.message; }
+    if(banner){
+      banner.style.display  = 'block';
+      banner.style.background = 'rgba(245,158,11,0.1)';
+      banner.style.border   = '1px solid rgba(245,158,11,0.2)';
+      banner.style.color    = '#f59e0b';
+      banner.textContent    = 'Your documents are under review. We will notify you once verified.';
+    }
+  } catch(e){
+    msg.style.color = '#e74c3c';
+    msg.textContent = 'Error: ' + e.message;
+  }
 }
 
 /* ──────── SECURITY FUNCTIONS ──────── */
