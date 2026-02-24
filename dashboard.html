@@ -2012,15 +2012,15 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
           <!-- Filters -->
           <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center;">
             <div style="display:flex;gap:6px;">
-              <button class="hist-filter active-hf" onclick="setHistFilter('all',this)">All</button>
-              <button class="hist-filter" onclick="setHistFilter('deposit',this)">Deposits</button>
-              <button class="hist-filter" onclick="setHistFilter('withdrawal',this)">Withdrawals</button>
-              <button class="hist-filter" onclick="setHistFilter('profit',this)">Profits</button>
+              <button class="hist-filter hf-type active-hf" onclick="setHistFilter('all',this)">All</button>
+              <button class="hist-filter hf-type" onclick="setHistFilter('deposit',this)">Deposits</button>
+              <button class="hist-filter hf-type" onclick="setHistFilter('withdrawal',this)">Withdrawals</button>
+              <button class="hist-filter hf-type" onclick="setHistFilter('profit',this)">Profits</button>
             </div>
             <div style="display:flex;gap:6px;margin-left:auto;">
-              <button class="hist-filter" onclick="setHistStatus('all',this)" id="hf-all-s" style="border-color:var(--blue);color:var(--blue);">All Status</button>
-              <button class="hist-filter" onclick="setHistStatus('pending',this)">Pending</button>
-              <button class="hist-filter" onclick="setHistStatus('approved',this)">Approved</button>
+              <button class="hist-filter hf-status active-hf" onclick="setHistStatus('all',this)">All Status</button>
+              <button class="hist-filter hf-status" onclick="setHistStatus('pending',this)">Pending</button>
+              <button class="hist-filter hf-status" onclick="setHistStatus('approved',this)">Approved</button>
             </div>
           </div>
 
@@ -2164,9 +2164,14 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
 <script>
 const {createClient}=supabase;
 const sb=createClient('https://tnvbiricxztlxppdqphh.supabase.co','sb_publishable_sbf6NMGko9Jtm9ySrjk4UA_iNCn-pnI');
-let user=null,wallet=null,bscMode='buy';
 
-/* ──────── INIT ──────── */
+// ── Global state vars ──
+let user = null, wallet = null, bscMode = 'buy';
+let allHistory = [], histTypeFilter = 'all', histStatusFilter = 'all', histPage = 1;
+let allWLData = [], wlFilter = 'all', wlInterval = null;
+let btcChange24h = 0;
+let notifPageData = [];
+
 /* ──────── INIT ──────── */
 async function init(){
   document.getElementById('loading-screen').style.display='flex';
@@ -3058,14 +3063,14 @@ async function loadHistory(){
 }
 function setHistFilter(f,btn){
   histTypeFilter=f;
-  document.querySelectorAll('.hist-filter').forEach(b=>{if(['all','deposit','withdrawal','profit'].includes(b.textContent.toLowerCase().trim()))b.classList.remove('active-hf');});
+  document.querySelectorAll('.hf-type').forEach(b=>b.classList.remove('active-hf'));
   if(btn) btn.classList.add('active-hf');
   renderHistory();
 }
 function setHistStatus(f,btn){
   histStatusFilter=f;
-  ['hs-all','hs-pending','hs-approved'].forEach(id=>{const el=document.getElementById(id);if(el){el.style.borderColor='var(--border)';el.style.color='var(--gray)';}});
-  if(btn){btn.style.borderColor='var(--blue)';btn.style.color='var(--blue)';}
+  document.querySelectorAll('.hf-status').forEach(b=>b.classList.remove('active-hf'));
+  if(btn) btn.classList.add('active-hf');
   renderHistory();
 }
 function renderHistory(){
@@ -3118,41 +3123,38 @@ function exportHistory(){
 async function loadNotifPage(){
   const list = document.getElementById('notif-page-list');
   if(!list) return;
-  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--gray);">Loading...</div>';
-
-  const {data, error} = await sb.from('notifications')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', {ascending:false});
-
-  if(error || !data || !data.length){
-    list.innerHTML = '<div style="text-align:center;padding:48px;color:var(--gray);"><div style="font-size:32px;margin-bottom:12px;">🔔</div><div style="font-size:14px;font-weight:600;color:var(--white);">No notifications yet</div><div style="font-size:12px;margin-top:4px;">You will be notified about deposits, withdrawals and account updates here.</div></div>';
-    return;
+  list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);">Loading...</div>';
+  try {
+    const {data, error} = await sb.from('notifications')
+      .select('*').eq('user_id', user.id)
+      .order('created_at', {ascending:false});
+    if(error) throw error;
+    if(!data || !data.length){
+      list.innerHTML = '<div style="text-align:center;padding:48px;"><div style="font-size:40px;margin-bottom:12px;">🔔</div><div style="font-size:14px;font-weight:600;color:var(--white);">No notifications yet</div><div style="font-size:12px;color:var(--gray);margin-top:6px;">Account alerts for deposits, withdrawals and KYC updates will show here.</div></div>';
+      return;
+    }
+    const icons={deposit:'💰',withdrawal:'💸',profit:'📈',kyc:'🪪',security:'🔒',welcome:'👋',info:'ℹ️',success:'✅',warning:'⚠️',promo:'🎁'};
+    list.innerHTML = data.map(n=>{
+      const isUnread = !n.read;
+      const icon = icons[n.type] || '🔔';
+      const time = getTimeAgo(n.created_at);
+      return '<div class="notif-page-item'+(isUnread?' unread':'')+'">'+
+        (isUnread?'<div class="notif-page-dot"></div>':'<div style="width:8px;flex-shrink:0;"></div>')+
+        '<div style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.12);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">'+icon+'</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">'+
+            '<div style="font-size:13px;font-weight:'+(isUnread?'700':'500')+';color:var(--white);">'+(n.title||'Notification')+'</div>'+
+            '<div style="font-size:10px;color:var(--gray);white-space:nowrap;">'+time+'</div>'+
+          '</div>'+
+          '<div style="font-size:12px;color:var(--gray);margin-top:3px;line-height:1.5;">'+(n.message||'')+'</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+    // Mark all as read
+    sb.from('notifications').update({read:true}).eq('user_id',user.id).eq('read',false).then(()=>loadNotifBadge());
+  } catch(e) {
+    list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--gray);">Could not load notifications. Please try again.</div>';
   }
-
-  const icons = {deposit:'💰', withdrawal:'💸', profit:'📈', kyc:'🪪', security:'🔒', welcome:'👋', info:'ℹ️', success:'✅', warning:'⚠️', promo:'🎁'};
-
-  list.innerHTML = data.map(n => {
-    const isUnread = !n.read;
-    const icon = icons[n.type] || '🔔';
-    const time = getTimeAgo(n.created_at);
-    return `<div class="notif-page-item ${isUnread ? 'unread' : ''}">
-      ${isUnread ? '<div class="notif-page-dot"></div>' : '<div style="width:8px;flex-shrink:0;"></div>'}
-      <div style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
-          <div style="font-size:13px;font-weight:${isUnread?'700':'500'};color:var(--white);">${n.title||'Notification'}</div>
-          <div style="font-size:10px;color:var(--gray);white-space:nowrap;">${time}</div>
-        </div>
-        <div style="font-size:12px;color:var(--gray);margin-top:3px;line-height:1.5;">${n.message||''}</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // Mark all as read silently
-  sb.from('notifications').update({read:true}).eq('user_id',user.id).eq('read',false).then(()=>{
-    loadNotifBadge();
-  });
 }
 
 async function markAllNotifsRead(){
@@ -3222,46 +3224,7 @@ async function loadReferrals(){
     </div>`;
   }).join('');
 }
-async function loadReferrals(){
-  if(!user) return;
-  const refLink = 'https://swiftexpress-qzgn.vercel.app/register.html?ref=' + user.id.slice(0,8);
-  const inp = document.getElementById('ref-link-input');
-  if(inp) inp.value = refLink;
 
-  // Load referred users from profiles table
-  const {data} = await sb.from('profiles').select('*').eq('referred_by', user.id.slice(0,8));
-  const refs = data || [];
-  const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  setEl('ref-count', refs.length);
-
-  // Calculate earnings (5% of each referral's deposits)
-  let totalEarned=0, pendingBonus=0;
-  for(const r of refs){
-    const {data:txns} = await sb.from('transactions').select('amount,status').eq('user_id',r.id).eq('type','deposit');
-    if(txns){
-      txns.forEach(t=>{
-        if(t.status==='approved') totalEarned += parseFloat(t.amount||0)*0.05;
-        if(t.status==='pending')  pendingBonus+= parseFloat(t.amount||0)*0.05;
-      });
-    }
-  }
-  setEl('ref-earned','$'+totalEarned.toFixed(2));
-  setEl('ref-pending-bonus','$'+pendingBonus.toFixed(2));
-
-  // Render referral list
-  const listEl = document.getElementById('ref-list');
-  if(!listEl) return;
-  if(!refs.length){
-    listEl.innerHTML='<div style="text-align:center;padding:24px;color:var(--gray);font-size:12px;">No referrals yet. Share your link to get started!</div>';
-    return;
-  }
-  listEl.innerHTML = refs.map(r=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
-      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;">${(r.full_name||r.email||'?').slice(0,2).toUpperCase()}</div>
-      <div style="flex:1;"><div style="font-size:13px;font-weight:600;">${r.full_name||'Anonymous'}</div><div style="font-size:11px;color:var(--gray);">Joined ${getTimeAgo(r.created_at)}</div></div>
-      <div style="text-align:right;"><div style="font-size:12px;font-weight:700;color:var(--green);">Active</div></div>
-    </div>`).join('');
-}
 function shareRefLink(platform){
   const link = document.getElementById('ref-link-input')?.value || '';
   const msg = encodeURIComponent('Join SwiftExpress and start investing! Use my referral link: ' + link);
@@ -3334,8 +3297,7 @@ function updateHistStats(){
   const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
   setEl('hist-total-dep','$'+deps.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
   setEl('hist-total-wd','$'+wds.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
-  setEl('hs-total-txns', allHistory.length);
-  setEl('hs-pending-cnt', pend.length);
+  setEl('hist-total-profit', '$'+deps.reduce((s,t)=>s+parseFloat(t.amount||0)*0.05,0).toLocaleString('en',{minimumFractionDigits:2}));
 }
 function downloadStatement(){
   if(!allHistory.length){alert('No transactions to export.');return;}
