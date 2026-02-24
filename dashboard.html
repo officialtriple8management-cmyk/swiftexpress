@@ -3259,6 +3259,34 @@ function shareRefLink(platform){
   };
   if(urls[platform]) window.open(urls[platform], '_blank');
 }
+const BLOG_POSTS = [
+  {id:1,tag:'Market Update',tagColor:'rgba(59,130,246,0.15)',tagText:'#3b82f6',
+   title:'Bitcoin surges past $95,000 — What this means for investors',
+   excerpt:'Bitcoin has broken through a key resistance level, driven by institutional demand and ETF inflows. Analysts predict continued momentum through Q2.',
+   date:'Feb 20, 2026',author:'SwiftExpress Analysts',readTime:'3 min read',
+   content:'The recent surge in Bitcoin prices has been attributed to a combination of institutional buying, ETF inflows, and macroeconomic tailwinds. Several major corporations have announced Bitcoin treasury allocations, adding further demand pressure. Our analysts believe the current momentum is supported by strong on-chain fundamentals, with long-term holder supply at historic highs. For SwiftExpress investors, this presents an opportunity to review your allocation strategy. We recommend maintaining diversification across crypto and forex positions to manage volatility.'},
+  {id:2,tag:'Platform Update',tagColor:'rgba(16,185,129,0.15)',tagText:'#10b981',
+   title:'SwiftExpress now supports 11 external wallets including Phantom and Exodus',
+   excerpt:'We have expanded our Connect Wallet feature to support 11 of the most popular crypto wallets, making it easier to link your existing holdings.',
+   date:'Feb 18, 2026',author:'SwiftExpress Team',readTime:'2 min read',
+   content:'We are excited to announce that the Connect Wallet feature on SwiftExpress now supports 11 external wallets. New additions include Phantom (Solana), Exodus, Ledger, Trezor, Rainbow, OKX Wallet and Bybit Wallet, joining existing support for MetaMask, WalletConnect, Coinbase Wallet and Trust Wallet. Full wallet integration for fund transfers is coming in the next platform update.'},
+  {id:3,tag:'Trading Tips',tagColor:'rgba(245,158,11,0.15)',tagText:'#f59e0b',
+   title:'5 risk management strategies every investor should know',
+   excerpt:'Managing risk is the cornerstone of long-term investment success. Here are five proven strategies our top traders use to protect and grow capital.',
+   date:'Feb 15, 2026',author:'SwiftExpress Analysts',readTime:'5 min read',
+   content:'1. Position Sizing — Never risk more than 2% of your total capital on a single trade. 2. Stop-Loss Orders — Always set a stop-loss before entering any trade. Our signals page provides recommended stop levels. 3. Diversification — Spread investments across crypto, stocks, and forex to reduce correlation risk. 4. Take Profits Systematically — Take partial profits at key levels and let the remainder run. 5. Keep a Trading Journal — Document every trade with entry, exit, rationale and outcome.'},
+  {id:4,tag:'Forex',tagColor:'rgba(139,92,246,0.15)',tagText:'#8b5cf6',
+   title:'EUR/USD hits 3-month high amid ECB rate decision uncertainty',
+   excerpt:'The Euro strengthened against the Dollar following mixed signals from European Central Bank officials regarding the pace of future rate cuts.',
+   date:'Feb 12, 2026',author:'SwiftExpress Analysts',readTime:'3 min read',
+   content:'EUR/USD climbed to its highest level in three months as market participants reassessed ECB rate cut expectations. ECB officials have been divided on the pace of easing, with some members advocating patience given persistent services inflation. For forex traders on SwiftExpress, the current environment favors range-trading strategies with tighter stops. Check the Signals page for the latest entries.'},
+  {id:5,tag:'Education',tagColor:'rgba(239,68,68,0.15)',tagText:'#ef4444',
+   title:'Understanding KYC verification — why it protects you',
+   excerpt:'KYC (Know Your Customer) verification is not just a regulatory requirement — it is a critical layer of security that protects your funds and identity.',
+   date:'Feb 10, 2026',author:'SwiftExpress Compliance',readTime:'4 min read',
+   content:'KYC verification serves multiple important purposes. First, it prevents fraud by ensuring only real, verified individuals can access and withdraw funds. Second, it protects you as a user against unauthorized account access. Third, it ensures regulatory compliance which protects the platform and all users. At SwiftExpress, your KYC documents are reviewed by our compliance team within 24-48 hours and stored securely.'}
+];
+
 function loadBlog(){
   const list = document.getElementById('blog-list');
   if(!list) return;
