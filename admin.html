@@ -307,6 +307,28 @@
     </div>
   </div>
 
+  <!-- KYC VERIFICATION PAGE -->
+  <div class="page" id="page-kyc" style="display:none">
+    <div class="topbar">
+      <div class="page-title">🪪 KYC Verification</div>
+    </div>
+    <div style="padding:20px 24px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;">
+        <div style="font-size:13px;color:var(--gray);">Review identity submissions. All user details are shown below.</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="filterKYC('all',this)" class="kyc-filter active-filter">All</button>
+          <button onclick="filterKYC('pending',this)" class="kyc-filter">Pending</button>
+          <button onclick="filterKYC('verified',this)" class="kyc-filter">Verified</button>
+          <button onclick="filterKYC('rejected',this)" class="kyc-filter">Rejected</button>
+        </div>
+      </div>
+      <div id="kyc-cards-container">
+        <div style="text-align:center;color:var(--gray);padding:48px;">Loading submissions...</div>
+      </div>
+    </div>
+  </div>
+
+
   <!-- BROADCAST PAGE -->
   <div class="page" id="page-broadcast" style="display:none">
     <div class="topbar"><div class="page-title">📣 Broadcast Message</div></div>
@@ -986,22 +1008,32 @@ async function viewUserDetail(userId){
   showPage('user-detail', null);
   document.getElementById('ud-page-title').textContent = 'Loading...';
 
-  const [{data:profile},{data:wallet},{data:txs}] = await Promise.all([
-    sb.from('profiles').select('*').eq('id',userId).single(),
-    sb.from('wallets').select('*').eq('user_id',userId).single(),
-    sb.from('transactions').select('*').eq('user_id',userId).order('created_at',{ascending:false}).limit(20)
-  ]);
+  let profile = null, wallet = null, txs = [];
+  try {
+    const results = await Promise.all([
+      sb.from('profiles').select('*').eq('id',userId).single(),
+      sb.from('wallets').select('*').eq('user_id',userId).single(),
+      sb.from('transactions').select('*').eq('user_id',userId).order('created_at',{ascending:false}).limit(20)
+    ]);
+    profile = results[0].data;
+    wallet  = results[1].data;
+    txs     = results[2].data || [];
+  } catch(e) {
+    document.getElementById('ud-page-title').textContent = 'Error loading user';
+    return;
+  }
 
   const name = profile?.full_name || profile?.email || 'Unknown User';
   document.getElementById('ud-page-title').textContent = name;
   document.getElementById('ud-avatar').textContent = name.slice(0,2).toUpperCase();
   document.getElementById('ud-name').textContent = name;
   document.getElementById('ud-email').textContent = profile?.email || '--';
-  document.getElementById('ud-phone').textContent = profile?.phone || '--';
-  document.getElementById('ud-age').textContent = profile?.age || '--';
-  document.getElementById('ud-country').textContent = profile?.country || '--';
-  document.getElementById('ud-address').textContent = profile?.address || '--';
-  document.getElementById('ud-since').textContent = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en',{year:'numeric',month:'long',day:'2-digit'}) : '--';
+  // phone/age/country/address may come from profile or wallet kyc snapshot
+  document.getElementById('ud-phone').textContent   = profile?.phone   || wallet?.kyc_phone   || '--';
+  document.getElementById('ud-age').textContent     = profile?.age     || wallet?.kyc_age     || '--';
+  document.getElementById('ud-country').textContent = profile?.country || wallet?.kyc_country || '--';
+  document.getElementById('ud-address').textContent = profile?.address || wallet?.kyc_address || wallet?.kyc_full_name || '--';
+  document.getElementById('ud-since').textContent   = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en',{year:'numeric',month:'long',day:'2-digit'}) : '--';
 
   // Tier badge
   const tier = wallet?.tier || 'Starter';
@@ -1187,7 +1219,11 @@ function showPage(name,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  el.classList.add('active');
+  if(el) el.classList.add('active');
+  // Page-specific loaders
+  if(name==='kyc'){ loadKYC(); updateKYCBadge(); }
+  if(name==='broadcast') loadBroadcast();
+  if(name==='overview') loadAnalytics();
 }
 function openModal(t){document.getElementById(t+'Modal').classList.add('open');}
 function closeModal(t){document.getElementById(t+'Modal').classList.remove('open');}

@@ -1064,14 +1064,6 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Referrals
       </button>
-      <button class="sb-item" onclick="switchPage('history',this)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        History
-      </button>
-      <button class="sb-item" onclick="switchPage('notifications-page',this)" id="sb-notif-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        Notifications
-      </button>
 
       <div class="sb-sep"></div>
 
@@ -2087,81 +2079,9 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
       </div>
 
       <!-- ════════════ TRANSACTION HISTORY PAGE ════════════ -->
-      <div class="page" id="page-history">
-        <div class="inner-wrap" style="max-width:960px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px;">
-            <div>
-              <div class="inner-title" style="margin-bottom:2px;">🕐 Transaction History</div>
-              <div style="font-size:12px;color:var(--gray);">Full record of all your deposits, withdrawals and trades.</div>
-            </div>
-            <button onclick="downloadStatement()" style="background:var(--card);border:1px solid var(--border);color:var(--white);padding:9px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;">📥 Download Statement</button>
-          </div>
-
-          <!-- Filter bar -->
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center;">
-            <div style="display:flex;gap:6px;">
-              <button class="hist-filter active-hf" onclick="setHistFilter('all',this)">All</button>
-              <button class="hist-filter" onclick="setHistFilter('deposit',this)">Deposits</button>
-              <button class="hist-filter" onclick="setHistFilter('withdrawal',this)">Withdrawals</button>
-              <button class="hist-filter" onclick="setHistFilter('profit',this)">Profits</button>
-            </div>
-            <div style="display:flex;gap:6px;margin-left:auto;">
-              <button class="hist-filter" onclick="setHistStatus('all',this)" id="hs-all" style="border-color:var(--blue);color:var(--blue);">All Status</button>
-              <button class="hist-filter" onclick="setHistStatus('pending',this)" id="hs-pending">Pending</button>
-              <button class="hist-filter" onclick="setHistStatus('approved',this)" id="hs-approved">Approved</button>
-            </div>
-          </div>
-
-          <!-- Summary cards -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:20px;">
-            <div class="hist-stat-card"><div class="hist-stat-val" id="hs-total-dep">$0.00</div><div class="hist-stat-lbl">Total Deposited</div></div>
-            <div class="hist-stat-card"><div class="hist-stat-val" id="hs-total-wd">$0.00</div><div class="hist-stat-lbl">Total Withdrawn</div></div>
-            <div class="hist-stat-card"><div class="hist-stat-val" id="hs-total-txns">0</div><div class="hist-stat-lbl">Total Transactions</div></div>
-            <div class="hist-stat-card"><div class="hist-stat-val" id="hs-pending-cnt">0</div><div class="hist-stat-lbl">Pending</div></div>
-          </div>
-
-          <!-- Table -->
-          <div style="overflow-x:auto;background:var(--card);border:1px solid var(--border);border-radius:12px;">
-            <table style="width:100%;border-collapse:collapse;">
-              <thead>
-                <tr style="border-bottom:1px solid var(--border);">
-                  <th style="padding:12px 16px;text-align:left;font-size:11px;color:var(--gray);font-weight:700;text-transform:uppercase;">Date</th>
-                  <th style="padding:12px 16px;text-align:left;font-size:11px;color:var(--gray);font-weight:700;text-transform:uppercase;">Type</th>
-                  <th style="padding:12px 16px;text-align:left;font-size:11px;color:var(--gray);font-weight:700;text-transform:uppercase;">Method</th>
-                  <th style="padding:12px 16px;text-align:right;font-size:11px;color:var(--gray);font-weight:700;text-transform:uppercase;">Amount</th>
-                  <th style="padding:12px 16px;text-align:center;font-size:11px;color:var(--gray);font-weight:700;text-transform:uppercase;">Status</th>
-                  <th style="padding:12px 16px;text-align:left;font-size:11px;color:var(--gray);font-weight:700;text-transform:uppercase;">Ref ID</th>
-                </tr>
-              </thead>
-              <tbody id="hist-tbody">
-                <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gray);">Loading...</td></tr>
-              </tbody>
-            </table>
-          </div>
-          <div id="hist-empty" style="display:none;text-align:center;padding:48px;color:var(--gray);">
-            <div style="font-size:32px;margin-bottom:12px;">📭</div>
-            <div style="font-size:14px;font-weight:600;">No transactions found</div>
-            <div style="font-size:12px;margin-top:4px;">Try a different filter or make your first deposit.</div>
-          </div>
-        </div>
-      </div>
-
+      
       <!-- ════════════ NOTIFICATIONS PAGE ════════════ -->
-      <div class="page" id="page-notifications-page">
-        <div class="inner-wrap" style="max-width:680px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:10px;">
-            <div>
-              <div class="inner-title" style="margin-bottom:2px;">🔔 Notifications</div>
-              <div style="font-size:12px;color:var(--gray);">All your account alerts and updates.</div>
-            </div>
-            <button onclick="markAllRead()" style="background:var(--card);border:1px solid var(--border);color:var(--gray);padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">Mark all as read</button>
-          </div>
-          <div id="notif-page-body">
-            <div style="text-align:center;padding:48px;color:var(--gray);">Loading...</div>
-          </div>
-        </div>
-      </div>
-
+      
     </div><!-- /content-area -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -2282,7 +2202,7 @@ async function init(){
     document.getElementById('pd-name').textContent=name;
     document.getElementById('pd-email').textContent=user.email;
   setMobileUserInfo(user.email);
-  setTimeout(()=>{populateProfilePage();loadSettings();updateSubscribePage();loadReferrals();},500);
+  setTimeout(()=>{populateProfilePage();loadSettings();updateSubscribePage();},500);
   }catch(e){
     const name=user.email.split('@')[0]||'User';
     document.getElementById('avatar-el').textContent=name.slice(0,2).toUpperCase();
@@ -2578,9 +2498,7 @@ function switchPage(name,btn){
   if(name==='referrals') loadReferrals();
   if(name==='history') loadHistory();
   if(name==='notifications-page') loadNotifPage();
-  if(name==='referrals') loadReferrals();
   if(name==='blog') loadBlog();
-  if(name==='notifications-page') loadNotifPage();
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   if(btn)btn.classList.add('active');
   document.getElementById('page-title').textContent=name.charAt(0).toUpperCase()+name.slice(1);
@@ -2811,7 +2729,6 @@ async function submitKYC(){
       kyc_phone:        meta.phone     || '',
       kyc_age:          meta.age       || '',
       kyc_country:      meta.country   || '',
-      kyc_address:      meta.address   || '',
       kyc_email:        user.email     || '',
     }).eq('user_id', user.id);
     if(dbErr) throw dbErr;
@@ -3185,77 +3102,111 @@ function exportHistory(){
   URL.revokeObjectURL(url);
 }
 async function loadNotifPage(){
-  const el = document.getElementById('notif-page-body');
-  if(!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--gray);">Loading...</div>';
-  const {data} = await sb.from('notifications').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
-  if(!data||!data.length){
-    el.innerHTML='<div style="text-align:center;padding:48px;color:var(--gray);"><div style="font-size:32px;margin-bottom:12px;">🔔</div><div style="font-size:14px;font-weight:600;">No notifications yet</div><div style="font-size:12px;margin-top:4px;">You will be notified about deposits, withdrawals and account updates.</div></div>';
-    return;
-  }
-  const icons={deposit:'💰',withdrawal:'💸',kyc:'🪪',system:'⚙️',promo:'🎁'};
-  el.innerHTML = data.map(n=>{
-    const icon = icons[n.type||'system']||'🔔';
-    const timeAgo = getTimeAgo(n.created_at);
-    return `<div class="notif-page-item ${n.is_read?'':'unread-page'}">
-      <div style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
-          <div style="font-size:13px;font-weight:700;">${n.title||'Notification'}</div>
-          <div style="font-size:10px;color:var(--gray);white-space:nowrap;">${timeAgo}</div>
-        </div>
-        <div style="font-size:12px;color:var(--gray);margin-top:4px;line-height:1.5;">${n.message||''}</div>
-      </div>
-      ${!n.is_read?'<div class="notif-dot"></div>':'<div class="notif-dot read-dot"></div>'}
-    </div>`;
-  }).join('');
-  // Mark all as read
-  await sb.from('notifications').update({is_read:true}).eq('user_id',user.id);
-}
-function renderNotifPage(){
   const list = document.getElementById('notif-page-list');
   if(!list) return;
+  list.innerHTML = '<div style="text-align:center;padding:32px;color:var(--gray);">Loading...</div>';
 
-  const iconMap = {
-    deposit:'💰', withdrawal:'💸', profit:'📈',
-    kyc:'🪪', security:'🔒', welcome:'👋', default:'🔔'
-  };
+  const {data, error} = await sb.from('notifications')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', {ascending:false});
 
-  list.innerHTML = notifPageData.map(n => {
-    const isUnread = !n.read_at;
-    const icon = iconMap[n.type] || iconMap.default;
-    const time = formatTimeAgo(new Date(n.created_at));
-    const fullDate = new Date(n.created_at).toLocaleString('en',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  if(error || !data || !data.length){
+    list.innerHTML = '<div style="text-align:center;padding:48px;color:var(--gray);"><div style="font-size:32px;margin-bottom:12px;">🔔</div><div style="font-size:14px;font-weight:600;color:var(--white);">No notifications yet</div><div style="font-size:12px;margin-top:4px;">You will be notified about deposits, withdrawals and account updates here.</div></div>';
+    return;
+  }
 
-    return `<div class="notif-page-item ${isUnread?'unread':''}" onclick="markNotifRead('${n.id}',this)">
-      ${isUnread ? '<div class="notif-page-dot"></div>' : ''}
-      <div class="notif-page-icon">${icon}</div>
+  const icons = {deposit:'💰', withdrawal:'💸', profit:'📈', kyc:'🪪', security:'🔒', welcome:'👋', info:'ℹ️', success:'✅', warning:'⚠️', promo:'🎁'};
+
+  list.innerHTML = data.map(n => {
+    const isUnread = !n.read;
+    const icon = icons[n.type] || '🔔';
+    const time = getTimeAgo(n.created_at);
+    return `<div class="notif-page-item ${isUnread ? 'unread' : ''}">
+      ${isUnread ? '<div class="notif-page-dot"></div>' : '<div style="width:8px;flex-shrink:0;"></div>'}
+      <div style="width:36px;height:36px;border-radius:50%;background:rgba(59,130,246,0.1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${icon}</div>
       <div style="flex:1;min-width:0;">
-        <div class="notif-page-title">${n.title||'Notification'}</div>
-        <div class="notif-page-body">${n.message||''}</div>
-        <div class="notif-page-time" title="${fullDate}">🕐 ${time}</div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap;">
+          <div style="font-size:13px;font-weight:${isUnread?'700':'500'};color:var(--white);">${n.title||'Notification'}</div>
+          <div style="font-size:10px;color:var(--gray);white-space:nowrap;">${time}</div>
+        </div>
+        <div style="font-size:12px;color:var(--gray);margin-top:3px;line-height:1.5;">${n.message||''}</div>
       </div>
     </div>`;
   }).join('');
+
+  // Mark all as read silently
+  sb.from('notifications').update({read:true}).eq('user_id',user.id).eq('read',false).then(()=>{
+    loadNotifBadge();
+  });
 }
-async function markNotifRead(id, el){
-  if(!el.classList.contains('unread')) return;
-  await sb.from('notifications').update({read_at: new Date().toISOString()}).eq('id', id);
-  el.classList.remove('unread');
-  const dot = el.querySelector('.notif-page-dot');
-  if(dot) dot.remove();
-}
+
 async function markAllNotifsRead(){
   await sb.from('notifications').update({read:true}).eq('user_id',user.id);
   loadNotifPage();
+  loadNotifBadge();
 }
-function formatTimeAgo(date){
-  const diff = Math.floor((Date.now() - date) / 1000);
-  if(diff < 60)   return 'Just now';
-  if(diff < 3600) return Math.floor(diff/60) + 'm ago';
-  if(diff < 86400) return Math.floor(diff/3600) + 'h ago';
-  if(diff < 604800) return Math.floor(diff/86400) + 'd ago';
-  return date.toLocaleDateString('en',{day:'2-digit',month:'short'});
+
+async function loadReferrals(){
+  if(!user) return;
+
+  // Set referral link
+  const refCode = user.id.slice(0,8);
+  const refLink = 'https://swiftexpress-qzgn.vercel.app/register.html?ref=' + refCode;
+  const inp = document.getElementById('ref-link-input');
+  if(inp) inp.value = refLink;
+
+  const setV = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+
+  // Query users who signed up with this referral code
+  const {data: refs, error} = await sb.from('profiles')
+    .select('id, full_name, email, created_at')
+    .eq('referred_by', refCode);
+
+  const list = document.getElementById('ref-list');
+  const items = refs || [];
+
+  setV('ref-total-count', items.length);
+
+  // Count how many have deposited
+  let activeNum = 0, totalEarned = 0;
+  if(items.length > 0){
+    const ids = items.map(r => r.id);
+    const {data: txs} = await sb.from('transactions')
+      .select('user_id')
+      .in('user_id', ids)
+      .eq('type','deposit')
+      .eq('status','approved');
+    const deposited = new Set((txs||[]).map(t => t.user_id));
+    activeNum = deposited.size;
+    totalEarned = activeNum * 10;
+  }
+
+  setV('ref-active-count', activeNum);
+  setV('ref-earned', '$' + totalEarned.toLocaleString());
+
+  if(!list) return;
+  if(!items.length){
+    list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--gray);font-size:13px;">No referrals yet. Share your link above to get started!</div>';
+    return;
+  }
+
+  list.innerHTML = items.map(r => {
+    const initials = (r.full_name || r.email || '?').slice(0,2).toUpperCase();
+    const joined   = new Date(r.created_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'});
+    return `<div class="ref-item">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;">${initials}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;">${r.full_name || 'Anonymous'}</div>
+          <div style="font-size:11px;color:var(--gray);">${r.email || '--'}</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:11px;color:var(--gray);">Joined ${joined}</div>
+      </div>
+    </div>`;
+  }).join('');
 }
 async function loadReferrals(){
   if(!user) return;
