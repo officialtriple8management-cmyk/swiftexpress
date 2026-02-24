@@ -2075,7 +2075,6 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
             <button onclick="markAllNotifsRead()" style="background:var(--card);border:1px solid var(--border);color:var(--gray);padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">Mark all as read</button>
           </div>
           <div id="notif-page-list" style="display:flex;flex-direction:column;gap:8px;">
-            <div style="text-align:center;color:var(--gray);padding:32px;">Loading notifications...</div>
           </div>
         </div>
       </div>
@@ -2086,16 +2085,10 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
           <div class="inner-title">📰 Market News &amp; Updates</div>
           <div class="inner-sub" style="margin-bottom:24px;">Latest market insights, platform updates and trading tips from our analysts.</div>
           <div id="blog-list" style="display:flex;flex-direction:column;gap:16px;">
-            <!-- Populated by JS -->
-            <div style="text-align:center;color:var(--gray);padding:32px;">Loading news...</div>
           </div>
         </div>
       </div>
 
-      <!-- ════════════ TRANSACTION HISTORY PAGE ════════════ -->
-      
-      <!-- ════════════ NOTIFICATIONS PAGE ════════════ -->
-      
     </div><!-- /content-area -->
   </div><!-- /main -->
 </div><!-- /app -->
@@ -2510,14 +2503,20 @@ async function loadNotifs(){
 }
 function switchPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+name).classList.add('active');
+  var pg = document.getElementById('page-'+name);
+  if(!pg){ console.error('Page not found: page-'+name); return; }
+  pg.classList.add('active');
   // Start/stop watchlist ticker
   if(name==='markets') startWatchlist(); else stopWatchlist();
   if(name==='subscribe') updateSubscribePage();
   if(name==='referrals') loadReferrals();
   if(name==='history') loadHistory();
   if(name==='notifications-page') loadNotifPage();
-  if(name==='blog') loadBlog();
+  if(name==='blog'){
+    // loadBlog is synchronous - call immediately
+    if(typeof loadBlog === 'function') loadBlog();
+    else console.error('loadBlog not defined');
+  }
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   if(btn)btn.classList.add('active');
   document.getElementById('page-title').textContent=name.charAt(0).toUpperCase()+name.slice(1);
@@ -3265,22 +3264,22 @@ const BLOG_POSTS = [
 ];
 
 function loadBlog(){
-  const list = document.getElementById('blog-list');
-  if(!list) return;
-  list.innerHTML = BLOG_POSTS.map(post => `
-    <div class="blog-card" id="blog-card-${post.id}" onclick="toggleBlog(${post.id})">
-      <div class="blog-tag" style="background:${post.tagColor};color:${post.tagText};">${post.tag}</div>
-      <div class="blog-title">${post.title}</div>
-      <div class="blog-excerpt">${post.excerpt}</div>
-      <div class="blog-meta">
-        <span>✍️ ${post.author}</span>
-        <span>📅 ${post.date}</span>
-        <span>⏱ ${post.readTime}</span>
-        <span id="blog-toggle-${post.id}" style="margin-left:auto;color:var(--blue);font-weight:600;">Read more ›</span>
-      </div>
-      <div class="blog-expanded" id="blog-exp-${post.id}">${post.content}</div>
-    </div>
-  `).join('');
+  var list = document.getElementById('blog-list');
+  if(!list){ console.error('blog-list not found'); return; }
+  var posts = typeof BLOG_POSTS !== 'undefined' ? BLOG_POSTS : [];
+  if(!posts.length){ list.innerHTML = '<p style="color:var(--gray);padding:20px;">No posts available.</p>'; return; }
+  var html = '';
+  for(var i=0;i<posts.length;i++){
+    var p = posts[i];
+    html += '<div class="blog-card" onclick="toggleBlog('+p.id+')">';
+    html += '<div class="blog-tag" style="background:'+p.tagColor+';color:'+p.tagText+';">'+p.tag+'</div>';
+    html += '<div class="blog-title">'+p.title+'</div>';
+    html += '<div class="blog-excerpt">'+p.excerpt+'</div>';
+    html += '<div class="blog-meta"><span>✍️ '+p.author+'</span><span style="margin-left:8px;">📅 '+p.date+'</span><span style="margin-left:auto;color:var(--blue);font-weight:600;" id="blog-toggle-'+p.id+'">Read more ›</span></div>';
+    html += '<div class="blog-expanded" id="blog-exp-'+p.id+'" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--gray);line-height:1.7;">'+p.content+'</div>';
+    html += '</div>';
+  }
+  list.innerHTML = html;
 }
 function toggleBlog(id){
   const exp = document.getElementById('blog-exp-'+id);
