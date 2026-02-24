@@ -2307,11 +2307,6 @@ async function init(){
     if(event==='SIGNED_OUT') window.location.replace('login.html');
   });
 }
-
-/* ──────── BTC-LINKED BALANCE ──────── */
-let btcChange24h=0; // live BTC 24h change %
-let lastBtcPrice=0;
-
 function refreshBalances(){
   if(!wallet) return;
   const base=(+wallet.btc_balance||0)+(+wallet.stocks_balance||0)+(+wallet.forex_balance||0);
@@ -2352,8 +2347,6 @@ function refreshBalances(){
     badge.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:10px;height:10px"><polyline points="${isUp?'18 15 12 9 6 15':'6 9 12 15 18 9'}"/></svg>${chgStr} BTC`;
   }
 }
-
-/* ──────── PRICES ──────── */
 async function fetchPrices(){
   try{
     const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd&include_24hr_change=true');
@@ -2372,8 +2365,6 @@ async function fetchPrices(){
     }
   }catch(e){}
 }
-
-/* ──────── TRADE ──────── */
 function setBSC(mode){
   bscMode=mode;
   ['buy','sell','convert'].forEach(m=>{
@@ -2385,13 +2376,11 @@ function setBSC(mode){
   btn.textContent=mode.charAt(0).toUpperCase()+mode.slice(1);
   btn.className='action-btn '+(mode==='sell'?'sell-mode':'buy');
 }
-
 function pickLev(el,val){
   document.querySelectorAll('.lev-chip').forEach(c=>c.classList.remove('picked'));
   el.classList.add('picked');
   document.getElementById('lev-inp').value=val;
 }
-
 function updateTradeAsset(){
   const type=document.getElementById('trade-type-sel').value;
   const map={crypto:'BTC',stocks:'AAPL',forex:'EUR',commodities:'GOLD'};
@@ -2400,7 +2389,6 @@ function updateTradeAsset(){
   document.getElementById('sl-badge').textContent=sym;
   document.getElementById('tp-badge').textContent=sym;
 }
-
 async function placeTrade(){
   const amt=parseFloat(document.getElementById('trade-amt-inp').value);
   if(!amt||amt<=0){alert('Please enter a valid amount.');return;}
@@ -2420,52 +2408,12 @@ async function placeTrade(){
   document.getElementById('trade-amt-inp').value='';
   loadTrades();
 }
-
-/* ──────── TRADES TABLE ──────── */
-let tradesMode='open';
-async function loadTrades(){
-  const {data}=await sb.from('transactions').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
-  const tbody=document.getElementById('trades-body');
-  if(!data||!data.length){
-    tbody.innerHTML='<tr><td class="empty-td" colspan="8">No trades yet</td></tr>';
-    return;
-  }
-  const filtered=data.filter(t=>tradesMode==='open'?t.status==='pending':t.status!=='pending');
-  if(!filtered.length){
-    tbody.innerHTML='<tr><td class="empty-td" colspan="8">No '+(tradesMode)+' trades</td></tr>';
-    return;
-  }
-  tbody.innerHTML=filtered.map(t=>{
-    let extra={sl:'--',tp:'--',lev:'--',dur:'--'};
-    try{if(t.proof_url&&t.proof_url.startsWith('{'))extra=JSON.parse(t.proof_url);}catch(e){}
-    return`<tr>
-      <td style="color:var(--gray);white-space:nowrap">${new Date(t.created_at).toLocaleDateString('en-GB')}</td>
-      <td style="color:var(--gray);font-family:monospace;font-size:11px">${t.id.slice(0,8).toUpperCase()}</td>
-      <td>${t.payment_method||'--'}</td>
-      <td style="font-weight:600">$${parseFloat(t.amount).toLocaleString()}</td>
-      <td style="color:var(--gray)">${extra.lev||'--'}</td>
-      <td style="color:var(--gray)">${extra.sl||'--'}</td>
-      <td style="color:var(--gray)">${extra.tp||'--'}</td>
-      <td style="color:var(--gray)">${extra.dur||'--'}</td>
-    </tr>`;
-  }).join('');
-}
-
 function tradeTab(mode,el){
   tradesMode=mode;
   document.querySelectorAll('.trades-tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   loadTrades();
 }
-
-/* ──────── DEPOSIT ──────── */
-/* ──────── DEPOSIT MODAL ──────── */
-let walletAddresses={};
-
-/* ──────── DEPOSIT MODAL + AUTO-ROTATION ──────── */
-let allWalletAddresses={};
-let assignedAddress=null;
-
 async function loadWalletAddresses(){
   const {data}=await sb.from('wallet_addresses')
     .select('*').eq('is_active',true)
@@ -2478,13 +2426,11 @@ async function loadWalletAddresses(){
     });
   }
 }
-
 function getNextAddress(method){
   const list=allWalletAddresses[method];
   if(!list||!list.length) return null;
   return list[0]; // already sorted by usage_count ASC — least used first
 }
-
 function openDepositModal(){
   loadWalletAddresses(); // refresh every time modal opens
   document.getElementById('deposit-modal').classList.add('open');
@@ -2497,17 +2443,10 @@ function openDepositModal(){
   document.getElementById('proof-file').value='';
   assignedAddress=null;
 }
-
 function closeDepositModal(){
   document.getElementById('deposit-modal').classList.remove('open');
   assignedAddress=null;
 }
-
-window.addEventListener('DOMContentLoaded',()=>{
-  const mo=document.getElementById('deposit-modal');
-  if(mo) mo.addEventListener('click',function(e){if(e.target===this)closeDepositModal();});
-});
-
 function onMethodChange(){
   const method=document.getElementById('mod-method').value;
   const addrSection=document.getElementById('address-section');
@@ -2531,7 +2470,6 @@ function onMethodChange(){
   const btn=document.getElementById('copy-btn');
   btn.textContent='Copy';btn.className='copy-btn';
 }
-
 function copyAddress(){
   const addr=document.getElementById('mod-address').textContent;
   const copy=(t)=>{
@@ -2547,12 +2485,10 @@ function copyAddress(){
   btn.textContent='Copied!';btn.className='copy-btn copied';
   setTimeout(()=>{btn.textContent='Copy';btn.className='copy-btn';},2000);
 }
-
 function onFileSelected(){
   const file=document.getElementById('proof-file').files[0];
   document.getElementById('file-name').textContent=file?file.name:'No file chosen';
 }
-
 async function submitDeposit(){
   const method=document.getElementById('mod-method').value;
   const amt=parseFloat(document.getElementById('mod-amount').value);
@@ -2608,10 +2544,7 @@ async function submitDeposit(){
     btn.disabled=false;btn.textContent='Deposit';
   }
 }
-
 async function doDeposit(){openDepositModal();}
-
-/* ──────── WITHDRAWAL ──────── */
 async function doWithdraw(){
   const amt=parseFloat(document.getElementById('wd-amt').value);
   const method=document.getElementById('wd-method').value;
@@ -2629,8 +2562,6 @@ async function doWithdraw(){
   document.getElementById('wd-acct').value='';
   document.getElementById('wd-method').value='';
 }
-
-/* ──────── NOTIFICATIONS ──────── */
 async function loadNotifs(){
   const {data}=await sb.from('notifications').select('*').eq('user_id',user.id).order('created_at',{ascending:false});
   const el=document.getElementById('notif-body');
@@ -2638,8 +2569,6 @@ async function loadNotifs(){
   el.innerHTML=data.map(n=>`<div class="notif-item${n.is_read?'':' unread'}"><h5>${n.title}</h5><p>${n.message}</p></div>`).join('');
   sb.from('notifications').update({is_read:true}).eq('user_id',user.id);
 }
-
-/* ──────── UI HELPERS ──────── */
 function switchPage(name,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
@@ -2657,7 +2586,6 @@ function switchPage(name,btn){
   document.getElementById('page-title').textContent=name.charAt(0).toUpperCase()+name.slice(1);
   closeNotif();closeProfile();
 }
-
 function toggleNotif(){
   const p=document.getElementById('notif-panel');
   const o=document.getElementById('notif-overlay');
@@ -2684,22 +2612,10 @@ function closeProfile(){
   document.getElementById('profile-panel').style.display='none';
   document.getElementById('profile-overlay').classList.remove('open');
 }
-
-/* ── MOBILE SIDEBAR ── */
 function toggleMobileSidebar(){
   const sb=document.querySelector('.sidebar');
   sb.style.display=sb.style.display==='none'?'flex':'none';
 }
-window.addEventListener('resize',()=>{
-  const btn=document.getElementById('mobile-menu-btn');
-  if(btn) btn.style.display=window.innerWidth<=800?'flex':'none';
-  if(window.innerWidth>800){
-    document.querySelector('.sidebar').style.display='';
-  }
-});
-window.dispatchEvent(new Event('resize'));
-
-/* ──────── MOBILE MENU ──────── */
 function openMobileMenu(){
   document.getElementById('mob-drawer').classList.add('open');
   document.getElementById('mob-overlay').classList.add('open');
@@ -2718,14 +2634,10 @@ function mobileSwitchPage(page, el){
   switchPage(page, el);
   closeMobileMenu();
 }
-// Set mobile user email
 function setMobileUserInfo(email){
   const el=document.getElementById('mob-user-email');
   if(el) el.textContent=email;
 }
-// Update fetchPrices interval to be more frequent for live feel
-
-/* ──────── SETTINGS PANEL ──────── */
 function openSettingsPanel(section){
   document.getElementById('settings-overlay').classList.add('open');
   document.getElementById('settings-panel').classList.add('open');
@@ -2751,13 +2663,14 @@ function closeSettingsPanel(){
   document.getElementById('settings-overlay').classList.remove('open');
   document.getElementById('settings-panel').classList.remove('open');
 }
-
 function copyRefLink(){
-  const el=document.getElementById("ref-link-input");
-  if(el){navigator.clipboard.writeText(el.value).catch(()=>{el.select();document.execCommand("copy");});}
-  alert("Referral link copied!");}
-
-/* ──────── PROFILE PAGE POPULATION ──────── */
+  const el = document.getElementById('ref-link-input');
+  if(!el) return;
+  navigator.clipboard.writeText(el.value).then(()=>{
+    const btn = el.nextElementSibling;
+    if(btn){ const orig=btn.textContent; btn.textContent='✅ Copied!'; setTimeout(()=>btn.textContent=orig,2000); }
+  }).catch(()=>{ el.select(); document.execCommand('copy'); });
+}
 function populateProfilePage(){
   if(!user || !wallet) return;
   const meta = user.user_metadata || {};
@@ -2823,8 +2736,6 @@ function populateProfilePage(){
     else if(kycStatus==='pending'){ banner.style.display='block'; banner.style.background='rgba(245,158,11,0.1)'; banner.style.border='1px solid rgba(245,158,11,0.2)'; banner.style.color='#f59e0b'; banner.textContent='⏳ Your documents are under review. We will notify you once verified.'; if(kycForm) kycForm.style.display='none'; }
   }
 }
-
-/* ──────── SAVE PERSONAL INFO ──────── */
 async function savePersonalInfo(){
   const msg = document.getElementById('pi-msg');
   const meta = {
@@ -2843,13 +2754,10 @@ async function savePersonalInfo(){
   msg.style.color='var(--green)'; msg.textContent='✅ Profile updated successfully!';
   setTimeout(()=>msg.textContent='',3000);
 }
-
-/* ──────── KYC SUBMISSION ──────── */
 function onKycFileSelect(input){
   const fn = document.getElementById('kyc-file-name');
   if(fn && input.files[0]) fn.textContent = '📎 ' + input.files[0].name;
 }
-
 async function submitKYC(){
   const msg = document.getElementById('kyc-msg');
   const idType = document.getElementById('kyc-id-type').value;
@@ -2926,15 +2834,12 @@ async function submitKYC(){
     msg.textContent = 'Error: ' + e.message;
   }
 }
-
-/* ──────── SECURITY FUNCTIONS ──────── */
 function togglePw(id, btn){
   const el = document.getElementById(id);
   if(!el) return;
   el.type = el.type==='password' ? 'text' : 'password';
   btn.textContent = el.type==='password' ? '👁' : '🙈';
 }
-
 async function changePassword(){
   const msg = document.getElementById('sec-pw-msg');
   const cur = document.getElementById('sec-cur-pw').value;
@@ -2952,13 +2857,11 @@ async function changePassword(){
   msg.style.color='var(--green)'; msg.textContent='✅ Password updated successfully!';
   ['sec-cur-pw','sec-new-pw','sec-conf-pw'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
-
 async function resetPasswordEmail(){
   const {error} = await sb.auth.resetPasswordForEmail(user.email);
   if(error) alert('Error: '+error.message);
   else alert('✅ Password reset email sent to '+user.email+'. Check your inbox.');
 }
-
 async function changeEmail(){
   const msg = document.getElementById('sec-email-msg');
   const pw = document.getElementById('sec-email-pw').value;
@@ -2971,7 +2874,6 @@ async function changeEmail(){
   if(error){ msg.style.color='#e74c3c'; msg.textContent='Error: '+error.message; return; }
   msg.style.color='var(--green)'; msg.textContent='✅ Check your new email for a confirmation link.';
 }
-
 async function changePhone(){
   const msg = document.getElementById('sec-phone-msg');
   const pw = document.getElementById('sec-phone-pw').value;
@@ -2985,7 +2887,6 @@ async function changePhone(){
   if(user) user.user_metadata = {...(user.user_metadata||{}), phone};
   msg.style.color='var(--green)'; msg.textContent='✅ Phone number updated successfully!';
 }
-
 function toggle2FA(){
   const btn = document.getElementById('twofa-btn');
   const status = document.getElementById('twofa-status');
@@ -3001,8 +2902,6 @@ function toggle2FA(){
     if(msg){ msg.style.color='var(--gray)'; msg.textContent='2FA disabled.'; }
   }
 }
-
-/* ──────── SETTINGS PAGE ──────── */
 function setTheme(theme, el){
   document.querySelectorAll('.theme-opt').forEach(o=>o.style.borderColor='var(--border)');
   if(el) el.style.borderColor='var(--blue)';
@@ -3017,7 +2916,6 @@ function setTheme(theme, el){
   document.body.style.background = t.bg;
   localStorage.setItem('se-theme', theme);
 }
-
 function setAccent(color, el){
   document.querySelectorAll('.color-opt').forEach(o=>o.style.border='3px solid transparent');
   if(el) el.style.border='3px solid #fff';
@@ -3025,17 +2923,14 @@ function setAccent(color, el){
   document.documentElement.style.setProperty('--green-btn', color);
   localStorage.setItem('se-accent', color);
 }
-
 function saveSetting(key, val){
   localStorage.setItem('se-'+key, val);
 }
-
 function toggleBalanceVisibility(show){
   const el = document.getElementById('bal-display');
   if(el) el.style.filter = show ? 'none' : 'blur(8px)';
   saveSetting('pref-showbal', show);
 }
-
 function loadSettings(){
   // Load accent
   const accent = localStorage.getItem('se-accent');
@@ -3044,49 +2939,6 @@ function loadSettings(){
   const showBal = localStorage.getItem('se-pref-showbal');
   if(showBal==='false'){ const el=document.getElementById('bal-display'); if(el) el.style.filter='blur(8px)'; const cb=document.getElementById('pref-showbal'); if(cb) cb.checked=false; }
 }
-
-/* ──────── WATCHLIST LIVE PRICES ──────── */
-const WL_ASSETS = [
-  {id:'bitcoin',sym:'BTC',name:'Bitcoin',cat:'crypto',icon:'₿',bg:'#f7931a',color:'#f7931a'},
-  {id:'ethereum',sym:'ETH',name:'Ethereum',cat:'crypto',icon:'Ξ',bg:'#627eea',color:'#627eea'},
-  {id:'solana',sym:'SOL',name:'Solana',cat:'crypto',icon:'◎',bg:'#9945ff',color:'#9945ff'},
-  {id:'ripple',sym:'XRP',name:'XRP',cat:'crypto',icon:'✕',bg:'#00aae4',color:'#00aae4'},
-  {id:'binancecoin',sym:'BNB',name:'BNB',cat:'crypto',icon:'B',bg:'#f3ba2f',color:'#f3ba2f'},
-  {id:'cardano',sym:'ADA',name:'Cardano',cat:'crypto',icon:'₳',bg:'#0033ad',color:'#4da6ff'},
-  {id:'dogecoin',sym:'DOGE',name:'Dogecoin',cat:'crypto',icon:'Ð',bg:'#c2a633',color:'#f2c94c'},
-  {id:'polkadot',sym:'DOT',name:'Polkadot',cat:'crypto',icon:'●',bg:'#e6007a',color:'#e6007a'},
-  // Stocks (static — no free API for stocks)
-  {id:'_aapl',sym:'AAPL',name:'Apple Inc.',cat:'stocks',icon:'',bg:'#555',color:'#aaa',static:true},
-  {id:'_tsla',sym:'TSLA',name:'Tesla',cat:'stocks',icon:'T',bg:'#cc0000',color:'#ff4444',static:true},
-  {id:'_msft',sym:'MSFT',name:'Microsoft',cat:'stocks',icon:'M',bg:'#0078d4',color:'#4da6ff',static:true},
-  {id:'_nvda',sym:'NVDA',name:'NVIDIA',cat:'stocks',icon:'N',bg:'#76b900',color:'#76b900',static:true},
-  {id:'_amzn',sym:'AMZN',name:'Amazon',cat:'stocks',icon:'A',bg:'#ff9900',color:'#ff9900',static:true},
-  {id:'_googl',sym:'GOOGL',name:'Alphabet',cat:'stocks',icon:'G',bg:'#4285f4',color:'#4285f4',static:true},
-  // Forex (static)
-  {id:'_eurusd',sym:'EUR/USD',name:'Euro / US Dollar',cat:'forex',icon:'€',bg:'#1a5276',color:'#5dade2',static:true},
-  {id:'_gbpusd',sym:'GBP/USD',name:'Pound / US Dollar',cat:'forex',icon:'£',bg:'#154360',color:'#85c1e9',static:true},
-  {id:'_usdjpy',sym:'USD/JPY',name:'US Dollar / Yen',cat:'forex',icon:'¥',bg:'#1b4332',color:'#52be80',static:true},
-  {id:'_gold',sym:'XAU/USD',name:'Gold',cat:'forex',icon:'Au',bg:'#7d6608',color:'#f4d03f',static:true},
-];
-
-// Static seed prices for stocks/forex (will jitter slightly)
-const STATIC_PRICES = {
-  '_aapl':{price:214.50,chg:1.23},
-  '_tsla':{price:248.75,chg:-2.15},
-  '_msft':{price:418.30,chg:0.87},
-  '_nvda':{price:875.60,chg:3.42},
-  '_amzn':{price:195.20,chg:-0.65},
-  '_googl':{price:168.45,chg:1.08},
-  '_eurusd':{price:1.0842,chg:0.12},
-  '_gbpusd':{price:1.2634,chg:-0.08},
-  '_usdjpy':{price:149.82,chg:0.23},
-  '_gold':{price:2034.50,chg:0.55},
-};
-
-let wlPrices = {};
-let wlFilter = 'all';
-let wlInterval = null;
-
 async function loadWatchlist(){
   // Fetch crypto prices
   const ids = WL_ASSETS.filter(a=>!a.static).map(a=>a.id).join(',');
@@ -3107,14 +2959,12 @@ async function loadWatchlist(){
   });
   renderWatchlist();
 }
-
 function setWLFilter(f, btn){
   wlFilter = f;
   document.querySelectorAll('.wl-filter-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
   renderWatchlist();
 }
-
 function renderWatchlist(){
   const grid = document.getElementById('wl-grid');
   if(!grid) return;
@@ -3142,23 +2992,14 @@ function renderWatchlist(){
     </div>`;
   }).join('');
 }
-
 function startWatchlist(){
   loadWatchlist();
   if(wlInterval) clearInterval(wlInterval);
   wlInterval = setInterval(loadWatchlist, 10000);
 }
-
 function stopWatchlist(){
   if(wlInterval){ clearInterval(wlInterval); wlInterval=null; }
 }
-
-/* ──────── CONNECT WALLET ──────── */
-const walletIcons = {
-  'MetaMask':'🦊','WalletConnect':'🔵','Coinbase Wallet':'🔷','Phantom':'👻',
-  'Trust Wallet':'🛡️','Exodus':'🌀','Ledger':'🔐','Trezor':'🟩','Rainbow':'🌈',
-  'OKX Wallet':'⬛','Bybit Wallet':'🟠'
-};
 function showWalletConnect(name){
   document.getElementById('wcm-name').textContent = name;
   document.getElementById('wcm-icon').textContent = walletIcons[name]||'🔗';
@@ -3169,10 +3010,6 @@ function showWalletConnect(name){
     alert(name+' connection coming soon! This feature is under development.');
   }, 3000);
 }
-
-/* ──────── SUBSCRIPTION PLAN SELECTION ──────── */
-let selectedPlan = '';
-
 function selectPlan(planName, range){
   selectedPlan = planName;
   // Open deposit modal with plan context note
@@ -3186,7 +3023,6 @@ function selectPlan(planName, range){
     }
   }, 100);
 }
-
 function updateSubscribePage(){
   const tier = (wallet && wallet.tier) ? wallet.tier : 'Starter';
   const tierLower = tier.toLowerCase();
@@ -3281,392 +3117,6 @@ function updateSubscribePage(){
     // HIGHER TIERS — stay as "Get Started" (default, already reset above)
   });
 }
-
-/* ──────── TRANSACTION HISTORY ──────── */
-let allHistory = [];
-let histTypeFilter = 'all';
-let histStatusFilter = 'all';
-let histPage = 0;
-const HIST_PER_PAGE = 20;
-
-async function loadHistory(){
-  const list = document.getElementById('hist-list');
-  if(list) list.innerHTML = '<div style="text-align:center;color:var(--gray);padding:32px;">Loading...</div>';
-
-  const {data, error} = await sb.from('transactions')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', {ascending: false});
-
-  if(error || !data){
-    if(list) list.innerHTML = '<div style="text-align:center;color:var(--gray);padding:32px;">No transactions found.</div>';
-    return;
-  }
-
-  allHistory = data;
-  histPage = 0;
-
-  // Update summary cards
-  const deps = data.filter(t => t.type==='deposit' && t.status==='approved');
-  const wds  = data.filter(t => t.type==='withdrawal' && t.status==='approved');
-  const totalDep = deps.reduce((s,t) => s + parseFloat(t.amount||0), 0);
-  const totalWd  = wds.reduce((s,t)  => s + parseFloat(t.amount||0), 0);
-  const totalPro = parseFloat(wallet?.total_profit||0);
-
-  const sd = document.getElementById('hist-total-dep');
-  const sw = document.getElementById('hist-total-wd');
-  const sp = document.getElementById('hist-total-profit');
-  if(sd) sd.textContent = '$' + totalDep.toLocaleString('en',{minimumFractionDigits:2});
-  if(sw) sw.textContent = '$' + totalWd.toLocaleString('en',{minimumFractionDigits:2});
-  if(sp){ sp.textContent = (totalPro>=0?'+':'') + '$' + Math.abs(totalPro).toLocaleString('en',{minimumFractionDigits:2}); sp.style.color = totalPro>=0 ? 'var(--green)' : '#ef4444'; }
-
-  renderHistory();
-}
-
-function setHistFilter(type, btn){
-  histTypeFilter = type;
-  histPage = 0;
-  document.querySelectorAll('.hist-filter').forEach(b => {
-    if(['all','deposit','withdrawal','profit'].includes(b.textContent.toLowerCase().replace(' ',''))){ b.classList.remove('active-hf'); }
-  });
-  if(btn) btn.classList.add('active-hf');
-  renderHistory();
-}
-
-function setHistStatus(status, btn){
-  histStatusFilter = status;
-  histPage = 0;
-  renderHistory();
-}
-
-function renderHistory(){
-  let data = allHistory;
-  if(histTypeFilter !== 'all') data = data.filter(t => t.type === histTypeFilter);
-  if(histStatusFilter !== 'all') data = data.filter(t => t.status === histStatusFilter);
-
-  const list = document.getElementById('hist-list');
-  const loadMoreBtn = document.getElementById('hist-load-more');
-  if(!list) return;
-
-  const slice = data.slice(0, (histPage+1) * HIST_PER_PAGE);
-  if(!slice.length){
-    list.innerHTML = '<div style="text-align:center;color:var(--gray);padding:32px;font-size:13px;">No transactions found for this filter.</div>';
-    if(loadMoreBtn) loadMoreBtn.style.display = 'none';
-    return;
-  }
-
-  const icons = { deposit:'💰', withdrawal:'💸', profit:'📈', default:'📋' };
-  const iconBg = { deposit:'rgba(59,130,246,0.1)', withdrawal:'rgba(239,68,68,0.1)', profit:'rgba(16,185,129,0.1)', default:'rgba(255,255,255,0.05)' };
-  const statusBg = { pending:'rgba(245,158,11,0.1)', approved:'rgba(16,185,129,0.1)', rejected:'rgba(239,68,68,0.1)' };
-  const statusColor = { pending:'#f59e0b', approved:'var(--green)', rejected:'#ef4444' };
-
-  list.innerHTML = slice.map(t => {
-    const isDeposit = t.type === 'deposit';
-    const isWithdrawal = t.type === 'withdrawal';
-    const amtColor = isDeposit ? 'var(--green)' : isWithdrawal ? '#ef4444' : 'var(--white)';
-    const amtPrefix = isDeposit ? '+' : isWithdrawal ? '-' : '';
-    const icon = icons[t.type] || icons.default;
-    const bg   = iconBg[t.type] || iconBg.default;
-    const sBg  = statusBg[t.status] || statusBg.pending;
-    const sCol = statusColor[t.status] || statusColor.pending;
-    const date = new Date(t.created_at).toLocaleString('en',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    const method = t.payment_method ? ' &middot; ' + t.payment_method : '';
-
-    return `<div class="hist-tx-row">
-      <div class="hist-tx-icon" style="background:${bg};">${icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div class="hist-tx-title">${cap(t.type)}${method}</div>
-        <div class="hist-tx-date">${date}</div>
-        <div style="margin-top:4px;">
-          <span class="hist-tx-status" style="background:${sBg};color:${sCol};">${cap(t.status)}</span>
-          ${t.type==='deposit'&&t.admin_note?'<span style="font-size:10px;color:var(--gray);margin-left:6px;">'+t.admin_note+'</span>':''}
-        </div>
-      </div>
-      <div class="hist-tx-amount">
-        <div class="hist-tx-amt-val" style="color:${amtColor};">${amtPrefix}$${parseFloat(t.amount||0).toLocaleString('en',{minimumFractionDigits:2})}</div>
-        <div style="font-size:10px;color:var(--gray);margin-top:2px;">${t.id.slice(0,8).toUpperCase()}</div>
-      </div>
-    </div>`;
-  }).join('');
-
-  if(loadMoreBtn) loadMoreBtn.style.display = slice.length < data.length ? 'block' : 'none';
-}
-
-function loadMoreHistory(){
-  histPage++;
-  renderHistory();
-}
-
-function exportHistory(){
-  const data = allHistory;
-  if(!data.length){ alert('No transactions to export.'); return; }
-  const headers = ['Date','Type','Amount','Method','Status','ID'];
-  const rows = data.map(t => [
-    new Date(t.created_at).toLocaleString(),
-    t.type, t.amount, t.payment_method||'', t.status, t.id
-  ]);
-  const csv = [headers, ...rows].map(r => r.map(v => '"'+(v||'').toString().replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href = url; a.download = 'swiftexpress-history.csv'; a.click();
-  URL.revokeObjectURL(url);
-}
-
-/* ──────── NOTIFICATIONS PAGE ──────── */
-let notifPageData = [];
-
-async function loadNotifPage(){
-  const list = document.getElementById('notif-page-list');
-  if(list) list.innerHTML = '<div style="text-align:center;color:var(--gray);padding:32px;">Loading...</div>';
-
-  const {data, error} = await sb.from('notifications')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', {ascending:false})
-    .limit(50);
-
-  if(error || !data || !data.length){
-    if(list) list.innerHTML = '<div style="text-align:center;color:var(--gray);padding:32px;font-size:13px;">No notifications yet.</div>';
-    return;
-  }
-
-  notifPageData = data;
-  renderNotifPage();
-}
-
-function renderNotifPage(){
-  const list = document.getElementById('notif-page-list');
-  if(!list) return;
-
-  const iconMap = {
-    deposit:'💰', withdrawal:'💸', profit:'📈',
-    kyc:'🪪', security:'🔒', welcome:'👋', default:'🔔'
-  };
-
-  list.innerHTML = notifPageData.map(n => {
-    const isUnread = !n.read_at;
-    const icon = iconMap[n.type] || iconMap.default;
-    const time = formatTimeAgo(new Date(n.created_at));
-    const fullDate = new Date(n.created_at).toLocaleString('en',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-
-    return `<div class="notif-page-item ${isUnread?'unread':''}" onclick="markNotifRead('${n.id}',this)">
-      ${isUnread ? '<div class="notif-page-dot"></div>' : ''}
-      <div class="notif-page-icon">${icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div class="notif-page-title">${n.title||'Notification'}</div>
-        <div class="notif-page-body">${n.message||''}</div>
-        <div class="notif-page-time" title="${fullDate}">🕐 ${time}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function markNotifRead(id, el){
-  if(!el.classList.contains('unread')) return;
-  await sb.from('notifications').update({read_at: new Date().toISOString()}).eq('id', id);
-  el.classList.remove('unread');
-  const dot = el.querySelector('.notif-page-dot');
-  if(dot) dot.remove();
-}
-
-async function markAllNotifsRead(){
-  await sb.from('notifications').update({read_at: new Date().toISOString()}).eq('user_id', user.id).is('read_at', null);
-  notifPageData.forEach(n => n.read_at = new Date().toISOString());
-  renderNotifPage();
-}
-
-function formatTimeAgo(date){
-  const diff = Math.floor((Date.now() - date) / 1000);
-  if(diff < 60)   return 'Just now';
-  if(diff < 3600) return Math.floor(diff/60) + 'm ago';
-  if(diff < 86400) return Math.floor(diff/3600) + 'h ago';
-  if(diff < 604800) return Math.floor(diff/86400) + 'd ago';
-  return date.toLocaleDateString('en',{day:'2-digit',month:'short'});
-}
-
-/* ──────── REFERRALS ──────── */
-async function loadReferrals(){
-  // Set referral link with user's ID
-  const refInput = document.getElementById('ref-link-input');
-  if(refInput && user) refInput.value = 'https://swiftexpress-qzgn.vercel.app/register.html?ref=' + user.id.slice(0,8);
-
-  // Load referrals from DB (users who signed up with this user's ref code)
-  const {data: refs} = await sb.from('profiles')
-    .select('id,full_name,email,created_at,referred_by')
-    .eq('referred_by', user.id.slice(0,8));
-
-  const list = document.getElementById('ref-list');
-  const refCount = document.getElementById('ref-total-count');
-  const activeCount = document.getElementById('ref-active-count');
-  const earned = document.getElementById('ref-earned');
-
-  const items = refs || [];
-  if(refCount) refCount.textContent = items.length;
-
-  // Count those who have deposited
-  let activeNum = 0;
-  let totalEarned = 0;
-  if(items.length > 0){
-    const ids = items.map(r=>r.id);
-    const {data: txs} = await sb.from('transactions')
-      .select('user_id,status,type')
-      .in('user_id', ids)
-      .eq('type','deposit')
-      .eq('status','approved');
-    const deposited = [...new Set((txs||[]).map(t=>t.user_id))];
-    activeNum = deposited.length;
-    totalEarned = activeNum * 10;
-  }
-
-  if(activeCount) activeCount.textContent = activeNum;
-  if(earned) earned.textContent = '$' + totalEarned.toLocaleString();
-
-  if(!list) return;
-  if(!items.length){
-    list.innerHTML = '<div style="text-align:center;color:var(--gray);padding:24px;font-size:13px;">No referrals yet. Share your link to get started!</div>';
-    return;
-  }
-  list.innerHTML = items.map(r => {
-    const joined = new Date(r.created_at).toLocaleDateString('en',{month:'short',day:'numeric',year:'numeric'});
-    return `<div class="ref-item">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;">${(r.full_name||r.email||'?').slice(0,2).toUpperCase()}</div>
-        <div><div style="font-size:13px;font-weight:600;">${r.full_name||'Anonymous'}</div><div style="font-size:11px;color:var(--gray);">${r.email||'--'}</div></div>
-      </div>
-      <div style="text-align:right;">
-        <div style="font-size:11px;color:var(--gray);">Joined ${joined}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function copyRefLink(){
-  const el = document.getElementById('ref-link-input');
-  if(!el) return;
-  navigator.clipboard.writeText(el.value).then(()=>{
-    const btn = el.nextElementSibling;
-    if(btn){ const orig=btn.textContent; btn.textContent='✅ Copied!'; setTimeout(()=>btn.textContent=orig,2000); }
-  }).catch(()=>{ el.select(); document.execCommand('copy'); });
-}
-
-function shareRefLink(platform){
-  const link = document.getElementById('ref-link-input')?.value || '';
-  const msg = encodeURIComponent('Join SwiftExpress and start investing! Use my referral link: ' + link);
-  const urls = {
-    whatsapp: 'https://wa.me/?text=' + msg,
-    twitter:  'https://twitter.com/intent/tweet?text=' + msg,
-    telegram: 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Join SwiftExpress and start investing!'),
-    email:    'mailto:?subject=Join SwiftExpress&body=' + msg
-  };
-  if(urls[platform]) window.open(urls[platform], '_blank');
-}
-
-/* ──────── BLOG / NEWS ──────── */
-const BLOG_POSTS = [
-  {
-    id:1, tag:'Market Update', tagColor:'rgba(59,130,246,0.15)', tagText:'#3b82f6',
-    title:'Bitcoin surges past $95,000 — What this means for investors',
-    excerpt:'Bitcoin has broken through a key resistance level, driven by institutional demand and ETF inflows. Analysts predict continued momentum through Q2.',
-    date:'Feb 20, 2026', author:'SwiftExpress Analysts', readTime:'3 min read',
-    content:'The recent surge in Bitcoin prices has been attributed to a combination of institutional buying, ETF inflows, and macroeconomic tailwinds. Several major corporations have announced Bitcoin treasury allocations, adding further demand pressure. Our analysts believe the current momentum is supported by strong on-chain fundamentals, with long-term holder supply at historic highs. For SwiftExpress investors on our Starter and Growth tiers, this presents an opportunity to review your allocation strategy. We recommend maintaining diversification across crypto and forex positions to manage volatility.'
-  },
-  {
-    id:2, tag:'Platform Update', tagColor:'rgba(16,185,129,0.15)', tagText:'var(--green)',
-    title:'SwiftExpress now supports 11 external wallets including Phantom and Exodus',
-    excerpt:'We have expanded our Connect Wallet feature to support 11 of the most popular crypto wallets, making it easier to link your existing holdings.',
-    date:'Feb 18, 2026', author:'SwiftExpress Team', readTime:'2 min read',
-    content:'We are excited to announce that the Connect Wallet feature on SwiftExpress now supports 11 external wallets. New additions include Phantom (Solana), Exodus, Ledger, Trezor, Rainbow, OKX Wallet and Bybit Wallet, joining existing support for MetaMask, WalletConnect, Coinbase Wallet and Trust Wallet. Full wallet integration for fund transfers is coming in the next platform update. Stay tuned for more announcements.'
-  },
-  {
-    id:3, tag:'Trading Tips', tagColor:'rgba(245,158,11,0.15)', tagText:'#f59e0b',
-    title:'5 risk management strategies every investor should know',
-    excerpt:'Managing risk is the cornerstone of long-term investment success. Here are five proven strategies our top traders use to protect and grow capital.',
-    date:'Feb 15, 2026', author:'SwiftExpress Analysts', readTime:'5 min read',
-    content:'1. Position Sizing — Never risk more than 2% of your total capital on a single trade. This ensures that no single loss can significantly damage your portfolio. 2. Stop-Loss Orders — Always set a stop-loss before entering any trade. Our signals page provides recommended stop levels for every signal. 3. Diversification — Spread investments across crypto, stocks, and forex to reduce correlation risk. 4. Take Profits Systematically — Do not wait for the perfect exit. Take partial profits at key levels and let the remainder run. 5. Keep a Trading Journal — Document every trade with entry, exit, rationale and outcome. Reviewing patterns over time is one of the most powerful improvement tools available.'
-  },
-  {
-    id:4, tag:'Forex', tagColor:'rgba(139,92,246,0.15)', tagText:'#8b5cf6',
-    title:'EUR/USD hits 3-month high amid ECB rate decision uncertainty',
-    excerpt:'The Euro strengthened against the Dollar following mixed signals from European Central Bank officials regarding the pace of future rate cuts.',
-    date:'Feb 12, 2026', author:'SwiftExpress Analysts', readTime:'3 min read',
-    content:'EUR/USD climbed to its highest level in three months as market participants reassessed ECB rate cut expectations. ECB officials have been divided on the pace of easing, with some members advocating patience given persistent services inflation. For forex traders on SwiftExpress, the current environment favors range-trading strategies with tighter stops. Our signals team has updated their EUR/USD recommendations accordingly — check the Signals page for the latest entries.'
-  },
-  {
-    id:5, tag:'Education', tagColor:'rgba(239,68,68,0.15)', tagText:'#ef4444',
-    title:'Understanding KYC verification — why it protects you',
-    excerpt:'KYC (Know Your Customer) verification is not just a regulatory requirement — it is a critical layer of security that protects your funds and identity.',
-    date:'Feb 10, 2026', author:'SwiftExpress Compliance', readTime:'4 min read',
-    content:'KYC verification serves multiple important purposes on investment platforms. First, it prevents fraud by ensuring that only real, verified individuals can access and withdraw funds. Second, it protects you as a user — if someone attempted to access your account, verification would serve as an additional barrier. Third, it ensures regulatory compliance, which protects the platform and all its users from legal risk. At SwiftExpress, your KYC documents are reviewed by our compliance team within 24-48 hours. Documents are stored securely and are never shared with third parties. We accept Passports, National ID Cards and Drivers Licenses.'
-  }
-];
-
-let expandedPost = null;
-
-function loadBlog(){
-  const list = document.getElementById('blog-list');
-  if(!list) return;
-  list.innerHTML = BLOG_POSTS.map(post => `
-    <div class="blog-card" id="blog-card-${post.id}" onclick="toggleBlog(${post.id})">
-      <div class="blog-tag" style="background:${post.tagColor};color:${post.tagText};">${post.tag}</div>
-      <div class="blog-title">${post.title}</div>
-      <div class="blog-excerpt">${post.excerpt}</div>
-      <div class="blog-meta">
-        <span>✍️ ${post.author}</span>
-        <span>📅 ${post.date}</span>
-        <span>⏱ ${post.readTime}</span>
-        <span id="blog-toggle-${post.id}" style="margin-left:auto;color:var(--blue);font-weight:600;">Read more ›</span>
-      </div>
-      <div class="blog-expanded" id="blog-exp-${post.id}">${post.content}</div>
-    </div>
-  `).join('');
-}
-
-function toggleBlog(id){
-  const exp = document.getElementById('blog-exp-'+id);
-  const tog = document.getElementById('blog-toggle-'+id);
-  if(!exp) return;
-  const isOpen = exp.style.display === 'block';
-  exp.style.display = isOpen ? 'none' : 'block';
-  if(tog) tog.textContent = isOpen ? 'Read more ›' : 'Read less ‹';
-}
-
-/* ──────── NOTIFICATIONS PAGE ──────── */
-async function loadNotifPage(){
-  const list = document.getElementById('notif-page-list');
-  if(!list) return;
-  const {data} = await sb.from('notifications')
-    .select('*')
-    .eq('user_id', user.id)
-    .order('created_at', {ascending:false});
-  if(!data || !data.length){
-    list.innerHTML = '<div style="text-align:center;color:var(--gray);padding:40px;font-size:13px;">🔔 No notifications yet. Notifications about your deposits, withdrawals and account activity will appear here.</div>';
-    return;
-  }
-  list.innerHTML = data.map(n => `
-    <div class="notif-page-item ${n.read ? '' : 'unread'}">
-      ${!n.read ? '<div class="notif-page-dot"></div>' : '<div style="width:8px;flex-shrink:0;"></div>'}
-      <div style="flex:1;">
-        <div style="font-size:13px;font-weight:${n.read?'500':'700'};color:var(--white);margin-bottom:3px;">${n.title||'Notification'}</div>
-        <div style="font-size:12px;color:var(--gray);line-height:1.5;">${n.message||''}</div>
-        <div style="font-size:10px;color:var(--gray);margin-top:6px;">${new Date(n.created_at).toLocaleString('en',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
-      </div>
-    </div>
-  `).join('');
-  // Mark all as read after viewing
-  await sb.from('notifications').update({read:true}).eq('user_id',user.id).eq('read',false);
-}
-
-async function markAllNotifsRead(){
-  await sb.from('notifications').update({read:true}).eq('user_id',user.id);
-  loadNotifPage();
-}
-
-/* ──────── TRANSACTION HISTORY ──────── */
-let allHistory = [];
-let histTypeFilter = 'all';
-let histStatusFilter = 'all';
-
 async function loadHistory(){
   const tbody = document.getElementById('hist-tbody');
   if(tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--gray);">Loading...</td></tr>';
@@ -3675,18 +3125,6 @@ async function loadHistory(){
   updateHistStats();
   renderHistory();
 }
-
-function updateHistStats(){
-  const deps = allHistory.filter(t=>t.type==='deposit'&&t.status==='approved');
-  const wds  = allHistory.filter(t=>t.type==='withdrawal'&&t.status==='approved');
-  const pend = allHistory.filter(t=>t.status==='pending');
-  const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
-  setEl('hs-total-dep','$'+deps.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
-  setEl('hs-total-wd','$'+wds.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
-  setEl('hs-total-txns', allHistory.length);
-  setEl('hs-pending-cnt', pend.length);
-}
-
 function setHistFilter(f,btn){
   histTypeFilter=f;
   document.querySelectorAll('.hist-filter').forEach(b=>{if(['all','deposit','withdrawal','profit'].includes(b.textContent.toLowerCase().trim()))b.classList.remove('active-hf');});
@@ -3699,7 +3137,6 @@ function setHistStatus(f,btn){
   if(btn){btn.style.borderColor='var(--blue)';btn.style.color='var(--blue)';}
   renderHistory();
 }
-
 function renderHistory(){
   let data = allHistory;
   if(histTypeFilter !== 'all') data = data.filter(t=>t.type===histTypeFilter);
@@ -3728,29 +3165,25 @@ function renderHistory(){
     </tr>`;
   }).join('');
 }
-
-function downloadStatement(){
-  if(!allHistory.length){alert('No transactions to export.');return;}
-  const rows=[['Date','Type','Method','Amount','Status','Reference ID']];
-  allHistory.forEach(t=>{
-    rows.push([
-      new Date(t.created_at).toLocaleDateString(),
-      t.type||'',
-      t.payment_method||'',
-      '$'+parseFloat(t.amount||0).toFixed(2),
-      t.status||'',
-      (t.id||'').toUpperCase()
-    ]);
-  });
-  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob = new Blob([csv],{type:'text/csv'});
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'SwiftExpress_Statement_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
+function loadMoreHistory(){
+  histPage++;
+  renderHistory();
 }
-
-/* ──────── NOTIFICATIONS PAGE ──────── */
+function exportHistory(){
+  const data = allHistory;
+  if(!data.length){ alert('No transactions to export.'); return; }
+  const headers = ['Date','Type','Amount','Method','Status','ID'];
+  const rows = data.map(t => [
+    new Date(t.created_at).toLocaleString(),
+    t.type, t.amount, t.payment_method||'', t.status, t.id
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(v => '"'+(v||'').toString().replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'swiftexpress-history.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
 async function loadNotifPage(){
   const el = document.getElementById('notif-page-body');
   if(!el) return;
@@ -3779,26 +3212,51 @@ async function loadNotifPage(){
   // Mark all as read
   await sb.from('notifications').update({is_read:true}).eq('user_id',user.id);
 }
+function renderNotifPage(){
+  const list = document.getElementById('notif-page-list');
+  if(!list) return;
 
-async function markAllRead(){
-  await sb.from('notifications').update({is_read:true}).eq('user_id',user.id);
+  const iconMap = {
+    deposit:'💰', withdrawal:'💸', profit:'📈',
+    kyc:'🪪', security:'🔒', welcome:'👋', default:'🔔'
+  };
+
+  list.innerHTML = notifPageData.map(n => {
+    const isUnread = !n.read_at;
+    const icon = iconMap[n.type] || iconMap.default;
+    const time = formatTimeAgo(new Date(n.created_at));
+    const fullDate = new Date(n.created_at).toLocaleString('en',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    return `<div class="notif-page-item ${isUnread?'unread':''}" onclick="markNotifRead('${n.id}',this)">
+      ${isUnread ? '<div class="notif-page-dot"></div>' : ''}
+      <div class="notif-page-icon">${icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div class="notif-page-title">${n.title||'Notification'}</div>
+        <div class="notif-page-body">${n.message||''}</div>
+        <div class="notif-page-time" title="${fullDate}">🕐 ${time}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function markNotifRead(id, el){
+  if(!el.classList.contains('unread')) return;
+  await sb.from('notifications').update({read_at: new Date().toISOString()}).eq('id', id);
+  el.classList.remove('unread');
+  const dot = el.querySelector('.notif-page-dot');
+  if(dot) dot.remove();
+}
+async function markAllNotifsRead(){
+  await sb.from('notifications').update({read:true}).eq('user_id',user.id);
   loadNotifPage();
-  loadNotifs();
 }
-
-function getTimeAgo(dateStr){
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff/60000);
-  const hrs  = Math.floor(diff/3600000);
-  const days = Math.floor(diff/86400000);
-  if(mins<1) return 'Just now';
-  if(mins<60) return mins+'m ago';
-  if(hrs<24) return hrs+'h ago';
-  if(days<7) return days+'d ago';
-  return new Date(dateStr).toLocaleDateString('en',{day:'2-digit',month:'short',year:'numeric'});
+function formatTimeAgo(date){
+  const diff = Math.floor((Date.now() - date) / 1000);
+  if(diff < 60)   return 'Just now';
+  if(diff < 3600) return Math.floor(diff/60) + 'm ago';
+  if(diff < 86400) return Math.floor(diff/3600) + 'h ago';
+  if(diff < 604800) return Math.floor(diff/86400) + 'd ago';
+  return date.toLocaleDateString('en',{day:'2-digit',month:'short'});
 }
-
-/* ──────── REFERRALS ──────── */
 async function loadReferrals(){
   if(!user) return;
   const refLink = 'https://swiftexpress-qzgn.vercel.app/register.html?ref=' + user.id.slice(0,8);
@@ -3839,7 +3297,89 @@ async function loadReferrals(){
       <div style="text-align:right;"><div style="font-size:12px;font-weight:700;color:var(--green);">Active</div></div>
     </div>`).join('');
 }
-
+function shareRefLink(platform){
+  const link = document.getElementById('ref-link-input')?.value || '';
+  const msg = encodeURIComponent('Join SwiftExpress and start investing! Use my referral link: ' + link);
+  const urls = {
+    whatsapp: 'https://wa.me/?text=' + msg,
+    twitter:  'https://twitter.com/intent/tweet?text=' + msg,
+    telegram: 'https://t.me/share/url?url=' + encodeURIComponent(link) + '&text=' + encodeURIComponent('Join SwiftExpress and start investing!'),
+    email:    'mailto:?subject=Join SwiftExpress&body=' + msg
+  };
+  if(urls[platform]) window.open(urls[platform], '_blank');
+}
+function loadBlog(){
+  const list = document.getElementById('blog-list');
+  if(!list) return;
+  list.innerHTML = BLOG_POSTS.map(post => `
+    <div class="blog-card" id="blog-card-${post.id}" onclick="toggleBlog(${post.id})">
+      <div class="blog-tag" style="background:${post.tagColor};color:${post.tagText};">${post.tag}</div>
+      <div class="blog-title">${post.title}</div>
+      <div class="blog-excerpt">${post.excerpt}</div>
+      <div class="blog-meta">
+        <span>✍️ ${post.author}</span>
+        <span>📅 ${post.date}</span>
+        <span>⏱ ${post.readTime}</span>
+        <span id="blog-toggle-${post.id}" style="margin-left:auto;color:var(--blue);font-weight:600;">Read more ›</span>
+      </div>
+      <div class="blog-expanded" id="blog-exp-${post.id}">${post.content}</div>
+    </div>
+  `).join('');
+}
+function toggleBlog(id){
+  const exp = document.getElementById('blog-exp-'+id);
+  const tog = document.getElementById('blog-toggle-'+id);
+  if(!exp) return;
+  const isOpen = exp.style.display === 'block';
+  exp.style.display = isOpen ? 'none' : 'block';
+  if(tog) tog.textContent = isOpen ? 'Read more ›' : 'Read less ‹';
+}
+function updateHistStats(){
+  const deps = allHistory.filter(t=>t.type==='deposit'&&t.status==='approved');
+  const wds  = allHistory.filter(t=>t.type==='withdrawal'&&t.status==='approved');
+  const pend = allHistory.filter(t=>t.status==='pending');
+  const setEl=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  setEl('hs-total-dep','$'+deps.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
+  setEl('hs-total-wd','$'+wds.reduce((s,t)=>s+parseFloat(t.amount||0),0).toLocaleString('en',{minimumFractionDigits:2}));
+  setEl('hs-total-txns', allHistory.length);
+  setEl('hs-pending-cnt', pend.length);
+}
+function downloadStatement(){
+  if(!allHistory.length){alert('No transactions to export.');return;}
+  const rows=[['Date','Type','Method','Amount','Status','Reference ID']];
+  allHistory.forEach(t=>{
+    rows.push([
+      new Date(t.created_at).toLocaleDateString(),
+      t.type||'',
+      t.payment_method||'',
+      '$'+parseFloat(t.amount||0).toFixed(2),
+      t.status||'',
+      (t.id||'').toUpperCase()
+    ]);
+  });
+  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'SwiftExpress_Statement_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+async function markAllRead(){
+  await sb.from('notifications').update({is_read:true}).eq('user_id',user.id);
+  loadNotifPage();
+  loadNotifs();
+}
+function getTimeAgo(dateStr){
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff/60000);
+  const hrs  = Math.floor(diff/3600000);
+  const days = Math.floor(diff/86400000);
+  if(mins<1) return 'Just now';
+  if(mins<60) return mins+'m ago';
+  if(hrs<24) return hrs+'h ago';
+  if(days<7) return days+'d ago';
+  return new Date(dateStr).toLocaleDateString('en',{day:'2-digit',month:'short',year:'numeric'});
+}
 function shareRef(platform){
   const inp = document.getElementById('ref-link-input');
   const link = inp ? inp.value : '';
@@ -3849,13 +3389,11 @@ function shareRef(platform){
   else if(platform==='telegram') window.open('https://t.me/share/url?url='+encodeURIComponent(link)+'&text='+encodeURIComponent(text),'_blank');
   else { navigator.clipboard.writeText(link).catch(()=>{}); alert('Referral link copied!'); }
 }
-
 function doLogout(){sb.auth.signOut().then(()=>{window.location.href='login.html';});}
 function showMsg(el,txt,type){el.textContent=txt;el.className='msg-box '+type+' show';}
 function toggleBalMenu(){}
 
-init();
-</script>
+init();</script>
 
 <!-- ══════════════ DEPOSIT MODAL ══════════════ -->
 <div class="modal-overlay" id="deposit-modal">
