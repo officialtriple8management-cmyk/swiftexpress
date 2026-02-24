@@ -862,6 +862,33 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
   color:var(--blue);cursor:default;
 }
 .plan-get-btn.current-btn:hover{background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);}
+
+/* ── PAST TIER (user has exceeded this plan) ── */
+.plan-card.past-plan{
+  opacity:0.45;
+  filter:grayscale(0.6);
+  pointer-events:none;
+  border-color:var(--border) !important;
+  box-shadow:none !important;
+}
+.plan-card.past-plan .plan-pct,
+.plan-card.past-plan .plan-label{
+  text-decoration:line-through;
+  color:var(--gray) !important;
+}
+.past-plan-chip{
+  position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  background:var(--border2);color:var(--gray);font-size:10px;font-weight:800;
+  padding:4px 14px;border-radius:20px;letter-spacing:0.5px;
+  white-space:nowrap;z-index:2;
+}
+.plan-get-btn.past-btn{
+  background:var(--card) !important;
+  border:1px solid var(--border) !important;
+  color:var(--gray) !important;
+  cursor:not-allowed !important;
+  opacity:0.6;
+}
 </style>
 </head>
 <body>
@@ -1061,7 +1088,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
             </div>
 
             <!-- PROMO BANNER -->
-            <div class="promo">
+            <div class="promo" id="promo-banner">
               <h3>Get more powerful features now!</h3>
               <p>Unlock advanced trading tools today with a limited 20% discount across our platform upgrades now available.</p>
               <div class="promo-btns">
@@ -2810,8 +2837,16 @@ function selectPlan(planName, range){
 function updateSubscribePage(){
   const tier = (wallet && wallet.tier) ? wallet.tier : 'Starter';
   const tierLower = tier.toLowerCase();
+  const tierOrder = {starter:0, growth:1, elite:2};
+  const currentLevel = tierOrder[tierLower] || 0;
 
-  // Show current plan banner
+  // ── Hide promo banner if user has upgraded past Starter ──
+  const promoBanner = document.getElementById('promo-banner');
+  if(promoBanner){
+    promoBanner.style.display = currentLevel > 0 ? 'none' : '';
+  }
+
+  // ── Update current plan banner at top of subscribe page ──
   const banner = document.getElementById('current-plan-banner');
   const bannerName = document.getElementById('banner-tier-name');
   const bannerBadge = document.getElementById('banner-tier-badge');
@@ -2820,52 +2855,78 @@ function updateSubscribePage(){
     if(bannerName) bannerName.textContent = tier + ' Plan';
     if(bannerBadge){
       bannerBadge.textContent = tier.toUpperCase() + ' TIER';
-      const colors = {starter:'rgba(59,130,246,0.15)',growth:'rgba(16,185,129,0.15)',elite:'rgba(245,158,11,0.15)'};
-      const textColors = {starter:'var(--blue)',growth:'var(--green)',elite:'#f59e0b'};
+      const colors = {starter:'rgba(59,130,246,0.15)', growth:'rgba(16,185,129,0.15)', elite:'rgba(245,158,11,0.15)'};
+      const textColors = {starter:'var(--blue)', growth:'var(--green)', elite:'#f59e0b'};
       bannerBadge.style.background = colors[tierLower] || colors.starter;
       bannerBadge.style.color = textColors[tierLower] || textColors.starter;
+      bannerBadge.style.borderColor = (textColors[tierLower]||'var(--blue)').replace('var','').replace('(--blue)','rgba(59,130,246,0.3)');
     }
   }
 
-  // Remove all existing current plan markers
-  ['starter','growth','elite'].forEach(t => {
+  // ── Reset all plan cards to default state first ──
+  const allTiers = ['starter', 'growth', 'elite'];
+  const planBtnDefaults = {
+    starter: ["selectPlan('Starter','$100 - $4,999')", 'Get Started'],
+    growth:  ["selectPlan('Growth','$5,000 - $49,999')", 'Get Started'],
+    elite:   ["selectPlan('Elite','$50,000+')", 'Get Started']
+  };
+
+  allTiers.forEach(t => {
     const card = document.getElementById('plan-card-' + t);
-    const btn = document.getElementById('plan-btn-' + t);
+    const btn  = document.getElementById('plan-btn-' + t);
     if(card){
-      card.classList.remove('current-plan');
-      // Remove chip if exists
-      const existingChip = card.querySelector('.current-plan-chip');
-      if(existingChip) existingChip.remove();
+      card.classList.remove('current-plan', 'past-plan');
+      card.querySelectorAll('.current-plan-chip, .past-plan-chip').forEach(el => el.remove());
+      card.style.pointerEvents = '';
     }
     if(btn){
-      btn.classList.remove('current-btn');
-      // Restore original onclick and text
-      const plans = {
-        starter:["selectPlan('Starter','$100 - $4,999')", 'Get Started'],
-        growth:["selectPlan('Growth','$5,000 - $49,999')", 'Get Started'],
-        elite:["selectPlan('Elite','$50,000+')", 'Get Started']
-      };
-      btn.setAttribute('onclick', plans[t][0]);
-      if(btn.textContent === 'Current Plan') btn.textContent = plans[t][1];
+      btn.classList.remove('current-btn', 'past-btn');
+      btn.setAttribute('onclick', planBtnDefaults[t][0]);
+      btn.textContent = planBtnDefaults[t][1];
+      btn.disabled = false;
     }
   });
 
-  // Highlight current plan card
-  const currentCard = document.getElementById('plan-card-' + tierLower);
-  const currentBtn = document.getElementById('plan-btn-' + tierLower);
-  if(currentCard){
-    currentCard.classList.add('current-plan');
-    // Add chip badge
-    const chip = document.createElement('div');
-    chip.className = 'current-plan-chip';
-    chip.textContent = '✓ Your Current Plan';
-    currentCard.insertBefore(chip, currentCard.firstChild);
-  }
-  if(currentBtn){
-    currentBtn.classList.add('current-btn');
-    currentBtn.textContent = 'Current Plan';
-    currentBtn.setAttribute('onclick', '');
-  }
+  // ── Mark past tiers (tiers BELOW current) as inactive ──
+  allTiers.forEach(t => {
+    const level = tierOrder[t];
+    const card  = document.getElementById('plan-card-' + t);
+    const btn   = document.getElementById('plan-btn-' + t);
+
+    if(level < currentLevel){
+      // PAST TIER — greyed out, locked, crossed out
+      if(card){
+        card.classList.add('past-plan');
+        card.style.pointerEvents = 'none';
+        const chip = document.createElement('div');
+        chip.className = 'past-plan-chip';
+        chip.textContent = '✓ Completed';
+        card.insertBefore(chip, card.firstChild);
+      }
+      if(btn){
+        btn.classList.add('past-btn');
+        btn.textContent = 'Plan Completed';
+        btn.setAttribute('onclick', '');
+        btn.disabled = true;
+      }
+    } else if(level === currentLevel){
+      // CURRENT TIER — highlighted as active
+      if(card){
+        card.classList.add('current-plan');
+        const chip = document.createElement('div');
+        chip.className = 'current-plan-chip';
+        chip.textContent = '✓ Your Current Plan';
+        card.insertBefore(chip, card.firstChild);
+      }
+      if(btn){
+        btn.classList.add('current-btn');
+        btn.textContent = 'Current Plan';
+        btn.setAttribute('onclick', '');
+        btn.disabled = true;
+      }
+    }
+    // HIGHER TIERS — stay as "Get Started" (default, already reset above)
+  });
 }
 
 function doLogout(){sb.auth.signOut().then(()=>{window.location.href='login.html';});}
