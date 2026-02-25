@@ -585,11 +585,14 @@ async function loadStats(){
 }
 
 async function loadPendingDeposits(){
-  const {data}=await sb.from('transactions').select('*,profiles(full_name,email)').eq('type','deposit').eq('status','pending').order('created_at',{ascending:false});
   const el=document.getElementById('pending-deps');
+  const {data}=await sb.from('transactions').select('*').eq('type','deposit').eq('status','pending').order('created_at',{ascending:false});
   if(!data?.length){el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">No pending deposits</td></tr>';return;}
+  const uids=[...new Set(data.map(t=>t.user_id))];
+  const {data:profs}=await sb.from('profiles').select('id,full_name,email').in('id',uids);
+  const pm={};(profs||[]).forEach(p=>pm[p.id]=p);
   el.innerHTML=data.map(t=>`<tr>
-    <td><strong>${t.profiles?.full_name||'--'}</strong><br><small style="color:var(--gray)">${t.profiles?.email||''}</small></td>
+    <td><strong>${pm[t.user_id]?.full_name||'--'}</strong><br><small style="color:var(--gray)">${pm[t.user_id]?.email||''}</small></td>
     <td style="color:var(--green);font-weight:700">$${parseFloat(t.amount).toLocaleString()}</td>
     <td>${t.payment_method||'--'}</td>
     <td style="color:var(--gray);font-size:0.8rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.proof_url||'--'}</td>
@@ -599,11 +602,14 @@ async function loadPendingDeposits(){
 }
 
 async function loadPendingWithdrawals(){
-  const {data}=await sb.from('transactions').select('*,profiles(full_name,email)').eq('type','withdrawal').eq('status','pending').order('created_at',{ascending:false});
   const el=document.getElementById('pending-wds');
+  const {data}=await sb.from('transactions').select('*').eq('type','withdrawal').eq('status','pending').order('created_at',{ascending:false});
   if(!data?.length){el.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--gray);padding:24px">No pending withdrawals</td></tr>';return;}
+  const uids=[...new Set(data.map(t=>t.user_id))];
+  const {data:profs}=await sb.from('profiles').select('id,full_name,email').in('id',uids);
+  const pm={};(profs||[]).forEach(p=>pm[p.id]=p);
   el.innerHTML=data.map(t=>`<tr>
-    <td><strong>${t.profiles?.full_name||'--'}</strong><br><small style="color:var(--gray)">${t.profiles?.email||''}</small></td>
+    <td><strong>${pm[t.user_id]?.full_name||'--'}</strong><br><small style="color:var(--gray)">${pm[t.user_id]?.email||''}</small></td>
     <td style="color:var(--red);font-weight:700">$${parseFloat(t.amount).toLocaleString()}</td>
     <td>${t.payment_method||'--'}</td>
     <td style="color:var(--gray);font-size:0.8rem">${t.proof_url||'--'}</td>
@@ -613,9 +619,11 @@ async function loadPendingWithdrawals(){
 }
 
 async function loadAllDeposits(){
-  const {data}=await sb.from('transactions').select('*,profiles(full_name,email)').eq('type','deposit').order('created_at',{ascending:false});
+  const {data:_deps}=await sb.from('transactions').select('*').eq('type','deposit').order('created_at',{ascending:false});
+  const data=_deps||[];
+  if(data.length){const uids=[...new Set(data.map(t=>t.user_id))];const {data:pr}=await sb.from('profiles').select('id,full_name,email').in('id',uids);const pm={};(pr||[]).forEach(p=>pm[p.id]=p);data.forEach(t=>t._p=pm[t.user_id]||{});}
   document.getElementById('all-deps').innerHTML=(data||[]).map(t=>`<tr>
-    <td>${t.profiles?.full_name||'--'}</td>
+    <td>${t._p?.full_name||'--'}</td>
     <td style="font-weight:600">$${parseFloat(t.amount).toLocaleString()}</td>
     <td>${t.payment_method||'--'}</td>
     <td style="color:var(--gray);font-size:0.8rem">${t.proof_url||'--'}</td>
@@ -625,9 +633,11 @@ async function loadAllDeposits(){
 }
 
 async function loadAllWithdrawals(){
-  const {data}=await sb.from('transactions').select('*,profiles(full_name,email)').eq('type','withdrawal').order('created_at',{ascending:false});
+  const {data:_wds}=await sb.from('transactions').select('*').eq('type','withdrawal').order('created_at',{ascending:false});
+  const data=_wds||[];
+  if(data.length){const uids=[...new Set(data.map(t=>t.user_id))];const {data:pr}=await sb.from('profiles').select('id,full_name,email').in('id',uids);const pm={};(pr||[]).forEach(p=>pm[p.id]=p);data.forEach(t=>t._p=pm[t.user_id]||{});}
   document.getElementById('all-wds').innerHTML=(data||[]).map(t=>`<tr>
-    <td>${t.profiles?.full_name||'--'}</td>
+    <td>${t._p?.full_name||'--'}</td>
     <td style="font-weight:600">$${parseFloat(t.amount).toLocaleString()}</td>
     <td>${t.payment_method||'--'}</td>
     <td style="color:var(--gray);font-size:0.8rem">${t.proof_url||'--'}</td>
@@ -637,14 +647,16 @@ async function loadAllWithdrawals(){
 }
 
 async function loadBalancesTable(){
-  const {data}=await sb.from('wallets').select('*,profiles(full_name,email)');
-  document.getElementById('balance-table').innerHTML=(data||[]).map(w=>{
+  const {data:_wallets}=await sb.from('wallets').select('*');
+  const wdata=_wallets||[];
+  if(wdata.length){const uids=wdata.map(w=>w.user_id).filter(Boolean);const {data:pr}=await sb.from('profiles').select('id,full_name,email').in('id',uids);const pm={};(pr||[]).forEach(p=>pm[p.id]=p);wdata.forEach(w=>w._p=pm[w.user_id]||{});}
+  document.getElementById('balance-table').innerHTML=(wdata||[]).map(w=>{ const data=wdata;
     const tier=w.tier||'Starter';
     const tierColors={Starter:'#3b82f6',Growth:'#10b981',Elite:'#f59e0b'};
     const tc=tierColors[tier]||tierColors.Starter;
     return `<tr>
-    <td><strong>${w.profiles?.full_name||'--'}</strong></td>
-    <td style="color:var(--gray);font-size:0.8rem">${w.profiles?.email||'--'}</td>
+    <td><strong>${w._p?.full_name||'--'}</strong></td>
+    <td style="color:var(--gray);font-size:0.8rem">${w._p?.email||'--'}</td>
     <td>$${(w.btc_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
     <td>$${(w.stocks_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
     <td>$${(w.forex_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
@@ -796,20 +808,44 @@ let kycFilter = 'all';
 
 async function loadKYC(){
   const container = document.getElementById('kyc-cards-container');
-  if(container) container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;">Loading...</div>';
+  if(container) container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;">Loading submissions...</div>';
 
-  const {data, error} = await sb.from('wallets')
-    .select('*,profiles(full_name,email,phone,country,address,age)')
-    .not('kyc_status','is',null)
-    .neq('kyc_status','')
-    .order('kyc_submitted_at',{ascending:false});
+  try {
+    // Step 1: Get all wallets that have a KYC submission (no JOIN needed)
+    const {data: walletData, error: wErr} = await sb.from('wallets')
+      .select('*')
+      .not('kyc_status', 'is', null)
+      .neq('kyc_status', '')
+      .order('kyc_submitted_at', {ascending: false});
 
-  if(error || !data || data.length===0){
-    if(container) container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;font-size:14px;">No KYC submissions yet.</div>';
-    return;
+    if(wErr) throw new Error(wErr.message);
+    if(!walletData || walletData.length === 0){
+      if(container) container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;font-size:14px;"><div style="font-size:32px;margin-bottom:10px;">📭</div>No KYC submissions yet.</div>';
+      return;
+    }
+
+    // Step 2: Get profile info for those users separately
+    const userIds = walletData.map(w => w.user_id).filter(Boolean);
+    let profileMap = {};
+    if(userIds.length > 0){
+      const {data: profileData} = await sb.from('profiles')
+        .select('id, full_name, email, phone, country, age')
+        .in('id', userIds);
+      if(profileData) profileData.forEach(p => { profileMap[p.id] = p; });
+    }
+
+    // Step 3: Merge profiles into wallet data
+    allKYCData = walletData.map(w => ({
+      ...w,
+      profiles: profileMap[w.user_id] || {}
+    }));
+
+    renderKYCCards();
+
+  } catch(err) {
+    console.error('loadKYC error:', err);
+    if(container) container.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:48px;font-size:14px;">Error loading KYC data: ' + err.message + '</div>';
   }
-  allKYCData = data;
-  renderKYCCards();
 }
 
 function filterKYC(filter, btn){
