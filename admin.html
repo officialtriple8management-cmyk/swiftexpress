@@ -990,6 +990,7 @@ async function verifyKYC(userId, approve){
   const label = approve ? 'approve and verify' : 'reject';
   if(!confirm('Are you sure you want to ' + label + ' this KYC submission?')) return;
 
+  // 1. Update wallet KYC status
   const {error} = await sb.from('wallets').update({
     kyc_verified: approve,
     kyc_status:   approve ? 'verified' : 'rejected'
@@ -997,18 +998,33 @@ async function verifyKYC(userId, approve){
 
   if(error){ alert('Error: ' + error.message); return; }
 
-  // Also update the local cache so re-render is instant
+  // 2. Send notification to the user so their dashboard updates
+  try {
+    await sb.from('notifications').insert({
+      user_id: userId,
+      title:   approve ? '✅ KYC Verified' : '❌ KYC Rejected',
+      message: approve
+        ? 'Congratulations! Your identity has been verified successfully. You now have full access to all platform features.'
+        : 'Your KYC submission was not approved. Please re-submit with a clearer ID document.',
+      type:    'kyc',
+      read:    false,
+      is_read: false,
+    });
+  } catch(e){ console.warn('Notification insert failed:', e.message); }
+
+  // 3. Update local cache so re-render is instant
   const entry = allKYCData.find(w => w.user_id === userId);
   if(entry){ entry.kyc_verified = approve; entry.kyc_status = approve ? 'verified' : 'rejected'; }
 
   renderKYCCards();
+  updateKYCBadge();
 
-  // Show inline toast
+  // 4. Show toast
   const toast = document.createElement('div');
   toast.textContent = approve ? '✅ User successfully verified!' : '❌ KYC submission rejected.';
-  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'+(approve?'var(--green)':'#e74c3c')+';color:#fff;padding:12px 24px;border-radius:8px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
+  toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:'+(approve?'#10b981':'#e74c3c')+';color:#fff;padding:14px 28px;border-radius:10px;font-size:13px;font-weight:700;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);';
   document.body.appendChild(toast);
-  setTimeout(()=>toast.remove(), 3000);
+  setTimeout(()=>toast.remove(), 3500);
 }
 
 /* ──────── ENHANCED OVERVIEW ANALYTICS ──────── */

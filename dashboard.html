@@ -2109,7 +2109,7 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
     <div style="min-width:0;">
       <div class="profile-head-name" id="pd-name" style="font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Loading...</div>
       <div class="profile-head-email" id="pd-email" style="font-size:11px;color:var(--gray);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">--</div>
-      <div style="display:inline-flex;align-items:center;gap:4px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.2);color:#e74c3c;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:3px;letter-spacing:0.5px;">NOT VERIFIED</div>
+      <div id="pd-kyc-badge" style="display:inline-flex;align-items:center;gap:4px;background:rgba(231,76,60,0.1);border:1px solid rgba(231,76,60,0.2);color:#e74c3c;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;margin-top:3px;letter-spacing:0.5px;">NOT VERIFIED</div>
     </div>
   </div>
 
@@ -2509,6 +2509,7 @@ function switchPage(name,btn){
   // Start/stop watchlist ticker
   if(name==='markets') startWatchlist(); else stopWatchlist();
   if(name==='subscribe') updateSubscribePage();
+  if(name==='user-profile' || name==='personal-info') refreshWallet();
   if(name==='referrals') loadReferrals();
   if(name==='history') loadHistory();
   if(name==='notifications-page') loadNotifPage();
@@ -2607,6 +2608,14 @@ function copyRefLink(){
     if(btn){ const orig=btn.textContent; btn.textContent='✅ Copied!'; setTimeout(()=>btn.textContent=orig,2000); }
   }).catch(()=>{ el.select(); document.execCommand('copy'); });
 }
+async function refreshWallet(){
+  // Re-fetch wallet fresh from DB so KYC status is always current
+  const {data} = await sb.from('wallets').select('*').eq('user_id', user.id).single();
+  if(data) wallet = data;
+  populateProfilePage();
+  refreshBalances();
+}
+
 function populateProfilePage(){
   if(!user || !wallet) return;
   const meta = user.user_metadata || {};
@@ -2654,6 +2663,27 @@ function populateProfilePage(){
   if(vbadge){
     if(isVerified){ vbadge.textContent='✅ VERIFIED'; vbadge.style.background='rgba(16,185,129,0.1)'; vbadge.style.borderColor='rgba(16,185,129,0.25)'; vbadge.style.color='var(--green)'; }
     else if(kycStatus==='pending'){ vbadge.textContent='⏳ PENDING'; vbadge.style.background='rgba(245,158,11,0.1)'; vbadge.style.borderColor='rgba(245,158,11,0.25)'; vbadge.style.color='#f59e0b'; }
+  }
+
+  // Also update the small badge in the profile dropdown panel
+  const pdBadge = document.getElementById('pd-kyc-badge');
+  if(pdBadge){
+    if(isVerified){
+      pdBadge.textContent='✅ VERIFIED';
+      pdBadge.style.background='rgba(16,185,129,0.1)';
+      pdBadge.style.borderColor='rgba(16,185,129,0.25)';
+      pdBadge.style.color='var(--green)';
+    } else if(kycStatus==='pending'){
+      pdBadge.textContent='⏳ PENDING';
+      pdBadge.style.background='rgba(245,158,11,0.1)';
+      pdBadge.style.borderColor='rgba(245,158,11,0.25)';
+      pdBadge.style.color='#f59e0b';
+    } else {
+      pdBadge.textContent='● NOT VERIFIED';
+      pdBadge.style.background='rgba(231,76,60,0.1)';
+      pdBadge.style.borderColor='rgba(231,76,60,0.2)';
+      pdBadge.style.color='#e74c3c';
+    }
   }
 
   // Prefill personal info form
