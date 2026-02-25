@@ -2695,7 +2695,7 @@ function onKycFileSelect(input){
   if(fn && input.files[0]) fn.textContent = '📎 ' + input.files[0].name;
 }
 async function submitKYC(){
-  const msg = document.getElementById('kyc-msg');
+  const msg    = document.getElementById('kyc-msg');
   const idType = document.getElementById('kyc-id-type').value;
   const idNum  = document.getElementById('kyc-id-number').value.trim();
   const file   = document.getElementById('kyc-file').files[0];
@@ -2704,39 +2704,29 @@ async function submitKYC(){
   if(!idNum){  msg.style.color='#e74c3c'; msg.textContent='Please enter your ID number.'; return; }
   if(!file){   msg.style.color='#e74c3c'; msg.textContent='Please upload your ID document.'; return; }
 
-  const meta = user.user_metadata || {};
-  if(!meta.full_name){ msg.style.color='#e74c3c'; msg.textContent='Please fill in your Full Name in Personal Information first.'; return; }
-
   if(file.size > 5 * 1024 * 1024){
-    msg.style.color = '#e74c3c';
-    msg.textContent = 'File too large. Please upload a file under 5MB.';
+    msg.style.color='#e74c3c';
+    msg.textContent='File too large. Please upload a file under 5MB.';
     return;
   }
 
   msg.style.color='var(--gray)'; msg.textContent='Processing document...';
 
   try {
-    // 1. Convert file to base64 — stored directly in DB, no storage bucket required
+    // Get any saved metadata (won't block submission if missing)
+    const meta = user.user_metadata || {};
+
+    // 1. Convert file to base64 — no storage bucket needed
     const b64 = await new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload  = () => resolve(reader.result); // data:image/...;base64,...
-      reader.onerror = () => reject(new Error('Could not read file'));
+      reader.onload  = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Could not read file. Please try a different file.'));
       reader.readAsDataURL(file);
     });
 
-    msg.textContent = 'Saving your details...';
+    msg.textContent = 'Saving your submission...';
 
-    // 2. Snapshot personal info to profiles table for admin visibility
-    await sb.from('profiles').update({
-      full_name: meta.full_name || '',
-      phone:     meta.phone     || '',
-      age:       meta.age       || '',
-      country:   meta.country   || '',
-      address:   meta.address   || '',
-    }).eq('id', user.id);
-
-    // 3. Save all KYC data to wallets table
-    //    kyc_document_url stores the base64 data URI so admin can preview without any bucket
+    // 2. Save KYC data to wallets table only (safe — no extra columns needed on profiles)
     const {error: dbErr} = await sb.from('wallets').update({
       kyc_status:       'pending',
       kyc_id_type:      idType,
@@ -2749,24 +2739,45 @@ async function submitKYC(){
       kyc_country:      meta.country   || '',
       kyc_email:        user.email     || '',
     }).eq('user_id', user.id);
-    if(dbErr) throw dbErr;
 
+    if(dbErr) throw new Error(dbErr.message);
+
+    // 3. Update local wallet state
     if(wallet) wallet.kyc_status = 'pending';
 
+    // 4. Send notification to user
+    await sb.from('notifications').insert({
+      user_id: user.id,
+      title:   'KYC Submitted',
+      message: 'Your identity documents have been received and are under review. We will notify you within 24-48 hours.',
+      type:    'kyc',
+      read:    false,
+      is_read: false,
+    }).catch(()=>{}); // don't fail if notifications table has issues
+
+    // 5. Show success
     msg.style.color = 'var(--green)';
-    msg.textContent = '✅ Submitted! Your ID is under review. We will notify you within 24-48 hours.';
-    document.getElementById('kyc-form').style.display = 'none';
+    msg.textContent = '✅ Submitted! Your ID is under review. We will notify you within 24–48 hours.';
+
+    const form = document.getElementById('kyc-form');
+    if(form) form.style.display = 'none';
+
     const banner = document.getElementById('kyc-status-banner');
     if(banner){
-      banner.style.display  = 'block';
+      banner.style.display    = 'block';
       banner.style.background = 'rgba(245,158,11,0.1)';
-      banner.style.border   = '1px solid rgba(245,158,11,0.2)';
-      banner.style.color    = '#f59e0b';
-      banner.textContent    = 'Your documents are under review. We will notify you once verified.';
+      banner.style.border     = '1px solid rgba(245,158,11,0.2)';
+      banner.style.color      = '#f59e0b';
+      banner.textContent      = '⏳ Your documents are under review. We will notify you once verified.';
     }
+
+    // Refresh notification badge
+    loadNotifBadge();
+
   } catch(e){
     msg.style.color = '#e74c3c';
-    msg.textContent = 'Error: ' + e.message;
+    msg.textContent = 'Error: ' + (e.message || 'Something went wrong. Please try again.');
+    console.error('KYC submit error:', e);
   }
 }
 function togglePw(id, btn){
