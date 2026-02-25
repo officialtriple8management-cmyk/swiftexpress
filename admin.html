@@ -86,6 +86,36 @@
 .addr-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);}
 .addr-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
 
+
+  /* ── KYC Filter Buttons ── */
+  .kyc-filter {
+    background: var(--dark3);
+    border: 1px solid var(--border);
+    color: var(--gray);
+    padding: 7px 18px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+  .kyc-filter:hover { border-color: var(--gold); color: var(--gold); }
+  .active-filter {
+    background: var(--gold) !important;
+    border-color: var(--gold) !important;
+    color: #111 !important;
+  }
+  .kyc-card { background: var(--dark3); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .kyc-card.pending-card { border-left: 3px solid #f59e0b; }
+  .kyc-card.verified-card { border-left: 3px solid var(--green); }
+  .kyc-card.rejected-card { border-left: 3px solid #e74c3c; }
+  .kyc-info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 10px; margin: 14px 0; }
+  .kyc-info-item { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 10px 12px; }
+  .kyc-info-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--gray); margin-bottom: 3px; }
+  .kyc-info-val { font-size: 13px; font-weight: 600; color: var(--white); word-break: break-all; }
+  .kyc-doc-preview { max-width: 100%; max-height: 220px; object-fit: contain; border-radius: 8px; border: 1px solid var(--border); margin: 10px 0; display: block; }
+
 </style>
 </head>
 <body>
@@ -662,7 +692,7 @@ async function loadBalancesTable(){
     <td>$${(w.forex_balance||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
     <td style="color:var(--green)">$${(w.total_profit||0).toLocaleString('en',{minimumFractionDigits:2})}</td>
     <td><span style="background:${tc}22;color:${tc};border:1px solid ${tc}44;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;">${tier}</span></td>
-    <td><button class="btn btn-gold" onclick="openEditBal('${w.user_id}','${w.profiles?.full_name||'User'}',${w.btc_balance||0},${w.stocks_balance||0},${w.forex_balance||0},${w.total_profit||0})">Edit</button></td></tr>`;
+    <td><button class="btn btn-gold" onclick="openEditBal('${w.user_id}','${w._profile?.full_name||'User'}',${w.btc_balance||0},${w.stocks_balance||0},${w.forex_balance||0},${w.total_profit||0})">Edit</button></td></tr>`;
   }).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--gray);padding:24px">No data</td></tr>';
 }
 
@@ -808,43 +838,44 @@ let kycFilter = 'all';
 
 async function loadKYC(){
   const container = document.getElementById('kyc-cards-container');
-  if(container) container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;">Loading submissions...</div>';
+  if(!container) return;
+  container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;">Loading submissions...</div>';
 
   try {
-    // Step 1: Get all wallets that have a KYC submission (no JOIN needed)
+    // Get ALL wallets, then filter in JS - avoids issues with null/empty column filtering
     const {data: walletData, error: wErr} = await sb.from('wallets')
       .select('*')
-      .not('kyc_status', 'is', null)
-      .neq('kyc_status', '')
-      .order('kyc_submitted_at', {ascending: false});
+      .order('kyc_submitted_at', {ascending: false, nullsFirst: false});
 
-    if(wErr) throw new Error(wErr.message);
-    if(!walletData || walletData.length === 0){
-      if(container) container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;font-size:14px;"><div style="font-size:32px;margin-bottom:10px;">📭</div>No KYC submissions yet.</div>';
+    if(wErr) throw new Error('DB error: ' + wErr.message);
+
+    // Filter to only rows that have a KYC submission
+    const kycWallets = (walletData || []).filter(w =>
+      w.kyc_status && w.kyc_status !== '' && w.kyc_status !== null
+    );
+
+    if(kycWallets.length === 0){
+      container.innerHTML = '<div style="text-align:center;color:var(--gray);padding:48px;font-size:14px;"><div style="font-size:36px;margin-bottom:12px;">📭</div><div style="font-weight:600;color:var(--white);">No KYC submissions yet</div><div style="font-size:12px;margin-top:6px;">Submissions will appear here once users complete the KYC form.</div></div>';
       return;
     }
 
-    // Step 2: Get profile info for those users separately
-    const userIds = walletData.map(w => w.user_id).filter(Boolean);
+    // Fetch matching profiles separately
+    const userIds = kycWallets.map(w => w.user_id).filter(Boolean);
     let profileMap = {};
     if(userIds.length > 0){
       const {data: profileData} = await sb.from('profiles')
         .select('id, full_name, email, phone, country, age')
         .in('id', userIds);
-      if(profileData) profileData.forEach(p => { profileMap[p.id] = p; });
+      (profileData || []).forEach(p => { profileMap[p.id] = p; });
     }
 
-    // Step 3: Merge profiles into wallet data
-    allKYCData = walletData.map(w => ({
-      ...w,
-      profiles: profileMap[w.user_id] || {}
-    }));
-
+    // Merge and store
+    allKYCData = kycWallets.map(w => ({ ...w, _profile: profileMap[w.user_id] || {} }));
     renderKYCCards();
 
   } catch(err) {
     console.error('loadKYC error:', err);
-    if(container) container.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:48px;font-size:14px;">Error loading KYC data: ' + err.message + '</div>';
+    container.innerHTML = '<div style="text-align:center;color:#e74c3c;padding:48px;"><div style="font-size:32px;margin-bottom:10px;">⚠️</div><div style="font-size:14px;font-weight:600;">Error: ' + err.message + '</div><div style="font-size:12px;margin-top:8px;color:var(--gray);">Check the browser console for details.</div></div>';
   }
 }
 
@@ -878,12 +909,12 @@ function renderKYCCards(){
     const cardClass   = isVerified ? 'verified-card' : isPending ? 'pending-card' : 'rejected-card';
 
     // Use kyc_* snapshot fields first, fall back to profiles join
-    const fullName = w.kyc_full_name || w.profiles?.full_name || '--';
-    const email    = w.kyc_email    || w.profiles?.email    || '--';
-    const phone    = w.kyc_phone    || w.profiles?.phone    || '--';
-    const age      = w.kyc_age      || w.profiles?.age      || '--';
-    const country  = w.kyc_country  || w.profiles?.country  || '--';
-    const address  = w.kyc_address  || w.profiles?.address  || '--';
+    const fullName = w.kyc_full_name || w._profile?.full_name || '--';
+    const email    = w.kyc_email    || w._profile?.email    || '--';
+    const phone    = w.kyc_phone    || w._profile?.phone    || '--';
+    const age      = w.kyc_age      || w._profile?.age      || '--';
+    const country  = w.kyc_country  || w._profile?.country  || '--';
+    const address  = w.kyc_address  || w._profile?.address  || '--';
     const submittedDate = w.kyc_submitted_at ? new Date(w.kyc_submitted_at).toLocaleString() : '--';
 
     const idTypeLabel = {passport:'International Passport', national_id:'National ID Card', drivers_license:"Driver's License"}[w.kyc_id_type] || w.kyc_id_type || '--';
