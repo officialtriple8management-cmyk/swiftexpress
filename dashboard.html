@@ -1720,17 +1720,34 @@ tbody tr:hover td{background:rgba(255,255,255,0.015);}
           <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;">
             <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray);margin-bottom:16px;">Personal Details</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-              <div class="f-group"><label>Full Name</label><input class="t-input" id="pi-edit-name" placeholder="Your full name"/></div>
-              <div class="f-group"><label>Age</label><input class="t-input" id="pi-edit-age" type="number" placeholder="Your age"/></div>
-              <div class="f-group"><label>Phone Number</label><input class="t-input" id="pi-edit-phone" placeholder="+1 234 567 8900"/></div>
+              <div class="f-group"><label>Full Name</label><input class="t-input" id="pi-edit-name" name="fullname" autocomplete="name" placeholder="Your full name"/></div>
+              <div class="f-group"><label>Phone Number</label><input class="t-input" id="pi-edit-phone" name="phone" autocomplete="tel" type="tel" placeholder="+1 234 567 8900"/></div>
               <div class="f-group"><label>Country of Residence</label>
-                <select class="t-select" id="pi-edit-country">
+                <select class="t-select" id="pi-edit-country" name="country" autocomplete="country-name">
                   <option value="">Select country...</option>
-                  <option>United States</option><option>United Kingdom</option><option>Germany</option><option>France</option><option>Italy</option><option>Spain</option><option>Canada</option><option>Australia</option><option>Netherlands</option><option>Switzerland</option><option>Sweden</option><option>Norway</option><option>Denmark</option><option>Belgium</option><option>Austria</option><option>Portugal</option><option>Poland</option><option>Czech Republic</option><option>Other</option>
+                  <option>United States</option><option>United Kingdom</option><option>Germany</option><option>France</option><option>Italy</option><option>Spain</option><option>Canada</option><option>Australia</option><option>Netherlands</option><option>Switzerland</option><option>Sweden</option><option>Norway</option><option>Denmark</option><option>Belgium</option><option>Austria</option><option>Portugal</option><option>Poland</option><option>Czech Republic</option><option>Nigeria</option><option>South Africa</option><option>Ghana</option><option>Kenya</option><option>Other</option>
                 </select>
               </div>
+              <div class="f-group">
+                <label>Date of Birth</label>
+                <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px;">
+                  <select class="t-select" id="pi-edit-dob-day" name="dob-day" autocomplete="off">
+                    <option value="">Day</option>
+                  </select>
+                  <select class="t-select" id="pi-edit-dob-month" name="dob-month" autocomplete="off">
+                    <option value="">Month</option>
+                    <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+                    <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+                    <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+                    <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+                  </select>
+                  <select class="t-select" id="pi-edit-dob-year" name="dob-year" autocomplete="off">
+                    <option value="">Year</option>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div class="f-group" style="margin-top:14px;"><label>Home Address</label><input class="t-input" id="pi-edit-address" placeholder="Street, City, State, ZIP"/></div>
+            <div class="f-group" style="margin-top:14px;"><label>Home Address</label><input class="t-input" id="pi-edit-address" name="homeaddress_x7k" autocomplete="off" placeholder="Street, City, State, ZIP"/></div>
             <button onclick="savePersonalInfo()" class="sub-btn" style="margin-top:18px;">💾 Save Changes</button>
             <div id="pi-msg" style="font-size:12px;margin-top:10px;"></div>
           </div>
@@ -2639,7 +2656,21 @@ function populateProfilePage(){
   setEl('pi-fullname', meta.full_name);
   setEl('pi-email2', user.email);
   setEl('pi-phone', meta.phone);
-  setEl('pi-age', meta.age);
+  // Display age nicely - show computed from DOB if available
+  if(meta.dob){
+    const parts = meta.dob.split('-');
+    if(parts.length===3){
+      const birth = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if(m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      setEl('pi-age', age + ' yrs (' + parseInt(parts[2]) + ' ' + months[parseInt(parts[1])-1] + ' ' + parts[0] + ')');
+    }
+  } else {
+    setEl('pi-age', meta.age ? meta.age + ' years' : '—');
+  }
   setEl('pi-country', meta.country);
   setEl('pi-address', meta.address);
   setEl('pi-uid', user.id);
@@ -2689,10 +2720,30 @@ function populateProfilePage(){
   // Prefill personal info form
   const pf=(id,val)=>{const el=document.getElementById(id);if(el&&val)el.value=val;};
   pf('pi-edit-name', meta.full_name);
-  pf('pi-edit-age', meta.age);
   pf('pi-edit-phone', meta.phone);
   pf('pi-edit-country', meta.country);
   pf('pi-edit-address', meta.address);
+
+  // Populate day and year dropdowns
+  const dayEl = document.getElementById('pi-edit-dob-day');
+  const yearEl = document.getElementById('pi-edit-dob-year');
+  if(dayEl && dayEl.options.length <= 1){
+    for(let d=1;d<=31;d++){ const o=document.createElement('option'); o.value=d; o.textContent=d; dayEl.appendChild(o); }
+  }
+  if(yearEl && yearEl.options.length <= 1){
+    const curYear = new Date().getFullYear();
+    for(let y=curYear-10;y>=curYear-100;y--){ const o=document.createElement('option'); o.value=y; o.textContent=y; yearEl.appendChild(o); }
+  }
+  // Prefill DOB if saved
+  if(meta.dob){
+    const parts = meta.dob.split('-');
+    if(parts.length===3){
+      const setSelect=(id,val)=>{const el=document.getElementById(id);if(el)el.value=parseInt(val).toString();};
+      setSelect('pi-edit-dob-year', parts[0]);
+      setSelect('pi-edit-dob-month', parseInt(parts[1]).toString());
+      setSelect('pi-edit-dob-day', parseInt(parts[2]).toString());
+    }
+  }
 
   // KYC status banner
   const banner = document.getElementById('kyc-status-banner');
@@ -2704,12 +2755,30 @@ function populateProfilePage(){
 }
 async function savePersonalInfo(){
   const msg = document.getElementById('pi-msg');
+
+  // Compute age from date of birth selects
+  const dobDay   = document.getElementById('pi-edit-dob-day')?.value;
+  const dobMonth = document.getElementById('pi-edit-dob-month')?.value;
+  const dobYear  = document.getElementById('pi-edit-dob-year')?.value;
+  let computedAge = '';
+  let dobString = '';
+  if(dobDay && dobMonth && dobYear){
+    const today = new Date();
+    const birth = new Date(parseInt(dobYear), parseInt(dobMonth)-1, parseInt(dobDay));
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if(m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    computedAge = age.toString();
+    dobString = dobYear + '-' + String(dobMonth).padStart(2,'0') + '-' + String(dobDay).padStart(2,'0');
+  }
+
   const meta = {
     full_name: document.getElementById('pi-edit-name').value.trim(),
-    age: document.getElementById('pi-edit-age').value,
-    phone: document.getElementById('pi-edit-phone').value.trim(),
-    country: document.getElementById('pi-edit-country').value,
-    address: document.getElementById('pi-edit-address').value.trim()
+    age:       computedAge || (document.getElementById('pi-edit-age')?.value || ''),
+    dob:       dobString,
+    phone:     document.getElementById('pi-edit-phone').value.trim(),
+    country:   document.getElementById('pi-edit-country').value,
+    address:   document.getElementById('pi-edit-address').value.trim()
   };
   msg.style.color='var(--gray)'; msg.textContent='Saving...';
   const {error} = await sb.auth.updateUser({data: meta});
