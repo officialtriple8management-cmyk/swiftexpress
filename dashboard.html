@@ -2782,9 +2782,24 @@ async function savePersonalInfo(){
     address:   document.getElementById('pi-edit-address').value.trim()
   };
   msg.style.color='var(--gray)'; msg.textContent='Saving...';
+
+  // 1. Save to Supabase Auth user_metadata
   const {error} = await sb.auth.updateUser({data: meta});
   if(error){ msg.style.color='#e74c3c'; msg.textContent='Error: '+error.message; return; }
-  // Update local user meta
+
+  // 2. ALSO write to profiles table so admin panel sees fresh data
+  try {
+    await sb.from('profiles').update({
+      full_name: meta.full_name,
+      phone:     meta.phone,
+      age:       meta.age,
+      dob:       meta.dob,
+      country:   meta.country,
+      address:   meta.address,
+    }).eq('id', user.id);
+  } catch(e){ console.warn('profiles sync failed:', e.message); }
+
+  // 3. Update local state and re-render
   if(user) user.user_metadata = {...(user.user_metadata||{}), ...meta};
   populateProfilePage();
   msg.style.color='var(--green)'; msg.textContent='✅ Profile updated successfully!';
@@ -2837,6 +2852,7 @@ async function submitKYC(){
       kyc_phone:        meta.phone     || '',
       kyc_age:          meta.age       || '',
       kyc_country:      meta.country   || '',
+      kyc_address:      meta.address   || '',
       kyc_email:        user.email     || '',
     }).eq('user_id', user.id);
 

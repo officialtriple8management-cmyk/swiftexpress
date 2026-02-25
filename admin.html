@@ -914,7 +914,7 @@ function renderKYCCards(){
     const phone    = w.kyc_phone    || w._profile?.phone    || '--';
     const age      = w.kyc_age      || w._profile?.age      || '--';
     const country  = w.kyc_country  || w._profile?.country  || '--';
-    const address  = w.kyc_address  || w._profile?.address  || '--';
+    const address  = w.kyc_address  || w._profile?.address  || w._profile?.full_name && '' || '--'; // kyc_address stored at submission
     const submittedDate = w.kyc_submitted_at ? new Date(w.kyc_submitted_at).toLocaleString() : '--';
 
     const idTypeLabel = {passport:'International Passport', national_id:'National ID Card', drivers_license:"Driver's License"}[w.kyc_id_type] || w.kyc_id_type || '--';
@@ -1112,10 +1112,12 @@ async function viewUserDetail(userId){
   document.getElementById('ud-name').textContent = name;
   document.getElementById('ud-email').textContent = profile?.email || '--';
   // phone/age/country/address may come from profile or wallet kyc snapshot
-  document.getElementById('ud-phone').textContent   = profile?.phone   || wallet?.kyc_phone   || '--';
-  document.getElementById('ud-age').textContent     = profile?.age     || wallet?.kyc_age     || '--';
-  document.getElementById('ud-country').textContent = profile?.country || wallet?.kyc_country || '--';
-  document.getElementById('ud-address').textContent = profile?.address || wallet?.kyc_address || wallet?.kyc_full_name || '--';
+  // Priority: profiles table (updated live) > kyc snapshot (captured at submission time)
+  document.getElementById('ud-phone').textContent   = wallet?.kyc_phone   || profile?.phone   || '--';
+  document.getElementById('ud-age').textContent     = wallet?.kyc_age     || profile?.age     || '--';
+  document.getElementById('ud-country').textContent = wallet?.kyc_country || profile?.country || '--';
+  // IMPORTANT: never fall back to kyc_full_name for address - that was the bug
+  document.getElementById('ud-address').textContent = wallet?.kyc_address || profile?.address || '--';
   document.getElementById('ud-since').textContent   = profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en',{year:'numeric',month:'long',day:'2-digit'}) : '--';
 
   // Tier badge
