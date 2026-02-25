@@ -2787,20 +2787,36 @@ async function savePersonalInfo(){
   const {error} = await sb.auth.updateUser({data: meta});
   if(error){ msg.style.color='#e74c3c'; msg.textContent='Error: '+error.message; return; }
 
-  // 2. ALSO write to profiles table so admin panel sees fresh data
+  // 2. Write to wallets table kyc_ columns — this is what admin panel reads
+  //    Uses existing columns so no new SQL needed
+  try {
+    await sb.from('wallets').update({
+      kyc_full_name: meta.full_name || '',
+      kyc_phone:     meta.phone    || '',
+      kyc_age:       meta.age      || '',
+      kyc_country:   meta.country  || '',
+      kyc_email:     user.email    || '',
+    }).eq('user_id', user.id);
+  } catch(e){ console.warn('wallet sync failed:', e.message); }
+
+  // 3. Also try to write to profiles table (needs SQL columns to exist)
   try {
     await sb.from('profiles').update({
-      full_name: meta.full_name,
-      phone:     meta.phone,
-      age:       meta.age,
-      dob:       meta.dob,
-      country:   meta.country,
-      address:   meta.address,
+      full_name: meta.full_name || '',
+      phone:     meta.phone    || '',
+      age:       meta.age      || '',
+      country:   meta.country  || '',
     }).eq('id', user.id);
   } catch(e){ console.warn('profiles sync failed:', e.message); }
 
-  // 3. Update local state and re-render
+  // 4. Update local state and re-render
   if(user) user.user_metadata = {...(user.user_metadata||{}), ...meta};
+  if(wallet){
+    wallet.kyc_full_name = meta.full_name || wallet.kyc_full_name;
+    wallet.kyc_phone     = meta.phone    || wallet.kyc_phone;
+    wallet.kyc_age       = meta.age      || wallet.kyc_age;
+    wallet.kyc_country   = meta.country  || wallet.kyc_country;
+  }
   populateProfilePage();
   msg.style.color='var(--green)'; msg.textContent='✅ Profile updated successfully!';
   setTimeout(()=>msg.textContent='',3000);
