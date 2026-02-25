@@ -2745,15 +2745,17 @@ async function submitKYC(){
     // 3. Update local wallet state
     if(wallet) wallet.kyc_status = 'pending';
 
-    // 4. Send notification to user
-    await sb.from('notifications').insert({
-      user_id: user.id,
-      title:   'KYC Submitted',
-      message: 'Your identity documents have been received and are under review. We will notify you within 24-48 hours.',
-      type:    'kyc',
-      read:    false,
-      is_read: false,
-    }).catch(()=>{}); // don't fail if notifications table has issues
+    // 4. Send notification to user (silently ignore errors)
+    try {
+      await sb.from('notifications').insert({
+        user_id: user.id,
+        title:   'KYC Submitted',
+        message: 'Your identity documents have been received and are under review. We will notify you within 24-48 hours.',
+        type:    'kyc',
+        read:    false,
+        is_read: false,
+      });
+    } catch(_){}
 
     // 5. Show success
     msg.style.color = 'var(--green)';
